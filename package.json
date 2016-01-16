@@ -1,0 +1,25 @@
+{
+  "name": "pro5",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.ls",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "lsc server.ls",
+    "watch": "nodemon -e ls --exec lsc server.ls"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "alt": "^0.18.1",
+    "body-parser": "^1.14.2",
+    "express": "^4.13.3",
+    "history": "^1.17.0",
+    "mongoose": "^4.3.5",
+    "morgan": "^1.6.1",
+    "prelude-ls": "^1.1.2",
+    "react": "^0.14.6",
+    "react-dom": "^0.14.6",
+    "react-router": "^1.0.3"
+  }
+}
