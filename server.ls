@@ -1,16 +1,14 @@
 require! {
     \./config
     \express
-    \morgan
-    \body-parser
+    \./middlewares
 }
 
 app = express!
-    ..use morgan \dev
-    ..use body-parser.json!
-    ..use body-parser.urlencoded extended:false
+    ..use middlewares
+    ..use express.static \public
 
-app.all \/, (req, res) ->
+app.get \/, (req, res) ->
     a = req.{query, body}
     res.send a
     console.log req.headers
