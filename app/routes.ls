@@ -1,11 +1,11 @@
 require! {
     \react : React
     \react-router : {Route}
-    \./compoments/App
+    \./compoments/Haha
 }
 
 console.log \hello-from-routes
 
-module.exports = ``<Route path='/' component={App}>
-<Route path='/haha' component={App}></Route>
+module.exports = ``<Route path='/' component={Haha}>
+<Route path='/haha' component={Haha}></Route>
 </Route>``
