@@ -14,7 +14,10 @@ require! {
     \react-router
     \./app-dest/routes
     \swig
+    \./api : api-app
 }
+
+app.use \/api, api-app
 
 app.use (req, res) ->
     react-router.match {routes:routes, location:req.url},
@@ -26,7 +29,6 @@ app.use (req, res) ->
             else if render-props then
                 #console.log 'args: ', &
                 html = ReactDOM.render-to-string React.create-element react-router.Routing-context, render-props
-                console.log html
                 page = swig.renderFile \views/index.html, html:html
                 res.status 200 .send page
             else
