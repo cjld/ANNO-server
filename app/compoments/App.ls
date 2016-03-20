@@ -15,7 +15,7 @@ class MainActions
         \selectToggle
         \resetSelects
         \selectShowed
-        \setShowed
+        \tabChange
 
     fetchCounter: ->
         $ .ajax do
@@ -37,8 +37,7 @@ class MainActions
             success: ~>
                 @fetchItemsSuccess it
             complete: ~>
-                @fetchItemsComplete "hehe"
-                console.log \wtf?
+                @fetchItemsComplete!
 
     deleteItems: (items) ->
         if not Array.isArray items
@@ -68,17 +67,33 @@ class MainStore
         @items = []
 
         @selects = {}
-        @showed = {}
+        @showed-items = []
+
+        @tabType = \total
+
+    update-showed-items: ->
+        @showed-items = @items.filter ~>
+            if @tabType == \total
+                return 1
+            return it.state == @tabType
+
+    on-tabChange: ->
+        @tabType = it
+        @update-showed-items!
+
+    on-selectShowed: ->
+        @selects = { [i._id, true] for i in @showed-items }
 
     on-fetchCounter: -> @loadingCounter = true
     on-fetchCounterSuccess: -> @counter = it
     on-fetchCounterComplete: -> @loadingCounter = false
 
     on-fetchItems: -> @loadingItems = true
-    on-fetchItemsSuccess: -> @items = it
-    on-fetchItemsComplete: ->
-        @loadingItems = false
-        console.log \come-here
+    on-fetchItemsSuccess: ->
+        @items = it
+        @update-showed-items!
+
+    on-fetchItemsComplete: !-> @loadingItems = false
 
     on-resetSelects: -> @selects = it
 
@@ -88,10 +103,9 @@ class MainStore
         for i in it
             ! = @selects[i]
 
-    on-selectShowed: -> @selects = @showed
-    on-setShowed: -> @showed = it
 
 store = alt.create-store MainStore
+
 
 class Navbar extends React.Component
     render: ->
@@ -189,13 +203,11 @@ class Guider extends React.Component
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ->
-            console.log e
             e.prevent-default!
             inputs = addItemForm.find \input
             values = {}
             for input in inputs
                 values[input.name] = $(input).val!
-            console.log values
             self.set-state ajaxing: true
             $.ajax do
                 method: \POST
@@ -293,9 +305,11 @@ class Guider extends React.Component
 
 class Displayer extends React.Component
     ->
+        super ...
+        data = store.get-state!
         @state =
-            *   tabType: \total # total annotated un-annotated issued
-                selects: store.get-state!.selects
+            *   tabType: data.tabType # total annotated un-annotated issued
+                selects: data.selects
                 items: []
                 ajaxing: true
                 counter:
@@ -305,10 +319,10 @@ class Displayer extends React.Component
                     \issued : 0
 
     on-change: ~>
-        console.log it.loadingItems
         @set-state do
+            tabType: it.tabType
             ajaxing: it.loadingItems
-            items: it.items
+            items: it.showed-items
             counter: it.counter
             selects: it.selects
 
@@ -338,7 +352,7 @@ class Displayer extends React.Component
         tabsUI = tabs.map (it) ->
             ``<a href="#"
                 className={(self.state.tabType==it.type?"active":"")+" item"}
-                onClick={function(){self.setState({tabType:it.type})}}
+                onClick={function(){actions.tabChange(it.type)}}
                 key={it.type}>
                 <i className={it.iconstr}></i>
                 <b>{it.number}</b>&nbsp;
@@ -349,19 +363,9 @@ class Displayer extends React.Component
             {tabsUI}
         </div>
         ``
-
-        imgs = self.state.items
-
         infos = [ \category \description ]
 
-        img-filter = imgs.filter ->
-            if self.state.tabType == \total
-                return true
-            return self.state.tabType == it.state
-
-        #actions.selectShowed { [i._id,true] for i in img-filter }
-
-        imgsUI = img-filter.map (it, index) ->
+        imgsUI = @state.items.map (it, index) ->
             listUI = infos.map (info) ->
                 ``<div className="item" key={info}>
                     <div className="header">

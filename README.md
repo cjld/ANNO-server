@@ -4,6 +4,7 @@
 // *   add flash
 // *   counter
 // *   type tab and color
+*   select
 *   edit info
     *   edit button
     *   edit modal
@@ -12,6 +13,7 @@
 *   select
 *   delete
 *   page
+*   react devTools
 
 ## hierarchical model
 *   models
