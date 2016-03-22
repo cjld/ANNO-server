@@ -147,7 +147,6 @@ class Navbar extends React.Component
                 </div>
         ``
 
-
 class Footer extends React.Component
     render: ->
         ``<div className="footer">
