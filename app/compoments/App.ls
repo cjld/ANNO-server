@@ -147,7 +147,7 @@ class Guider extends React.Component
         @state =
             *   displayType: \grid # grid list block
                 ajaxing: false
-                select-all-state: true
+                select-all-state: false
 
     componentDidMount: ->
         self = this

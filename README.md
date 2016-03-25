@@ -4,7 +4,7 @@
 // *   add flash
 // *   counter
 // *   type tab and color
-*   select
+// *   select
 *   edit info
     *   edit button
     *   edit modal
