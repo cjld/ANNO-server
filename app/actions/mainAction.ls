@@ -85,7 +85,9 @@ create-main-actions = (alt, actions-class, default-values) ->
             ->
                 super ...
                 @import-initial store, keys
-                comp.state = this
+                unless comp.state?
+                    comp.state = {}
+                comp.state <<< this
         console.log "create store #{name}"
         sp-store = alt.create-store SpecialStore, name
         sp-store.listen ->

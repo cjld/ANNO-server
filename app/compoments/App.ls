@@ -177,7 +177,7 @@ class Guider extends React.Component
             if self.state.select-all-state
                 actions.selectShowed!
             else
-                actions.resetSelects
+                actions.resetSelects!
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ->
@@ -308,7 +308,6 @@ class Displayer extends React.Component
             *   type: \un-annotated, iconstr:  "file outline icon"
             *   type: \issued, iconstr:  "warning sign icon"
 
-        console.log self.state
         for i in tabs
             i.number = self.state.counter[i.type]
 
