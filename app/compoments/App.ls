@@ -4,40 +4,57 @@ require! {
     \react-dom : ReactDOM
     \./../models/Object : my-object
     \../alt
+    \../actions/mainAction : {Actions, create-main-actions}
 }
 
-class MainActions
-    -> @generate-actions do
-        \fetchCounterSuccess
-        \fetchCounterComplete
-        \fetchItemsSuccess
-        \fetchItemsComplete
-        \selectToggle
-        \resetSelects
-        \selectShowed
-        \tabChange
+def-vals =
+    loadingCounter: true
+    counter: {}
+
+    loadingItems: true
+    items: {}
+
+    selects: {}
+    showedItems: []
+
+    tabType: \total
+
+class MainActions extends Actions
+    ->
+        super ...
+
+        # update showed-items
+        @gen-dep [\tabType, \items], (data) ->
+            {tabType, items} = data
+            showed-items = items.filter ~>
+                if tabType == \total
+                    return 1
+                return it.state == tabType
+            return {showed-items}
 
     fetchCounter: ->
+        @set-store loadingCounter:true
         $ .ajax do
             method: \POST
             url: \/api/counter
             error: ->
                 toastr.error it.response-text
             success: ~>
-                @fetchCounterSuccess it
+                @set-store counter:it
             complete: ~>
-                @fetchCounterComplete it
+                @set-store loadingCounter:false
 
     fetchItems: ->
+        @set-store loadingItems:true
         $ .ajax do
             method: \POST
             url: \/api/list-objects
             error: ->
                 toastr.error it.response-text
             success: ~>
-                @fetchItemsSuccess it
+                @set-store items:it
             complete: ~>
-                @fetchItemsComplete!
+                @set-store loadingItems:false
 
     deleteItems: (items) ->
         if not Array.isArray items
@@ -52,60 +69,26 @@ class MainActions
                 toastr.info it
                 @fetchItems!
                 @fetchCounter!
-                @resetSelects {}
+                @set-store selects:{}
             complete: ~>
 
-actions = alt.create-actions MainActions
+    resetSelects: ->
+        @set-store selects:{}
 
-class MainStore
-    ->
-        @bind-actions actions
-        @loadingCounter = true
-        @counter = {}
-
-        @loadingItems = true
-        @items = []
-
-        @selects = {}
-        @showed-items = []
-
-        @tabType = \total
-
-    update-showed-items: ->
-        @showed-items = @items.filter ~>
-            if @tabType == \total
-                return 1
-            return it.state == @tabType
-
-    on-tabChange: ->
-        @tabType = it
-        @update-showed-items!
-
-    on-selectShowed: ->
-        @selects = { [i._id, true] for i in @showed-items }
-
-    on-fetchCounter: -> @loadingCounter = true
-    on-fetchCounterSuccess: -> @counter = it
-    on-fetchCounterComplete: -> @loadingCounter = false
-
-    on-fetchItems: -> @loadingItems = true
-    on-fetchItemsSuccess: ->
-        @items = it
-        @update-showed-items!
-
-    on-fetchItemsComplete: !-> @loadingItems = false
-
-    on-resetSelects: -> @selects = it
-
-    on-selectToggle: ->
+    selectToggle: ->
+        {selects} = @store.get-state!
         if not Array.isArray it
             then it = [it]
         for i in it
-            ! = @selects[i]
+            ! = selects[i]
+        @set-store {selects}
 
+    selectShowed: ->
+        {showed-items} = @store.get-state!
+        selects = { [i._id, true] for i in showed-items }
+        @set-store {selects}
 
-store = alt.create-store MainStore
-
+{actions, store, BasicStore} = create-main-actions alt, MainActions, def-vals
 
 class Navbar extends React.Component
     render: ->
@@ -164,12 +147,7 @@ class Guider extends React.Component
         @state =
             *   displayType: \grid # grid list block
                 ajaxing: false
-                selects: store.get-state!.selects
                 select-all-state: true
-        store.listen @on-change
-
-    on-change: ~>
-        @set-state selects: it.selects
 
     componentDidMount: ->
         self = this
@@ -183,8 +161,9 @@ class Guider extends React.Component
         del-dialog.modal do
             detachable:false
             on-approve: ~>
-                console.log "delete items: ", @state.selects
-                actions.deleteItems @state.selects
+                {selects} = store.get-state!
+                console.log "delete items: ", selects
+                actions.deleteItems selects
 
 
         $ \#addItemBtn .click ->
@@ -196,9 +175,9 @@ class Guider extends React.Component
         $ \#selectAllBtn .click ->
             self.set-state select-all-state: !self.state.select-all-state
             if self.state.select-all-state
-                actions.selectShowed 0
+                actions.selectShowed!
             else
-                actions.resetSelects {}
+                actions.resetSelects
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ->
@@ -305,31 +284,15 @@ class Guider extends React.Component
 class Displayer extends React.Component
     ->
         super ...
-        data = store.get-state!
-        @state =
-            *   tabType: data.tabType # total annotated un-annotated issued
-                selects: data.selects
-                items: []
-                ajaxing: true
-                counter:
-                    \total : 0
-                    \annotated : 0
-                    \un-annotated : 0
-                    \issued : 0
-
-    on-change: ~>
-        @set-state do
-            tabType: it.tabType
-            ajaxing: it.loadingItems
-            items: it.showed-items
-            counter: it.counter
-            selects: it.selects
-
-    componentWillUnmount: ->
-        store.unlisten @on-change
+        store.connect-to-component this, [
+            \tabType
+            \selects
+            \showedItems
+            \loadingItems
+            \counter
+        ]
 
     componentDidMount: ->
-        store.listen @on-change
         actions.fetchCounter!
         actions.fetchItems!
 
@@ -345,13 +308,14 @@ class Displayer extends React.Component
             *   type: \un-annotated, iconstr:  "file outline icon"
             *   type: \issued, iconstr:  "warning sign icon"
 
+        console.log self.state
         for i in tabs
             i.number = self.state.counter[i.type]
 
         tabsUI = tabs.map (it) ->
             ``<a href="#"
                 className={(self.state.tabType==it.type?"active":"")+" item"}
-                onClick={function(){actions.tabChange(it.type)}}
+                onClick={function(){actions.setStore({tabType:it.type})}}
                 key={it.type}>
                 <i className={it.iconstr}></i>
                 <b>{it.number}</b>&nbsp;
@@ -364,7 +328,7 @@ class Displayer extends React.Component
         ``
         infos = [ \category \description ]
 
-        imgsUI = @state.items.map (it, index) ->
+        imgsUI = @state.showedItems.map (it, index) ->
             listUI = infos.map (info) ->
                 ``<div className="item" key={info}>
                     <div className="header">

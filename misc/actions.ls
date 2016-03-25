@@ -28,8 +28,7 @@ class MyActions extends Actions
 # SubStore
 class SubStore extends BasicStore
     ->
-        super ...
-        @import-initial store, [\a,\b]
+        super [\a,\b]
 
 sub-store = alt.create-store SubStore
 

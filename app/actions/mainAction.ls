@@ -53,8 +53,10 @@ create-main-actions = (alt, actions-class, default-values) ->
     actions = alt.create-actions actions-class
 
     class BasicStore
-        ->
+        (keys) ->
             @bind-actions actions
+            if keys?
+                @import-initial store, keys
 
         import-initial: (main-store, keys) !->
             data = main-store.get-state!
@@ -76,6 +78,20 @@ create-main-actions = (alt, actions-class, default-values) ->
     actions.store = store
     # fix set store not found in alt.create-store
     actions.set-store = Actions.prototype.set-store
+
+    store.connect-to-component = (comp, keys) ->
+        name = comp.constructor.name
+        class SpecialStore extends BasicStore
+            ->
+                super ...
+                @import-initial store, keys
+                comp.state = this
+        console.log "create store #{name}"
+        sp-store = alt.create-store SpecialStore, name
+        sp-store.listen ->
+            console.log "listen", it
+            comp.set-state it
+        return sp-store
 
     return {actions, store, BasicStore, Store}
 

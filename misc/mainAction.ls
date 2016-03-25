@@ -53,8 +53,10 @@ create-main-actions = (alt, actions-class, default-values) ->
     actions = alt.create-actions actions-class
 
     class BasicStore
-        ->
+        (keys) ->
             @bind-actions actions
+            if keys?
+                @import-initial store, keys
 
         import-initial: (main-store, keys) !->
             data = main-store.get-state!
