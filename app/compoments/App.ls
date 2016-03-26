@@ -26,7 +26,7 @@ class MainActions extends Actions
         # update showed-items
         @gen-dep [\tabType, \items], (data) ->
             {tabType, items} = data
-            showed-items = items.filter ~>
+            showed-items = [v for k,v of items].filter ~>
                 if tabType == \total
                     return 1
                 return it.state == tabType
@@ -52,7 +52,8 @@ class MainActions extends Actions
             error: ->
                 toastr.error it.response-text
             success: ~>
-                @set-store items:it
+                items = {[i._id, i] for i in it}
+                @set-store {items}
             complete: ~>
                 @set-store loadingItems:false
 
@@ -80,7 +81,10 @@ class MainActions extends Actions
         if not Array.isArray it
             then it = [it]
         for i in it
-            ! = selects[i]
+            if selects[i]?
+                delete selects[i]
+            else
+                selects[i] = true
         @set-store {selects}
 
     selectShowed: ->
@@ -148,6 +152,8 @@ class Guider extends React.Component
             *   displayType: \grid # grid list block
                 ajaxing: false
                 select-all-state: false
+                # modal type, edit or add
+                modalType: \add
 
     componentDidMount: ->
         self = this
@@ -162,11 +168,26 @@ class Guider extends React.Component
             detachable:false
             on-approve: ~>
                 {selects} = store.get-state!
-                console.log "delete items: ", selects
                 actions.deleteItems selects
 
 
-        $ \#addItemBtn .click ->
+        $ \#addItemBtn .click ~>
+            @set-state modalType:\add
+            dialog.modal \show
+
+        $ \#editItemBtn .click ~>
+            {selects} = store.get-state!
+            ids = Object.keys(selects)
+            if ids.length != 1
+                toastr.error "Please select only one item."
+                return
+            item = store.get-state!.items[ids[0]]
+            for k,v of item
+                # attribute selector
+                dom = addItemForm.find "input[name='#{k}']"
+                dom.val(v)
+
+            @set-state modalType:\edit
             dialog.modal \show
 
         $ \#delItemBtn .click ->
@@ -186,6 +207,11 @@ class Guider extends React.Component
             values = {}
             for input in inputs
                 values[input.name] = $(input).val!
+
+            if self.state.modalType == \edit
+                id = Object.keys(store.get-state!.selects)[0]
+                unless id? then return
+                values._id = id
             self.set-state ajaxing: true
             $.ajax do
                 method: \POST
@@ -263,6 +289,7 @@ class Guider extends React.Component
                     {self.state.selectAllState?"check circle icon":"check circle outline icon"}></i></a>
                     <a className="ui item" id="addItemBtn"><i className="green add circle icon"></i></a>
                     <a className="ui item" id="delItemBtn"><i className="red minus circle icon"></i></a>
+                    <a className="ui item" id="editItemBtn"><i className="edit icon"></i></a>
                 </div>
 
                 <i className="big database icon"></i>

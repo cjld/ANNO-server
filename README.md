@@ -5,14 +5,14 @@
 // *   counter
 // *   type tab and color
 // *   select
-*   edit info
-    *   edit button
-    *   edit modal
-    *   edit ajax
-    *   edit api
-*   select
-*   delete
-*   page
+// *   edit info
+//    *   edit button
+//    *   edit modal
+//    *   edit ajax
+//    *   edit api
+//    *   edit info hold
+// *   delete
+*   annotate page
 *   react devTools
 
 ## hierarchical model

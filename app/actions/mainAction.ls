@@ -91,7 +91,6 @@ create-main-actions = (alt, actions-class, default-values) ->
         console.log "create store #{name}"
         sp-store = alt.create-store SpecialStore, name
         sp-store.listen ->
-            console.log "listen", it
             comp.set-state it
         return sp-store
 

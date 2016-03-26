@@ -33,10 +33,17 @@ app.post \/new-object, (req, res, next) ->
             res.send "timeout ok!"
         return
 
-    object = new my-object req.body
-    object.save ->
-        if it then return next it
-        res.send "#{req.body.name} saved successfully."
+    if req.body._id?
+        edit-obj = {} <<< req.body
+        id = delete edit-obj._id
+        my-object.update {_id:id}, {$set:edit-obj}, ->
+            if it then return next it
+            res.send "Edit id:#{id} successfully!"
+    else
+        object = new my-object req.body
+        object.save ->
+            if it then return next it
+            res.send "#{req.body.name} saved successfully."
 
 app.post \/delete-items, (req, res, next) ->
     console.log req.body['items[]']
