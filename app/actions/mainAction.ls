@@ -43,7 +43,7 @@ class Actions
 import-exist = (a, b) ->
     updated = false
     for k,v of b
-        if a[k]?
+        if a.has-own-property k
             a[k] = v
             updated = true
     return updated
@@ -61,7 +61,7 @@ create-main-actions = (alt, actions-class, default-values) ->
         import-initial: (main-store, keys) !->
             data = main-store.get-state!
             for i in keys
-                if data[i]?
+                if data.has-own-property i
                     this[i] = data[i]
                 else
                     throw "No such key: #{i}"

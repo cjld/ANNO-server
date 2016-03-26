@@ -13,6 +13,7 @@
 //    *   edit info hold
 // *   delete
 *   annotate page
+    *   route page
 *   react devTools
 
 ## hierarchical model

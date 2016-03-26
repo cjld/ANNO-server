@@ -19,6 +19,8 @@ def-vals =
 
     tabType: \total
 
+    fatherId: undefined
+
 class MainActions extends Actions
     ->
         super ...
@@ -32,11 +34,23 @@ class MainActions extends Actions
                 return it.state == tabType
             return {showed-items}
 
+        # update items
+        @gen-dep [\fatherId], ~>
+            # dirty here
+            console.log \father-id, store.get-state!.father-id
+            actions.fetchContent!
+            return {}
+
+    fetchContent: ->
+        @fetchCounter!
+        @fetchItems!
+
     fetchCounter: ->
         @set-store loadingCounter:true
         $ .ajax do
             method: \POST
             url: \/api/counter
+            data: {parent:store.get-state!.fatherId}
             error: ->
                 toastr.error it.response-text
             success: ~>
@@ -49,6 +63,7 @@ class MainActions extends Actions
         $ .ajax do
             method: \POST
             url: \/api/list-objects
+            data: {parent:store.get-state!.fatherId}
             error: ->
                 toastr.error it.response-text
             success: ~>
@@ -68,8 +83,7 @@ class MainActions extends Actions
                 toastr.error it.response-text
             success: ~>
                 toastr.info it
-                @fetchItems!
-                @fetchCounter!
+                @fetchContent!
                 @set-store selects:{}
             complete: ~>
 
@@ -223,8 +237,7 @@ class Guider extends React.Component
                     toastr.success it
                     dialog.modal \hide
                     addItemForm[0].reset!
-                    actions.fetchItems!
-                    actions.fetchCounter!
+                    actions.fetchContent!
                 complete: ->
                     self.set-state ajaxing: false
 
@@ -319,10 +332,6 @@ class Displayer extends React.Component
             \counter
         ]
 
-    componentDidMount: ->
-        actions.fetchCounter!
-        actions.fetchItems!
-
     componentDidUpdate: ->
         node = $ ReactDOM.findDOMNode this
         node.find \.imgGalleryBoxOuter .popup inline:true
@@ -385,11 +394,10 @@ class Displayer extends React.Component
                     <a className="ui left corner label" onClick={onClick}>
                         <i className={iconname}></i>
                     </a>
-                    <div className="imgGalleryBox">
+                    <Link className="imgGalleryBox" to={"/i/"+obj._id}>
                         <img className="ui bordered image" src={it.url} alt="" />
-                    </div>
+                    </Link>
                 </div>
-
                 <div className="ui special popup">
                     <div className="ui bulleted list">
                         {listUI}
@@ -433,6 +441,15 @@ class MainPage extends React.Component
         ``
 
 class App extends React.Component
+
+    componentDidMount: ->
+        actions.set-store fatherId:@props.params.itemId
+        console.log \app-did-mount, @props.params.itemId
+
+    componentWillUpdate: ->
+        actions.set-store fatherId:it.params.itemId
+        console.log \app-will-update, it.params.itemId
+
     render: ->
         ``<div>
             <Navbar />

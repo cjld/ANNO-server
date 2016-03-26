@@ -6,5 +6,6 @@ require! {
 
 console.log \hello-from-routes
 
-module.exports = ``<Route path='/' component={App}>
+module.exports = ``<Route path='/'>
+    <Route path='i(/:itemId)' component={App} />
 </Route>``

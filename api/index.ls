@@ -18,7 +18,8 @@ app.get \/test, (req, res) ->
     res.send \ok!
 
 app.use \/list-objects, (req, res, next) ->
-    my-object.find {}, (err, objs) ->
+    console.log \list-object, req.body
+    my-object.find req.body, (err, objs) ->
         if err then return next err
         res.send objs
 
@@ -58,15 +59,19 @@ app.post \/delete-items, (req, res, next) ->
         res.send "Delete #{items.length} items successfully!"
 
 app.post \/counter, (req, res, next) ->
+    my-counter = (cond, cb) ->
+        cond <<< req.body
+        my-object.count cond, cb
+
     async.parallel {
         \total : (callback) ->
-            my-object.count {}, callback
+            my-counter {}, callback
         \annotated : (callback) ->
-            my-object.count {state:'annotated'}, callback
+            my-counter {state:'annotated'}, callback
         \un-annotated : (callback) ->
-            my-object.count {state:'un-annotated'}, callback
+            my-counter {state:'un-annotated'}, callback
         \issued : (callback) ->
-            my-object.count {state:'issued'}, callback
+            my-counter {state:'issued'}, callback
     }, (err, results) ->
         if err then return next err
         res.send results
