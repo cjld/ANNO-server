@@ -1,0 +1,5 @@
+asd = ->
+
+@asd
+class A
+
