@@ -12,6 +12,7 @@
 //    *   edit api
 //    *   edit info hold
 // *   delete
+*   better edit page
 *   annotate page
     *   route page
 *   react devTools
@@ -19,6 +20,10 @@
 ## hierarchical model
 *   models
 *   hierarchical database
+    // *   Navbar
+    *   description
+    *   dir icon
+
 
 ## annotate info
 ### annotate model

@@ -18,7 +18,11 @@ app.get \/test, (req, res) ->
     res.send \ok!
 
 app.use \/list-objects, (req, res, next) ->
-    console.log \list-object, req.body
+    my-object.find req.body.{parent}, (err, objs) ->
+        if err then return next err
+        res.send objs
+
+app.use \/find-objects, (req, res, next) ->
     my-object.find req.body, (err, objs) ->
         if err then return next err
         res.send objs
@@ -60,7 +64,7 @@ app.post \/delete-items, (req, res, next) ->
 
 app.post \/counter, (req, res, next) ->
     my-counter = (cond, cb) ->
-        cond <<< req.body
+        cond <<< req.body.{parent}
         my-object.count cond, cb
 
     async.parallel {

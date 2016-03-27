@@ -20,6 +20,7 @@ def-vals =
     tabType: \total
 
     fatherId: undefined
+    ancestors: []
 
 class MainActions extends Actions
     ->
@@ -39,9 +40,11 @@ class MainActions extends Actions
             # dirty here
             console.log \father-id, store.get-state!.father-id
             actions.fetchContent!
+            actions.findAncestor!
             return {}
 
     fetchContent: ->
+        @resetSelects!
         @fetchCounter!
         @fetchItems!
 
@@ -57,6 +60,29 @@ class MainActions extends Actions
                 @set-store counter:it
             complete: ~>
                 @set-store loadingCounter:false
+
+    find-objects: (cond, cb) ->
+        $ .ajax do
+            method: \POST
+            url: \/api/find-objects
+            data: cond
+            error: ->
+                toastr.error it.response-text
+            success: cb
+
+    findAncestor: ->
+        ancestors = []
+        my-func = ~>
+            i = it[0]
+            if i then ancestors.push(i)
+            if i and i.parent
+                @find-objects {_id:i.parent}, my-func
+            else
+                @set-store {ancestors}
+        if store.get-state!.fatherId?
+            @find-objects {_id:store.get-state!.fatherId}, my-func
+        else
+            @set-store {ancestors}
 
     fetchItems: ->
         @set-store loadingItems:true
@@ -159,6 +185,28 @@ class Footer extends React.Component
         </div>
         ``
 
+class Breadcrumb extends React.Component
+    ->
+        super ...
+        store.connect-to-component this, [
+            \ancestors
+        ]
+
+    render: ->
+        console.log \ance, @state.ancestors
+        lists = []
+        for a in @state.ancestors.reverse!
+            lists.push ``<div key={a._id} className="divider">/</div>``
+            lists.push ``<Link key={a._id+"-link"} to={"/i/"+a._id}>{a.name}</Link>``
+
+        ``<div>
+            <Link to="/i/"><i className="big database icon" /></Link>
+            <div className="ui huge breadcrumb">
+                {lists}
+            </div>
+        </div>``
+
+
 class Guider extends React.Component
     ->
         super ...
@@ -168,6 +216,10 @@ class Guider extends React.Component
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
+
+        store.connect-to-component this, [
+            \ancestors
+        ]
 
     componentDidMount: ->
         self = this
@@ -226,6 +278,9 @@ class Guider extends React.Component
                 id = Object.keys(store.get-state!.selects)[0]
                 unless id? then return
                 values._id = id
+            else
+                fid = store.get-state!.fatherId
+                if fid then values.parent = fid
             self.set-state ajaxing: true
             $.ajax do
                 method: \POST
@@ -242,6 +297,8 @@ class Guider extends React.Component
                     self.set-state ajaxing: false
 
     render: ->
+        mainDescription = @state.ancestors?.0?.description
+        unless mainDescription? then mainDescription=\Home
         self = this
         displayBar = [ \grid \list \block ].map (it) ->
             ``<a
@@ -305,18 +362,12 @@ class Guider extends React.Component
                     <a className="ui item" id="editItemBtn"><i className="edit icon"></i></a>
                 </div>
 
-                <i className="big database icon"></i>
-
-                <div className="ui huge breadcrumb">
-                    <div className="divider">/</div>
-                    <a href="#">Traffic-sign</a>
-                    <div className="divider">/</div>
-                    <a href="#">Prohibit</a>
-                </div>
+                <Breadcrumb/>
 
             </div>
+            <div className="ui fitted hidden clearing divider"></div>
             <div className="ui vertical segment">
-                <big>simple description, all prohibit traffic sign in China.</big>
+                <big>{mainDescription}</big>
             </div>
         </div>
         ``
@@ -361,7 +412,7 @@ class Displayer extends React.Component
             {tabsUI}
         </div>
         ``
-        infos = [ \category \description ]
+        infos = [ \category \description \name ]
 
         imgsUI = @state.showedItems.map (it, index) ->
             listUI = infos.map (info) ->
