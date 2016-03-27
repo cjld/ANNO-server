@@ -48,6 +48,16 @@ import-exist = (a, b) ->
             updated = true
     return updated
 
+inject-func = (obj, key, func) ->
+    pre-func = obj[key]
+    if pre-func
+        obj[key] = ->
+            func ...
+            pre-func ...
+    else
+        # console.log "inject failed.", &
+        obj[key] = func
+
 # return {actions, store, BasicStore, Store}
 create-main-actions = (alt, actions-class, default-values) ->
     actions = alt.create-actions actions-class
@@ -85,14 +95,22 @@ create-main-actions = (alt, actions-class, default-values) ->
             ->
                 super ...
                 @import-initial store, keys
-                unless comp.state?
-                    comp.state = {}
-                comp.state <<< this
         console.log "create store #{name}"
-        sp-store = alt.create-store SpecialStore, name
-        sp-store.listen ->
+        sp-store = alt.get-store name
+        unless sp-store
+            sp-store = alt.create-store SpecialStore, name
+        unless comp.state?
+            comp.state = {}
+        comp.state <<< sp-store.get-state!
+        listen-func = ->
             # console.log name, it
             comp.set-state it
+
+        inject-func comp, \componentDidMount, ->
+            sp-store.listen listen-func
+        inject-func comp, \componentWillUnmount, ->
+            sp-store.unlisten listen-func
+
         return sp-store
 
     return {actions, store, BasicStore, Store}
