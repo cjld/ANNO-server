@@ -487,6 +487,20 @@ class Displayer extends React.Component
         </div></div>
         ``
 
+class Editor extends React.Component
+
+    componentDidMount: ->
+        canvas = $ \#canvas .0
+        if canvas?get-context
+            ctx = canvas.get-context \2d
+            console.log \get-context, ctx
+        else
+            console.log \cannot-get-convas, canvas
+
+    render: ->
+        ``<canvas id='canvas'>
+        </canvas>``
+
 class MainPage extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
@@ -496,7 +510,7 @@ class MainPage extends React.Component
         ``<div className="ui container">
             <Guider />
             {
-                type == "item"? <div></div> : <Displayer />
+                type == "item"? <Editor /> : <Displayer />
             }
         </div>
         ``
