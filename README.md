@@ -21,7 +21,7 @@
 *   models
 *   hierarchical database
     // *   Navbar
-    *   description
+    // *   description
     *   dir icon
 
 
