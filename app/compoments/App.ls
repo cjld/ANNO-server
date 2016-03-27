@@ -20,6 +20,7 @@ def-vals =
     tabType: \total
 
     fatherId: undefined
+    currentItem: undefined
     ancestors: []
 
 class MainActions extends Actions
@@ -74,7 +75,10 @@ class MainActions extends Actions
         ancestors = []
         my-func = ~>
             i = it[0]
-            if i then ancestors.push(i)
+            if i
+                ancestors.push(i)
+                if ancestors.length == 1
+                    @set-store currentItem:i
             if i and i.parent
                 @find-objects {_id:i.parent}, my-func
             else
@@ -82,7 +86,7 @@ class MainActions extends Actions
         if store.get-state!.fatherId?
             @find-objects {_id:store.get-state!.fatherId}, my-func
         else
-            @set-store {ancestors}
+            @set-store {ancestors, currentItem:undefined}
 
     fetchItems: ->
         @set-store loadingItems:true
@@ -195,7 +199,8 @@ class Breadcrumb extends React.Component
     render: ->
         console.log \ance, @state.ancestors
         lists = []
-        for a in @state.ancestors.reverse!
+        p = [] <<< @state.ancestors
+        for a in p.reverse!
             lists.push ``<div key={a._id} className="divider">/</div>``
             lists.push ``<Link key={a._id+"-link"} to={"/i/"+a._id}>{a.name}</Link>``
 
@@ -205,7 +210,6 @@ class Breadcrumb extends React.Component
                 {lists}
             </div>
         </div>``
-
 
 class Guider extends React.Component
     ->
@@ -218,7 +222,7 @@ class Guider extends React.Component
                 modalType: \add
 
         store.connect-to-component this, [
-            \ancestors
+            \currentItem
         ]
 
     componentDidMount: ->
@@ -297,7 +301,7 @@ class Guider extends React.Component
                     self.set-state ajaxing: false
 
     render: ->
-        mainDescription = @state.ancestors?.0?.description
+        mainDescription = @state.currentItem?.description
         unless mainDescription? then mainDescription=\Home
         self = this
         displayBar = [ \grid \list \block ].map (it) ->
@@ -484,10 +488,16 @@ class Displayer extends React.Component
         ``
 
 class MainPage extends React.Component
+    ->
+        store.connect-to-component this, [\currentItem]
+
     render: ->
+        type = @state.currentItem?type
         ``<div className="ui container">
             <Guider />
-            <Displayer />
+            {
+                type == "item"? <div></div> : <Displayer />
+            }
         </div>
         ``
 
