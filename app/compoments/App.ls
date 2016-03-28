@@ -39,7 +39,6 @@ class MainActions extends Actions
         # update items
         @gen-dep [\fatherId], ~>
             # dirty here
-            console.log \father-id, store.get-state!.father-id
             actions.fetchContent!
             actions.findAncestor!
             return {}
@@ -197,7 +196,6 @@ class Breadcrumb extends React.Component
         ]
 
     render: ->
-        console.log \ance, @state.ancestors
         lists = []
         p = [] <<< @state.ancestors
         for a in p.reverse!
@@ -488,18 +486,26 @@ class Displayer extends React.Component
         ``
 
 class Editor extends React.Component
+    ->
+        store.connect-to-component this, [\currentItem]
 
     componentDidMount: ->
-        canvas = $ \#canvas .0
-        if canvas?get-context
-            ctx = canvas.get-context \2d
-            console.log \get-context, ctx
-        else
-            console.log \cannot-get-convas, canvas
+        @canvas = new fabric.Canvas \canvas
+
+    componentWillUpdate: ->
+        @imgUrl = @state.currentItem?.url
+
+    componentDidUpdate: ->
+        unless @imgUrl then return
+        console.log @imgUrl
+        fabric.Image.fromURL @imgUrl, ~>
+            @canvas.add img
 
     render: ->
-        ``<canvas id='canvas'>
-        </canvas>``
+        ``<div className="ui center aligned segment">
+            <canvas id='canvas'></canvas>
+            <img src={this.imgUrl} />
+        </div>``
 
 class MainPage extends React.Component
     ->
@@ -519,11 +525,9 @@ class App extends React.Component
 
     componentDidMount: ->
         actions.set-store fatherId:@props.params.itemId
-        console.log \app-did-mount, @props.params.itemId
 
     componentWillUpdate: ->
         actions.set-store fatherId:it.params.itemId
-        console.log \app-will-update, it.params.itemId
 
     render: ->
         ``<div>
