@@ -37,3 +37,8 @@
 # small TODO
 *   ajax default actions
 *   encapsule semantic to react
+
+
+
+# ps
+*   `setFluidWidth`: when popup

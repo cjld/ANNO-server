@@ -14,3 +14,9 @@
     overflow:hidden;
     position: relative;
 }
+
+.myCanvas canvas {
+    border-color: black;
+    border-style: solid;
+    border-width: 2px;
+}

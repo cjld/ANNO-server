@@ -15,6 +15,12 @@
     position: relative;
 }
 
+.myCanvas canvas {
+    border-color: black;
+    border-style: solid;
+    border-width: 2px;
+}
+
  /*
  * # Semantic UI - 2.1.7
  * https://github.com/Semantic-Org/Semantic-UI

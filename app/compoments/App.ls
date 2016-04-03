@@ -5,6 +5,7 @@ require! {
     \./../models/Object : my-object
     \../alt
     \../actions/mainAction : {Actions, create-main-actions}
+    \../models/types
 }
 
 def-vals =
@@ -22,6 +23,8 @@ def-vals =
     fatherId: undefined
     currentItem: undefined
     ancestors: []
+
+    editMode: ""
 
 class MainActions extends Actions
     ->
@@ -485,27 +488,341 @@ class Displayer extends React.Component
         </div></div>
         ``
 
+class MyPolygon
+    ->
+        @data = [] <<< it
+        @rebuild!
+
+    rebuild: ->
+        it = @data
+        @objs = []
+        @points = []
+        @lines = []
+        for [x,y] in it
+            r = 5
+            c = new fabric.Circle do
+                left: x - r
+                top: y - r
+                strokeWidth: 2
+                radius: r
+                fill: '#fff'
+                stroke: '#666'
+                selectable: false
+            c.hasControls = c.hasBorders = false
+            @points.push c
+            c.myindex = @points.length - 1
+        for i til it.length
+            if i==0 then j=it.length-1 else j=i-1
+            a = it[i]
+            b = it[j]
+            l = new fabric.Line [a[0],a[1],b[0],b[1]], {
+                fill: 'red'
+                stroke: 'red'
+                strokeWidth: 2
+                selectable: false
+            }
+            l.hasControls = l.hasBorders = false
+            @lines.push l
+            l.myindex = @lines.length - 1
+        cp = -> [ {x,y} for [x,y] in it ]
+        @polygon = new fabric.Polygon cp it
+        @polygon.set fill:\red, opacity:0.5
+        @polygon.hasControls = false
+        @polygon.hasBorders = false
+        @polygon.selectable = false
+        @objs.push @polygon
+        for l in @lines then @objs.push l
+        for p in @points then @objs.push p
+
+    toPoly: ->
+        v = []
+        if  it instanceof fabric.Circle or
+            it instanceof fabric.Rect
+        then
+            rect = it.getBoundingRect!
+            v = [
+                {x:it.left, y:it.top}
+                {x:it.left, y:it.top+it.height}
+                {x:it.left+it.width, y:it.top+it.height}
+                {x:it.left+it.width, y:it.top}
+            ]
+        else if it instanceof fabric.Line
+            {x1,y1,x2,y2} = it
+            if x1 == y1 and x2 == y2 then
+                y2 += 1
+            dx = y1 - y2
+            dy = x2 - x1
+            len = Math.sqrt(dx*dx+dy*dy)
+            dx /= len
+            dy /= len
+            v = [
+                {x:it.x1, y:it.y1}
+                {x:it.x2, y:it.y2}
+            ]
+        else if it instanceof fabric.Polygon
+            minx = miny = 1e30
+            v = for p in it.points
+                minx <?= p.x
+                miny <?= p.y
+                {x:p.x+it.left, y:p.y+it.top}
+            for p in v
+                p.x -= minx
+                p.y -= miny
+        return v
+
+    update: ->
+        for obj in @objs then obj.remove!
+        @rebuild!
+        for obj in @objs then @canvas.add obj
+        @canvas.renderAll!
+
+    addTo: (canvas) ->
+        canvas.add @polygon
+        @canvas = canvas
+        for l in @lines then canvas.add l
+        for p in @points then canvas.add p
+        mp = new fabric.Rect
+        w = 5
+        mp.width = mp.height = w*2
+        mp.selectable = false
+        canvas.add mp
+        my-target = null
+        canvas.on \mouse:down, ~>
+            {e} = it
+            if my-target?type == \circle and e.ctrl-key
+                i = my-target.myindex
+                @data.splice i, 1
+                my-target := null
+                @update!
+                return
+            if my-target?type == \line
+                i = my-target.myindex
+                @data.splice i, 0, [e.offsetX, e.offsetY]
+                @update!
+                my-target := @points[i]
+                return
+        canvas.on \mouse:move, ~>
+            {e,target} = it
+            if e.buttons != 0
+                if my-target?type == \polygon
+                    for i of @data
+                        @data[i] = [
+                            @data[i][0]+e.movementX
+                            @data[i][1]+e.movementY
+                        ]
+                    @update!
+                    return
+                else if my-target?type == \circle
+                    i = my-target.myindex
+                    @data[i][0] += e.movementX
+                    @data[i][1] += e.movementY
+                    @update!
+                    return
+
+            mp.left = e.offsetX - w
+            mp.top = e.offsetY - w
+            my-target := null
+            for obj in ([] <<< @objs).reverse!
+                pa = @toPoly mp
+                pb = @toPoly obj
+                v = intersectionPolygons pa, pb
+                if v.length
+                    my-target := obj
+                    break
+
+            console.log my-target?type
+            canvas.render-all!
+
 class Editor extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
+        @state.marks = [
+            *   type: \cow, state:\set-mark, spots:[{x:100,y:200}]
+            *   type: \dog, state:\set-mark2, spots:[]
+        ]
+        @state.cMark = \0
+
+    updateSpots: ->
+        if @spots
+            @canvas.get-objects!.splice @spots.l, @spots.r - @spots.l
+        @spots = {l:@canvas.get-objects!.length}
+        for i,mark of @state.marks
+            console.log i, @state.cMark, i == @state.cMark
+            color = if i == @state.cMark then '#f00' else '#00f'
+            w = 20
+            sw = 4
+            config =
+                strokeWidth: sw
+                fill: color
+                stroke: color
+                selectable: false
+                hasBorders: false
+                hasControls: false
+            for spot in mark.spots
+                l1 = new fabric.Line [spot.x - w, spot.y, spot.x + w, spot.y], config
+                l2 = new fabric.Line [spot.x, spot.y - w, spot.x, spot.y + w], config
+                lg = new fabric.Group [l1,l2]
+                lg.hasControls = lg.hasBorders = false
+                canvas.add lg
+        @spots.r = @canvas.get-objects!.length
 
     componentDidMount: ->
-        @canvas = new fabric.Canvas \canvas
+        data = [
+            *   points: [[100,100],[200,200],[200,100]]
+            #*   points: [[300,300],[400,400],[400,300]]
+        ]
+        canvas = new fabric.Canvas \canvas, {width:600,height:600}
+        @canvas = window.canvas = canvas
+        imgUrl = @state.currentItem?.url
 
-    componentWillUpdate: ->
-        @imgUrl = @state.currentItem?.url
+        #objs = [ new MyPolygon i.points for i in data]
+        #for obj in objs then obj.addTo canvas
+
+        canvas.on \mouse:down, ~>
+            if @state.editMode == \spotting
+                if it.e.ctrl-key
+                    # delete pt
+                    it.target?.del?!
+                    return
+                unless it.target == @img then return
+                @state.marks[@state.cMark].spots.push do
+                    x: it.e.offsetX
+                    y: it.e.offsetY
+                console.log \add, it.e.offsetX, it.e.offsetY
+                @updateSpots!
+                #canvas.renderAll!
+
+        fabric.Image.fromURL imgUrl, (img) ~>
+            @img = img
+            img.selectable = false
+            canvas.insertAt img, 0
+            @updateSpots!
+            #canvas.renderAll!
+
+        jq = $ ReactDOM.findDOMNode this
+        jq.find \#editModeDD .dropdown do
+            onChange: ~>
+                @set-state editMode:it
+
+    add: ~>
+        data = [
+            *   points: [[100,100],[200,200],[200,100]]
+            #*   points: [[300,300],[400,400],[400,300]]
+        ]
+        objs = [ new MyPolygon i.points for i in data]
+        for obj in objs then obj.addTo @canvas
+        @canvas.renderAll!
+
+    addMark: ~>
+        @state.marks.push type:"",state:"set-type"
+        @forceUpdate!
+    delMark: ~>
+        @state.marks.splice @cMark, 1
+        @forceUpdate!
 
     componentDidUpdate: ->
-        unless @imgUrl then return
-        console.log @imgUrl
-        fabric.Image.fromURL @imgUrl, ~>
-            @canvas.add img
+        @updateSpots!
 
     render: ->
-        ``<div className="ui center aligned segment">
-            <canvas id='canvas'></canvas>
-            <img src={this.imgUrl} />
+        imgUrl = @state.currentItem?.url
+        {marks,cMark} = @state
+        marksUI = for i of marks
+            switchCMark = ->
+                @set-state cMark:it
+            ``<tr key={i}>
+                <td><a onClick={switchCMark.bind(this,i)}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>
+                <td>{}<TypeDropdown stype={marks[i].type}/></td>
+                <td>{marks[i].state}</td>
+            </tr>
+            ``
+        ``<div className="ui segment">
+            <div className="ui grid">
+                <div className="myCanvas ten wide column">
+                    <canvas id='canvas'></canvas>
+                </div>
+                <div className="six wide column">
+                    <div className="ui button" onClick={this.addMark}>add</div>
+                    <div className="ui button" onClick={this.delMark}>delete</div>
+                    <div className="ui button" onClick={this.add}>pan</div>
+                    <div className="ui selection dropdown" id="editModeDD">
+                      <input type="hidden" name="gender" />
+                      <i className="dropdown icon"></i>
+                      <div className="default text">Edit Mode</div>
+                      <div className="menu">
+                        <div className="item" data-value="spotting">Instance Spotting</div>
+                        <div className="item" data-value="segment">Instance Segmentation</div>
+                      </div>
+                    </div>
+                    <table className="ui celled table">
+                        <thead>
+                            <tr><th>Mark ID</th>
+                            <th>type</th>
+                            <th>state</th></tr>
+                        </thead>
+                        <tbody>
+                        {marksUI}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>``
+
+class TypeDropdown extends React.Component
+
+    componentWillMount: ->
+        @set-state @props
+
+    componentDidMount: ->
+        jq = $ ReactDOM.findDOMNode this
+        @popup = jq.find ".menu a" .popup do
+            popup: jq.find \.popup
+            on: \click
+            position : 'bottom left'
+            # avoid popup set width
+            setFluidWidth: false
+
+    my-set-state: ->
+        @set-state it
+        if @popup
+            @popup.popup \hide
+        if this.props.onChange then this.props.onChange it
+
+    render: ->
+        text = if @state.stype == "" then "Please select" else @state.stype
+        img-url = types.url-map[@state.stype]
+
+        types-ui = []
+        for k,v of types.all-data
+            # if k>4 then break
+            subList = []
+            for i in v.types
+                f = @my-set-state.bind this, stype:i.title
+                subList.push ``<a onClick={f}>
+                    <img src={i.src} title={i.title} className="ui mini left floated image" style={{margin:'1px'}}/></a>``
+            types-ui.push ``<div className="column" style={{padding:'3px'}}>
+                <h4 className="ui header">{v.description}</h4>
+                <div className="">
+                    {subList}
+                </div>
+            </div>``
+
+        ``<div>
+        <div className="ui text menu">
+          <a className="item">
+            <img src={imgUrl} />
+          </a>
+          <a className="browse item">
+            {text}
+            <i className="dropdown icon"></i>
+          </a>
+        </div>
+        <div className="ui flowing basic admission fluid popup"
+        style={{width: '960px'}}>
+          <div className="ui eleven column relaxed divided grid">
+                {typesUi}
+          </div>
+        </div></div>
+        ``
 
 class MainPage extends React.Component
     ->
