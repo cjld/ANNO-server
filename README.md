@@ -37,6 +37,7 @@
 # small TODO
 *   ajax default actions
 *   encapsule semantic to react
+*   mantian utils function
 
 
 

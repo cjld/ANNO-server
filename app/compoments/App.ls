@@ -637,81 +637,212 @@ class Editor extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
         @state.marks = [
-            *   type: \cow, state:\set-mark, spots:[{x:100,y:200}]
-            *   type: \dog, state:\set-mark2, spots:[]
+            *   type: \cow, state:\set-mark, spots:[{x:100,y:200}], segments: {active:{}, data:[]}
+            *   type: \dog, state:\set-mark2, spots:[{x:200,y:200}], segments: {active:{}, data:[]}
         ]
         @state.cMark = \0
+        @state.smooth = false
 
-    updateSpots: ->
-        if @spots
-            @canvas.get-objects!.splice @spots.l, @spots.r - @spots.l
-        @spots = {l:@canvas.get-objects!.length}
+    create-typeimage-symbol: ->
+        @typeimages = {}
+        for k,v of types.url-map
+            raster = new paper.Raster v
+            @typeimages[k] = new paper.Symbol raster
+            raster.remove!
+        #@test-symbol @typeimages[k]
+
+    create-cross-symbol: ->
+        w = 7
+        line = new paper.Path [
+            new paper.Point -w,0
+            new paper.Point w,0
+        ]
+        line2 = new paper.Path [
+            new paper.Point 0,-w
+            new paper.Point 0,w
+        ]
+        linegroup = new paper.Group [line,line2]
+        linegroup.strokeColor = \yellow
+        linegroup.strokeWidth = 3
+        @cross-symbol = new paper.Symbol linegroup
+        linegroup.remove!
+        #@test-symbol @cross-symbol
+
+    test-symbol: (symbol) ->
+        for i til 100
+            instance = symbol.place!
+            instance.position = paper.Point.random!.multiply paper.view.size
+            instance.rotate Math.random! * 360
+            instance.scale 0.25 + Math.random! * 1.75
+
+    rebuild: ->
+        if @rebuild-group
+            @rebuild-group.remove!
+        @rebuild-group = new paper.Group
+        paper.project.current-style =
+            fillColor : \red
+            strokeColor : \black
+        segm-op = 1
+        spot-op = 1
+        # draw segments
+        @segments-group = new paper.Group
+        @rebuild-group.addChild @segments-group
         for i,mark of @state.marks
-            console.log i, @state.cMark, i == @state.cMark
-            color = if i == @state.cMark then '#f00' else '#00f'
-            w = 20
-            sw = 4
-            config =
-                strokeWidth: sw
-                fill: color
-                stroke: color
-                selectable: false
-                hasBorders: false
-                hasControls: false
-            for spot in mark.spots
-                l1 = new fabric.Line [spot.x - w, spot.y, spot.x + w, spot.y], config
-                l2 = new fabric.Line [spot.x, spot.y - w, spot.x, spot.y + w], config
-                lg = new fabric.Group [l1,l2]
-                lg.hasControls = lg.hasBorders = false
-                canvas.add lg
-        @spots.r = @canvas.get-objects!.length
+            for j,segment of mark.segments.data
+                path = new paper.Path
+                path.opacity = segm-op * if i==@state.cMark then 1 else 0.5
+                @segments-group.addChild path
+                path.mydata = {i,j}
+                if i==@state.cMark and
+                   j==mark.segments.active.j
+                    path.selected = true
+                path.closed = true
+                for k,p of segment
+                    pt = new paper.Point p
+                    path.add pt
+                if @state.smooth then path.smooth!
+
+        # draw spots
+        @spots-group = new paper.Group
+        @rebuild-group.addChild @spots-group
+        for i,mark of @state.marks
+            for j,spot of mark.spots
+                instance = @cross-symbol.place!
+                instance.position = spot
+                instance.opacity = spot-op * if @state.cMark == i then 1 else 0.5
+                @spots-group.addChild instance
+                instance.mydata = {i,j}
+        paper.view.draw!
 
     componentDidMount: ->
-        data = [
-            *   points: [[100,100],[200,200],[200,100]]
-            #*   points: [[300,300],[400,400],[400,300]]
-        ]
-        canvas = new fabric.Canvas \canvas, {width:600,height:600}
-        @canvas = window.canvas = canvas
-        imgUrl = @state.currentItem?.url
-
-        #objs = [ new MyPolygon i.points for i in data]
-        #for obj in objs then obj.addTo canvas
-
-        canvas.on \mouse:down, ~>
-            if @state.editMode == \spotting
-                if it.e.ctrl-key
-                    # delete pt
-                    it.target?.del?!
-                    return
-                unless it.target == @img then return
-                @state.marks[@state.cMark].spots.push do
-                    x: it.e.offsetX
-                    y: it.e.offsetY
-                console.log \add, it.e.offsetX, it.e.offsetY
-                @updateSpots!
-                #canvas.renderAll!
-
-        fabric.Image.fromURL imgUrl, (img) ~>
-            @img = img
-            img.selectable = false
-            canvas.insertAt img, 0
-            @updateSpots!
-            #canvas.renderAll!
-
         jq = $ ReactDOM.findDOMNode this
         jq.find \#editModeDD .dropdown do
             onChange: ~>
                 @set-state editMode:it
+        jq.find \#smoothCB .checkbox do
+            onChecked: ~> @set-state smooth:true
+            onUnchecked: ~> @set-state smooth:false
 
-    add: ~>
-        data = [
-            *   points: [[100,100],[200,200],[200,100]]
-            #*   points: [[300,300],[400,400],[400,300]]
-        ]
-        objs = [ new MyPolygon i.points for i in data]
-        for obj in objs then obj.addTo @canvas
-        @canvas.renderAll!
+        imgUrl = @state.currentItem.url
+        paper.setup 'canvas'
+        raster = new paper.Raster imgUrl
+        raster.position = paper.view.center
+        raster.on-load = -> console.log "The image has loaded."
+
+        @create-cross-symbol!
+        @create-typeimage-symbol!
+        @rebuild!
+        @spotting-tool = new paper.Tool
+
+        @spotting-tool.on-mouse-down = (e) ~>
+            hitOptions =
+                stroke: true
+                tolerance: 5
+            hit-result = @spots-group.hit-test e.point, hitOptions
+            @drag-func = undefined
+            if hit-result?item?mydata
+                {i,j} = that
+                if @state.cMark != i
+                    @set-state cMark:i
+                if e.modifiers.shift
+                    @state.marks[i].spots.splice j,1
+                    return @rebuild!
+                @drag-func = (i,j,e) -->
+                    @state.marks[i].spots[j] = e.point{x,y}
+                    @rebuild!
+                @drag-func = @drag-func i,j
+            else
+                if @state.cMark and @state.marks[@state.cMark]
+                    @state.marks[@state.cMark].spots.push e.point{x,y}
+                    @rebuild!
+
+        @spotting-tool.on-mouse-up = (e) ~>
+            @up-func? e
+            #console.log \on-mouse-up, e
+        @spotting-tool.on-mouse-drag = (e) ~>
+            @drag-func? e
+
+        @segment-tool = new paper.Tool
+
+        @segment-tool.on-mouse-down = (e) ~>
+            @drag-func = undefined
+            c = @state.cMark
+            if c then mark = @state.marks[c]
+            unless mark then return
+            point = e.point{x,y}
+            hitOptions =
+                stroke: true
+                fill: true
+                segments: true
+                tolerance: 5
+            hit-result = @segments-group.hit-test e.point, hitOptions
+            console.log hit-result
+            if e.modifiers.control
+                data = mark.segments.data
+                data.push [point]
+                mark.segments.active = {i:c,j:(data.length-1).to-string!}
+            else
+                #if hit-result?item?mydata?i != @state.cMark
+                #    @set-state cMark:i
+                if hit-result?item?mydata
+                    {i,j} = that
+                    if i == @state.cMark
+                        mark = @state.marks[i]
+                        poly = mark.segments.data[j]
+                        if hit-result.segment
+                            k = hit-result.item.segments.index-of that
+                            point = poly[k]
+                        if hit-result.location
+                            k = hit-result.location.index + 1
+                        switch hit-result?type
+                        case \fill
+                            if e.modifiers.shift
+                                mark.segments.data.splice j,1
+                            else
+                                @drag-func = (poly, e) ~~>
+                                    movePolygon poly, e.delta
+                                    @rebuild!
+                                @drag-func = @drag-func poly
+                        case \segment
+                            if e.modifiers.shift
+                                poly.splice k, 1
+                            else
+                                @drag-func = (point, e) ~~>
+                                    np = e.delta.add point
+                                    point <<< np{x,y}
+                                    @rebuild!
+                                @drag-func = @drag-func point
+                        case \stroke
+                            if e.modifiers.shift
+                                null
+                            else
+                                poly.splice k, 0, e.point{x,y}
+                        mark.segments.active.j = j
+                        @rebuild!
+                        return
+
+                j = mark.segments?active?j
+                if j?
+                    poly = mark.segments.data[j]
+                    poly?.push point
+            @rebuild!
+
+        @segment-tool.on-mouse-up = (e) ~>
+            @up-func? e
+
+        @segment-tool.on-mouse-drag = (e) ~>
+            @drag-func? e
+        @empty-tool = new paper.Tool
+        @empty-tool.activate!
+
+    componentDidUpdate: ->
+        if @state.editMode == \spotting
+            @spotting-tool.activate!
+        else if @state.editMode == \segment
+            @segment-tool.activate!
+        else
+            @empty-tool.activate!
+        @rebuild!
 
     addMark: ~>
         @state.marks.push type:"",state:"set-type"
@@ -719,9 +850,6 @@ class Editor extends React.Component
     delMark: ~>
         @state.marks.splice @cMark, 1
         @forceUpdate!
-
-    componentDidUpdate: ->
-        @updateSpots!
 
     render: ->
         imgUrl = @state.currentItem?.url
@@ -744,6 +872,10 @@ class Editor extends React.Component
                     <div className="ui button" onClick={this.addMark}>add</div>
                     <div className="ui button" onClick={this.delMark}>delete</div>
                     <div className="ui button" onClick={this.add}>pan</div>
+                    <div className="ui checkbox" id="smoothCB">
+                      <input type="checkbox" />
+                      <label>Smooth</label>
+                    </div>
                     <div className="ui selection dropdown" id="editModeDD">
                       <input type="hidden" name="gender" />
                       <i className="dropdown icon"></i>
@@ -795,11 +927,11 @@ class TypeDropdown extends React.Component
         for k,v of types.all-data
             # if k>4 then break
             subList = []
-            for i in v.types
+            for id,i of v.types
                 f = @my-set-state.bind this, stype:i.title
-                subList.push ``<a onClick={f}>
+                subList.push ``<a onClick={f} key={id}>
                     <img src={i.src} title={i.title} className="ui mini left floated image" style={{margin:'1px'}}/></a>``
-            types-ui.push ``<div className="column" style={{padding:'3px'}}>
+            types-ui.push ``<div className="column" style={{padding:'3px'}} key={k}>
                 <h4 className="ui header">{v.description}</h4>
                 <div className="">
                     {subList}
@@ -855,3 +987,7 @@ class App extends React.Component
         ``
 
 module.exports = App
+
+movePolygon = (poly, delta) ->
+    delta = new paper.Point delta
+    for i of poly then poly[i] = delta.add poly[i]
