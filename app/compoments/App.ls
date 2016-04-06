@@ -492,7 +492,7 @@ class Editor extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
         @state.marks = [
-            *   type: \cow, state:\set-mark, spots:[{x:100,y:200}], segments: {active:{}, data:[]}
+            *   type: \cow, state:\set-mark, spots:[{x:100,y:200}, {x:0,y:0}], segments: {active:{}, data:[]}
             *   type: \dog, state:\set-mark2, spots:[{x:200,y:200}], segments: {active:{}, data:[]}
         ]
         @state.cMark = \0
@@ -536,11 +536,15 @@ class Editor extends React.Component
         if @rebuild-group
             @rebuild-group.remove!
         @rebuild-group = new paper.Group
+        @rebuild-group.apply-matrix = false
+        @rebuild-group.translate @background.bounds.point
+        wfactor = 1 / @layer.scaling.x
         paper.project.current-style =
             fillColor : \red
             strokeColor : \black
-        segm-op = 1
-        spot-op = 1
+            strokeWidth : wfactor
+        segm-op = if @state.editMode==\pan then 0.5 else 1
+        spot-op = if @state.editMode==\pan then 0.8 else 1
         # draw segments
         @segments-group = new paper.Group
         @rebuild-group.addChild @segments-group
@@ -569,12 +573,13 @@ class Editor extends React.Component
             for j,spot of mark.spots
                 instance = @cross-symbol.place!
                 instance.position = spot
+                instance.scale wfactor
                 instance.opacity = spot-op * if @state.cMark == i then 1 else 0.5
                 @spots-group.addChild instance
                 instance.mydata = {i,j}
                 if type-symbol
                     instance = type-symbol.place!
-                    instance.scale 0.3
+                    instance.scale 0.3 * wfactor
                     instance.position = spot
                     @rebuild-group.addChild instance
         paper.view.draw!
@@ -583,20 +588,27 @@ class Editor extends React.Component
 
         imgUrl = @state.currentItem.url
         paper.setup 'canvas'
+        @layer = paper.project.activeLayer
+            ..apply-matrix = false
         raster = new paper.Raster imgUrl
-        raster.position = paper.view.center
-        raster.on-load = -> console.log "The image has loaded."
+        @background = raster
+        raster.on-load = ~>
+            console.log "The image has loaded."
+            @background.position = paper.view.center
+            @rebuild!
 
         @create-cross-symbol!
         @create-typeimage-symbol!
-        @rebuild!
+        #@rebuild!
         @spotting-tool = new paper.Tool
 
         @spotting-tool.on-mouse-down = (e) ~>
             hitOptions =
                 stroke: true
                 tolerance: 5
-            hit-result = @spots-group.hit-test e.point, hitOptions
+            tmatrix = @spots-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            hit-result = @spots-group.hit-test point, hitOptions
             @drag-func = undefined
             if hit-result?item?mydata
                 {i,j} = that
@@ -606,12 +618,12 @@ class Editor extends React.Component
                     @state.marks[i].spots.splice j,1
                     return @rebuild!
                 @drag-func = (i,j,e) -->
-                    @state.marks[i].spots[j] = e.point{x,y}
+                    @state.marks[i].spots[j] = e.point.transform tmatrix
                     @rebuild!
                 @drag-func = @drag-func i,j
             else
                 if @state.cMark and @state.marks[@state.cMark]
-                    @state.marks[@state.cMark].spots.push e.point{x,y}
+                    @state.marks[@state.cMark].spots.push point
                     @rebuild!
 
         @spotting-tool.on-mouse-up = (e) ~>
@@ -627,13 +639,14 @@ class Editor extends React.Component
             c = @state.cMark
             if c then mark = @state.marks[c]
             unless mark then return
-            point = e.point{x,y}
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
             hitOptions =
                 stroke: true
                 fill: true
                 segments: true
                 tolerance: 5
-            hit-result = @segments-group.hit-test e.point, hitOptions
+            hit-result = @segments-group.hit-test point, hitOptions
             console.log hit-result
             if e.modifiers.control
                 data = mark.segments.data
@@ -658,7 +671,7 @@ class Editor extends React.Component
                                 mark.segments.data.splice j,1
                             else
                                 @drag-func = (poly, e) ~~>
-                                    movePolygon poly, e.delta
+                                    movePolygon poly, e.delta.multiply tmatrix.scaling
                                     @rebuild!
                                 @drag-func = @drag-func poly
                         case \segment
@@ -666,7 +679,8 @@ class Editor extends React.Component
                                 poly.splice k, 1
                             else
                                 @drag-func = (point, e) ~~>
-                                    np = e.delta.add point
+                                    delta = e.delta.multiply tmatrix.scaling
+                                    np = delta.add point
                                     point <<< np{x,y}
                                     @rebuild!
                                 @drag-func = @drag-func point
@@ -674,7 +688,7 @@ class Editor extends React.Component
                             if e.modifiers.shift
                                 null
                             else
-                                poly.splice k, 0, e.point{x,y}
+                                poly.splice k, 0, point{x,y}
                         mark.segments.active.j = j
                         @rebuild!
                         return
@@ -690,6 +704,15 @@ class Editor extends React.Component
 
         @segment-tool.on-mouse-drag = (e) ~>
             @drag-func? e
+
+        @pan-tool = new paper.Tool
+        @pan-tool.on-mouse-drag = (e) ~>
+            if e.modifiers.control
+                @layer.scale(e.delta.y / 100.0 + 1, e.downPoint)
+            else
+                @layer.translate e.delta
+            @rebuild!
+
         @empty-tool = new paper.Tool
         @empty-tool.activate!
 
@@ -698,6 +721,8 @@ class Editor extends React.Component
             @spotting-tool.activate!
         else if @state.editMode == \segment
             @segment-tool.activate!
+        else if @state.editMode == \pan
+            @pan-tool.activate!
         else
             @empty-tool.activate!
         @rebuild!
