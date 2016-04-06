@@ -488,151 +488,6 @@ class Displayer extends React.Component
         </div></div>
         ``
 
-class MyPolygon
-    ->
-        @data = [] <<< it
-        @rebuild!
-
-    rebuild: ->
-        it = @data
-        @objs = []
-        @points = []
-        @lines = []
-        for [x,y] in it
-            r = 5
-            c = new fabric.Circle do
-                left: x - r
-                top: y - r
-                strokeWidth: 2
-                radius: r
-                fill: '#fff'
-                stroke: '#666'
-                selectable: false
-            c.hasControls = c.hasBorders = false
-            @points.push c
-            c.myindex = @points.length - 1
-        for i til it.length
-            if i==0 then j=it.length-1 else j=i-1
-            a = it[i]
-            b = it[j]
-            l = new fabric.Line [a[0],a[1],b[0],b[1]], {
-                fill: 'red'
-                stroke: 'red'
-                strokeWidth: 2
-                selectable: false
-            }
-            l.hasControls = l.hasBorders = false
-            @lines.push l
-            l.myindex = @lines.length - 1
-        cp = -> [ {x,y} for [x,y] in it ]
-        @polygon = new fabric.Polygon cp it
-        @polygon.set fill:\red, opacity:0.5
-        @polygon.hasControls = false
-        @polygon.hasBorders = false
-        @polygon.selectable = false
-        @objs.push @polygon
-        for l in @lines then @objs.push l
-        for p in @points then @objs.push p
-
-    toPoly: ->
-        v = []
-        if  it instanceof fabric.Circle or
-            it instanceof fabric.Rect
-        then
-            rect = it.getBoundingRect!
-            v = [
-                {x:it.left, y:it.top}
-                {x:it.left, y:it.top+it.height}
-                {x:it.left+it.width, y:it.top+it.height}
-                {x:it.left+it.width, y:it.top}
-            ]
-        else if it instanceof fabric.Line
-            {x1,y1,x2,y2} = it
-            if x1 == y1 and x2 == y2 then
-                y2 += 1
-            dx = y1 - y2
-            dy = x2 - x1
-            len = Math.sqrt(dx*dx+dy*dy)
-            dx /= len
-            dy /= len
-            v = [
-                {x:it.x1, y:it.y1}
-                {x:it.x2, y:it.y2}
-            ]
-        else if it instanceof fabric.Polygon
-            minx = miny = 1e30
-            v = for p in it.points
-                minx <?= p.x
-                miny <?= p.y
-                {x:p.x+it.left, y:p.y+it.top}
-            for p in v
-                p.x -= minx
-                p.y -= miny
-        return v
-
-    update: ->
-        for obj in @objs then obj.remove!
-        @rebuild!
-        for obj in @objs then @canvas.add obj
-        @canvas.renderAll!
-
-    addTo: (canvas) ->
-        canvas.add @polygon
-        @canvas = canvas
-        for l in @lines then canvas.add l
-        for p in @points then canvas.add p
-        mp = new fabric.Rect
-        w = 5
-        mp.width = mp.height = w*2
-        mp.selectable = false
-        canvas.add mp
-        my-target = null
-        canvas.on \mouse:down, ~>
-            {e} = it
-            if my-target?type == \circle and e.ctrl-key
-                i = my-target.myindex
-                @data.splice i, 1
-                my-target := null
-                @update!
-                return
-            if my-target?type == \line
-                i = my-target.myindex
-                @data.splice i, 0, [e.offsetX, e.offsetY]
-                @update!
-                my-target := @points[i]
-                return
-        canvas.on \mouse:move, ~>
-            {e,target} = it
-            if e.buttons != 0
-                if my-target?type == \polygon
-                    for i of @data
-                        @data[i] = [
-                            @data[i][0]+e.movementX
-                            @data[i][1]+e.movementY
-                        ]
-                    @update!
-                    return
-                else if my-target?type == \circle
-                    i = my-target.myindex
-                    @data[i][0] += e.movementX
-                    @data[i][1] += e.movementY
-                    @update!
-                    return
-
-            mp.left = e.offsetX - w
-            mp.top = e.offsetY - w
-            my-target := null
-            for obj in ([] <<< @objs).reverse!
-                pa = @toPoly mp
-                pb = @toPoly obj
-                v = intersectionPolygons pa, pb
-                if v.length
-                    my-target := obj
-                    break
-
-            console.log my-target?type
-            canvas.render-all!
-
 class Editor extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
@@ -642,6 +497,8 @@ class Editor extends React.Component
         ]
         @state.cMark = \0
         @state.smooth = false
+        @state.showMark = false
+        @state.editMode = "spotting"
 
     create-typeimage-symbol: ->
         @typeimages = {}
@@ -706,22 +563,23 @@ class Editor extends React.Component
         @spots-group = new paper.Group
         @rebuild-group.addChild @spots-group
         for i,mark of @state.marks
+            type-symbol = undefined
+            if @state.showMark and mark.type and @typeimages[mark.type]
+                type-symbol = @typeimages[mark.type]
             for j,spot of mark.spots
                 instance = @cross-symbol.place!
                 instance.position = spot
                 instance.opacity = spot-op * if @state.cMark == i then 1 else 0.5
                 @spots-group.addChild instance
                 instance.mydata = {i,j}
+                if type-symbol
+                    instance = type-symbol.place!
+                    instance.scale 0.3
+                    instance.position = spot
+                    @rebuild-group.addChild instance
         paper.view.draw!
 
     componentDidMount: ->
-        jq = $ ReactDOM.findDOMNode this
-        jq.find \#editModeDD .dropdown do
-            onChange: ~>
-                @set-state editMode:it
-        jq.find \#smoothCB .checkbox do
-            onChecked: ~> @set-state smooth:true
-            onUnchecked: ~> @set-state smooth:false
 
         imgUrl = @state.currentItem.url
         paper.setup 'canvas'
@@ -845,7 +703,7 @@ class Editor extends React.Component
         @rebuild!
 
     addMark: ~>
-        @state.marks.push type:"",state:"set-type"
+        @state.marks.push type:"",state:"set-type",spots:[],segments:{active:{},data:[]}
         @forceUpdate!
     delMark: ~>
         @state.marks.splice @cMark, 1
@@ -857,9 +715,14 @@ class Editor extends React.Component
         marksUI = for i of marks
             switchCMark = ->
                 @set-state cMark:it
+            switchCMark .= bind @, i
+            switchType = (i, data) ->
+                @state.marks[i].type = data
+                @forceUpdate!
+            switchType .= bind @, i
             ``<tr key={i}>
-                <td><a onClick={switchCMark.bind(this,i)}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>
-                <td>{}<TypeDropdown stype={marks[i].type}/></td>
+                <td><a onClick={switchCMark}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>
+                <td>{}<TypeDropdown data={marks[i].type} onChange={switchType}/></td>
                 <td>{marks[i].state}</td>
             </tr>
             ``
@@ -871,20 +734,19 @@ class Editor extends React.Component
                 <div className="six wide column">
                     <div className="ui button" onClick={this.addMark}>add</div>
                     <div className="ui button" onClick={this.delMark}>delete</div>
-                    <div className="ui button" onClick={this.add}>pan</div>
-                    <div className="ui checkbox" id="smoothCB">
-                      <input type="checkbox" />
-                      <label>Smooth</label>
-                    </div>
-                    <div className="ui selection dropdown" id="editModeDD">
-                      <input type="hidden" name="gender" />
-                      <i className="dropdown icon"></i>
-                      <div className="default text">Edit Mode</div>
-                      <div className="menu">
-                        <div className="item" data-value="spotting">Instance Spotting</div>
-                        <div className="item" data-value="segment">Instance Segmentation</div>
-                      </div>
-                    </div>
+                    <MyCheckbox
+                        text="Show mark"
+                        dataOwner={[this,"showMark"]}/>
+                    <MyCheckbox
+                        text="Smooth"
+                        dataOwner={[this, "smooth"]}/>
+                    <MyDropdown
+                        dataOwner={[this, "editMode"]}
+                        defaultText="Edit mode"
+                        options={[
+                            {value:"pan",text:"Pan"},
+                            {value:"spotting",text:"Instance Spotting"},
+                            {value:"segment",text:"Instance Segmentation"}]} />
                     <table className="ui celled table">
                         <thead>
                             <tr><th>Mark ID</th>
@@ -899,10 +761,63 @@ class Editor extends React.Component
             </div>
         </div>``
 
-class TypeDropdown extends React.Component
-
+# props
+# data
+# dataOwner:[ref,dataKey]
+class MyComponent extends React.Component
     componentWillMount: ->
-        @set-state @props
+        if @props.dataOwner?
+            [@dataOwner, @dataKey] = @props.dataOwner
+            @set-state data:@dataOwner.state[@dataKey]
+            @onChange = (data) ~> @dataOwner.set-state "#{@dataKey}":data
+        else if @props.data?
+            @set-state @props{data}
+            @onChange = @props.onChange
+
+    set-data: ->
+        @set-state data:it
+        if this.onChange then this.onChange it
+
+# props
+# text
+class MyCheckbox extends MyComponent
+    componentDidMount: ->
+        jq = $ ReactDOM.findDOMNode this
+        cb = jq.checkbox do
+            onChecked: ~> @set-data true
+            onUnchecked: ~> @set-data false
+        cb.checkbox if @state.data then "set checked" else "set unchecked"
+
+    render: ->
+        ``<div className="ui checkbox">
+          <input type="checkbox" />
+          <label>{this.props.text}</label>
+        </div>``
+
+# props
+# options:[{value,text}]
+# defaultText
+class MyDropdown extends MyComponent
+    componentDidMount: ->
+        jq = $ ReactDOM.findDOMNode this
+        dd = jq.dropdown do
+            onChange: @onChange
+        dd.dropdown 'set selected', @state.data
+
+    render: ->
+        optList = for opt in @props.options
+            ``<div className="item" data-value={opt.value} key={opt.value}>{opt.text}</div>
+            ``
+        ``<div className="ui selection dropdown">
+          <input type="hidden" />
+          <i className="dropdown icon"></i>
+          <div className="default text">{this.props.defaultText}</div>
+          <div className="menu">
+            {optList}
+          </div>
+        </div>``
+
+class TypeDropdown extends MyComponent
 
     componentDidMount: ->
         jq = $ ReactDOM.findDOMNode this
@@ -913,22 +828,19 @@ class TypeDropdown extends React.Component
             # avoid popup set width
             setFluidWidth: false
 
-    my-set-state: ->
-        @set-state it
-        if @popup
-            @popup.popup \hide
-        if this.props.onChange then this.props.onChange it
-
     render: ->
-        text = if @state.stype == "" then "Please select" else @state.stype
-        img-url = types.url-map[@state.stype]
+        text = if @state.data == "" then "Please select" else @state.data
+        img-url = types.url-map[@state.data]
 
         types-ui = []
         for k,v of types.all-data
             # if k>4 then break
             subList = []
             for id,i of v.types
-                f = @my-set-state.bind this, stype:i.title
+                f = ->
+                    @set-data it
+                    if @popup then @popup.popup \hide
+                f .= bind this, i.title
                 subList.push ``<a onClick={f} key={id}>
                     <img src={i.src} title={i.title} className="ui mini left floated image" style={{margin:'1px'}}/></a>``
             types-ui.push ``<div className="column" style={{padding:'3px'}} key={k}>
