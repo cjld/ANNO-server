@@ -43,3 +43,4 @@
 
 # ps
 *   `setFluidWidth`: when popup
+*   TimerMixin

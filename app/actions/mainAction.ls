@@ -1,119 +1,136 @@
+require! {
+    \../alt
+    \./libs/mainAction : {Actions, create-main-actions}
+}
 
-class Actions
+def-vals =
+    loadingCounter: true
+    counter: {}
+
+    loadingItems: true
+    items: {}
+
+    selects: {}
+    showedItems: []
+
+    tabType: \total
+
+    fatherId: undefined
+    currentItem: undefined
+    ancestors: []
+
+class MainActions extends Actions
     ->
-        @generate-actions [
-            \doSetStore
-        ]
-        @dep-map = {}
-        @dep-funcs = []
+        super ...
 
-    set-main-store: (main-store) ->
-        @store = main-store
-        return 0
+        # update showed-items
+        @gen-dep [\tabType, \items], (data) ->
+            {tabType, items} = data
+            showed-items = [v for k,v of items].filter ~>
+                if tabType == \total
+                    return 1
+                return it.state == tabType
+            return {showed-items}
 
-    gen-dep: (dep-vals, func) ->
-        @dep-funcs.push func
-        func-id = @dep-funcs.length - 1
-        for i in dep-vals
-            if not @dep-map[i]
-                @dep-map[i] = [func-id]
+        # update items
+        @gen-dep [\fatherId], ~>
+            # dirty here
+            actions.fetchContent!
+            actions.findAncestor!
+            return {}
+
+    fetchContent: ->
+        @resetSelects!
+        @fetchCounter!
+        @fetchItems!
+
+    fetchCounter: ->
+        @set-store loadingCounter:true
+        $ .ajax do
+            method: \POST
+            url: \/api/counter
+            data: {parent:store.get-state!.fatherId}
+            error: ->
+                toastr.error it.response-text
+            success: ~>
+                @set-store counter:it
+            complete: ~>
+                @set-store loadingCounter:false
+
+    find-objects: (cond, cb) ->
+        $ .ajax do
+            method: \POST
+            url: \/api/find-objects
+            data: cond
+            error: ->
+                toastr.error it.response-text
+            success: cb
+
+    findAncestor: ->
+        ancestors = []
+        my-func = ~>
+            i = it[0]
+            if i
+                ancestors.push(i)
+                if ancestors.length == 1
+                    @set-store currentItem:i
+            if i and i.parent
+                @find-objects {_id:i.parent}, my-func
             else
-                @dep-map[i].push func-id
-        return 0
+                @set-store {ancestors}
+        if store.get-state!.fatherId?
+            @find-objects {_id:store.get-state!.fatherId}, my-func
+        else
+            @set-store {ancestors, currentItem:undefined}
 
-    set-store: ->
-        @do-set-store it
-        call-ids = {}
-        for k of it
-            unless @dep-map[k]
-                continue
-            for i in @dep-map[k]
-                call-ids[i] = true
-        unless @store?
-            throw "please set-main-store first."
-        data = @store.get-state!
-        merge-data = {}
-        for i of call-ids
-            newdata = @dep-funcs[i] data
-            merge-data <<< newdata
-        if merge-data !== {}
-            @set-store merge-data
-        return it
+    fetchItems: ->
+        @set-store loadingItems:true
+        $ .ajax do
+            method: \POST
+            url: \/api/list-objects
+            data: {parent:store.get-state!.fatherId}
+            error: ->
+                toastr.error it.response-text
+            success: ~>
+                items = {[i._id, i] for i in it}
+                @set-store {items}
+            complete: ~>
+                @set-store loadingItems:false
 
-import-exist = (a, b) ->
-    updated = false
-    for k,v of b
-        if a.has-own-property k
-            a[k] = v
-            updated = true
-    return updated
+    deleteItems: (items) ->
+        if not Array.isArray items
+            items = [ k for k,v of items when v ]
+        $ .ajax do
+            method: \POST
+            url: \/api/delete-items
+            data: {items}
+            error: ->
+                toastr.error it.response-text
+            success: ~>
+                toastr.info it
+                @fetchContent!
+                @set-store selects:{}
+            complete: ~>
 
-inject-func = (obj, key, func) ->
-    pre-func = obj[key]
-    if pre-func
-        obj[key] = ->
-            func ...
-            pre-func ...
-    else
-        # console.log "inject failed.", &
-        obj[key] = func
+    resetSelects: ->
+        @set-store selects:{}
 
-# return {actions, store, BasicStore, Store}
-create-main-actions = (alt, actions-class, default-values) ->
-    actions = alt.create-actions actions-class
+    selectToggle: ->
+        {selects} = @store.get-state!
+        if not Array.isArray it
+            then it = [it]
+        for i in it
+            if selects[i]?
+                delete selects[i]
+            else
+                selects[i] = true
+        @set-store {selects}
 
-    class BasicStore
-        (keys) ->
-            @bind-actions actions
-            if keys?
-                @import-initial store, keys
+    selectShowed: ->
+        {showed-items} = @store.get-state!
+        selects = { [i._id, true] for i in showed-items }
+        @set-store {selects}
 
-        import-initial: (main-store, keys) !->
-            data = main-store.get-state!
-            for i in keys
-                if data.has-own-property i
-                    this[i] = data[i]
-                else
-                    throw "No such key: #{i}"
+{actions, store, BasicStore} = create-main-actions alt, MainActions, def-vals
 
-        on-do-set-store: ->
-            return import-exist this, it
-
-    class Store extends BasicStore
-        ->
-            super ...
-            this <<< default-values
-
-    store = alt.create-store Store
-    actions.store = store
-    # fix set store not found in alt.create-store
-    actions.set-store = Actions.prototype.set-store
-
-    store.connect-to-component = (comp, keys) ->
-        name = comp.constructor.name
-        class SpecialStore extends BasicStore
-            ->
-                super ...
-                @import-initial store, keys
-        console.log "create store #{name}"
-        sp-store = alt.get-store name
-        unless sp-store
-            sp-store = alt.create-store SpecialStore, name
-        unless comp.state?
-            comp.state = {}
-        comp.state <<< sp-store.get-state!
-        listen-func = ->
-            # console.log name, it
-            comp.set-state it
-
-        inject-func comp, \componentDidMount, ->
-            sp-store.listen listen-func
-        inject-func comp, \componentWillUnmount, ->
-            sp-store.unlisten listen-func
-
-        return sp-store
-
-    return {actions, store, BasicStore, Store}
-
-export Actions
-export create-main-actions
+module.exports = {actions, store}

@@ -41,7 +41,7 @@ dependencies = []
 gulp.task \compile, ->
     gulp.src \./app/**/*.ls
         .pipe gulp-changed \./app-dest, extension:\.js
-        .pipe gulp-livescript bare:true
+        .pipe gulp-livescript bare:false
         .pipe gulp-babel presets:[\es2015, \react]
         .pipe gulp.dest \./app-dest
 

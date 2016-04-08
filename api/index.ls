@@ -62,6 +62,10 @@ app.post \/delete-items, (req, res, next) ->
         if it then return next it
         res.send "Delete #{items.length} items successfully!"
 
+app.post \/save-mark, (req, res, next) ->
+    console.log req.body
+    res.send \ok.
+
 app.post \/counter, (req, res, next) ->
     my-counter = (cond, cb) ->
         cond <<< req.body.{parent}

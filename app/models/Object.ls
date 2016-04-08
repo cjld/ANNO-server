@@ -10,6 +10,7 @@ schema = new mongoose.Schema {
     tags: [String]
     # annotated, un-annotated, issued
     state: String
+    marks: String
     parent: mongoose.Schema.Types.ObjectId
 }
 
