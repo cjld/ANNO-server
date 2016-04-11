@@ -18,6 +18,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.autosave = true
         @state.saveStatus = "saved"
         @state.autosave-interval = 5000
+        @state.paintState = "foreground" # background foreground hair
+        @state.paint-brush-size = 10
         @autosave!
 
     autosave: ->
@@ -66,8 +68,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         if @rebuild-group
             @rebuild-group.remove!
         @rebuild-group = new paper.Group
+        @offset-group.addChild @rebuild-group
         @rebuild-group.apply-matrix = false
-        @rebuild-group.translate @background.bounds.point
         wfactor = 1 / @layer.scaling.x
         paper.project.current-style =
             fillColor : \red
@@ -75,6 +77,25 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeWidth : wfactor
         segm-op = if @state.editMode==\pan then 0.5 else 1
         spot-op = if @state.editMode==\pan then 0.8 else 1
+
+        # draw paints
+        @paints = {}
+        @paints.foreground = new paper.CompoundPath
+            ..fillColor = \green
+        @paints.background = new paper.CompoundPath
+            ..fillColor = \red
+        @paints.hair = new paper.CompoundPath
+            ..fillColor = \yellow
+        for k,v of @paints
+            v.strokeWidth = 0
+            v.opacity = 0.7
+            v.closed = true
+        @rebuild-group.addChildren [ v for k,v of @paints ]
+        paint-json = @state.marks[@state.cMark]?paints
+        if paint-json
+            for k,v of @paints
+                v.importJSON paint-json[k]
+
         # draw segments
         @segments-group = new paper.Group
         @rebuild-group.addChild @segments-group
@@ -132,9 +153,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..apply-matrix = false
         raster = new paper.Raster imgUrl
         @background = raster
+        @offset-group = new paper.Group
+            ..apply-matrix = false
         raster.on-load = ~>
             console.log "The image has loaded."
             @background.position = paper.view.center
+            @offset-group.translate @background.bounds.point
             @rebuild!
 
         @create-cross-symbol!
@@ -258,16 +282,84 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @layer.translate e.delta
             @rebuild!
 
+        @paint-tool = new paper.Tool
+        #@paint-tool.minDistance = 10
+
+        @cursor = new paper.Path.Circle [0,0], 10
+            ..fillColor = undefined
+            ..strokeColor = \green
+            ..strokeWidth = 2
+        @offset-group.addChild @cursor
+
+        # TODO: weird drawing
+        @paint-tool.on-mouse-move = (e) ~>
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            #@cursor.scaling = @state.paint-brush-size
+            @cursor.position = point
+            paper.view.draw!
+
+        @paint-tool.on-mouse-down = (e) ~>
+            @paint-tool.minDistance = 10
+            @drag-func = undefined
+            c = @state.cMark
+            if c then mark = @state.marks[c]
+            unless mark then return
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+
+            @rp = new paper.Path.Circle(point, @state.paint-brush-size)
+
+            add-path = (path) ~>
+                cpath = @paints[@state.paintState]
+                if e.modifiers.shift
+                    npath = cpath.subtract path
+                else
+                    npath = cpath.unite path
+                cpath.strokeWidth = 0
+                cpath.remove!
+                path.remove!
+                @paints[@state.paintState] = cpath = npath
+                @rebuild-group.addChild cpath
+                mark.paints = { [k, v.exportJSON!] for k,v of @paints }
+                #@state.saveStatus = \changed
+                if @state.saveStatus != \changed
+                    @set-state saveStatus:\changed
+                #cpath.smooth!
+
+            add-path @rp
+
+            @drag-func = (e) ~>
+                point = e.point.transform tmatrix
+                lpoint = e.lastPoint.transform tmatrix
+                d = e.delta.normalize!.rotate 90 .multiply @state.paint-brush-size
+                p = new paper.Path
+                @offset-group.addChild p
+                p.add point.subtract d
+                p.arcTo point.add d
+                p.add lpoint.add d
+                p.arcTo lpoint.subtract d
+                p.closed = true
+                add-path p
+
+        @paint-tool.on-mouse-drag = ~> @drag-func? it
+
+        @paint-tool.on-mouse-up = ~>
+            @paint-tool.minDistance = 0
+
         @empty-tool = new paper.Tool
         @empty-tool.activate!
 
     componentDidUpdate: ->
+        @cursor.visible = @state.editMode == \paint
         if @state.editMode == \spotting
             @spotting-tool.activate!
         else if @state.editMode == \segment
             @segment-tool.activate!
         else if @state.editMode == \pan
             @pan-tool.activate!
+        else if @state.editMode == \paint
+            @paint-tool.activate!
         else
             @empty-tool.activate!
         @rebuild!
@@ -317,6 +409,15 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <td>{hitStr}, {marks[i].state}</td>
             </tr>
             ``
+        if @state.editMode == \paint
+            paintDropdown = ``<MyDropdown
+                dataOwner={[this, "paintState"]}
+                defaultText="Paint Mode"
+                options={[
+                    {value:"background", text:"Background"},
+                    {value:"foreground", text:"Foreground"},
+                    {value:"hair", text:"hair"}
+                ]} />``
         ``<div className="ui segment">
             <div className="ui grid">
                 <div className="myCanvas ten wide column">
@@ -335,7 +436,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         options={[
                             {value:"pan",text:"Pan"},
                             {value:"spotting",text:"Instance Spotting"},
-                            {value:"segment",text:"Instance Segmentation"}]} />
+                            {value:"segment",text:"Instance Segmentation"},
+                            {value:"paint", text:"Paint Selection"}]} />
+                    {paintDropdown}
                     <div className="ui divider" />
 
                     <MyCheckbox
