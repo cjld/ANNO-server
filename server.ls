@@ -2,6 +2,9 @@ require! {
     \./config
     \express
     \./middlewares
+    \http
+    \socket.io : socket-io
+    \./socket/socket
 }
 
 app = express!
@@ -19,6 +22,7 @@ require! {
 
 app.use \/api, api-app
 
+# server rendering
 app.use (req, res) ->
     react-router.match {routes:routes, location:req.url},
         (err, redir-loc, render-props) ->
@@ -34,5 +38,11 @@ app.use (req, res) ->
             else
                 res.status 404 .send 'Page not found.'
 
-app.listen config.port, ->
+server = http.Server(app)
+io = socket-io(server)
+
+server.listen config.port, ->
     console.log "Listen on #{config.port}..."
+
+# set up socket io
+socket io

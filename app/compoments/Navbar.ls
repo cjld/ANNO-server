@@ -2,8 +2,17 @@ require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
 
 module.exports = class Navbar extends React.Component
+
+    componentDidMount: ->
+        socket = io!
+        @state = onlineUserCount:0
+        socket.on \user-count, ~> @set-state onlineUserCount:it
+
+        socket2 = io!
+        socket.on \user-count, ~> console.log \hhh, it
+
     render: ->
-        onlineUserCount = 108
+        onlineUserCount = this.state?onlineUserCount
         navList = [ \Explore \Datasets \Stats \Category \Whatever ]
         navs = navList.map (it) ->
             ``<a href={it.toLowerCase()} className="item" key={it}>

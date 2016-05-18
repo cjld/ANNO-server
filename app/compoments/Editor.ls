@@ -146,8 +146,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             toastr.error "Error when parsing marks: #{error.to-string!}"
 
     componentDidMount: ->
+        socket = io!
+        socket.emit \open-session, @state.currentItem._id
 
         imgUrl = @state.currentItem.url
+
         paper.setup 'canvas'
         @layer = paper.project.activeLayer
             ..apply-matrix = false
@@ -299,6 +302,30 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @cursor.position = point
             paper.view.draw!
 
+
+
+        socket.on \ok, (data) ~>
+            if data.pcmd == \paint
+                if @result-path
+                    @result-path.remove!
+                    @result-path = null
+                paths = data.contours.map ~>
+                    seg = it.map ~> [it.x, it.y]
+                    new paper.Path do
+                        segments: seg.reverse!
+                        closed: true
+                console.log paths.map -> it.area
+
+                path = new paper.CompoundPath do
+                    children: paths.reverse!
+                    fillColor: \black
+                    fillRule: \evenodd
+                    selected: true
+                @offset-group.addChild path
+                @result-path = path
+                paper.view.draw!
+
+
         @paint-tool.on-mouse-down = (e) ~>
             @paint-tool.minDistance = 10
             @drag-func = undefined
@@ -309,6 +336,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             point = e.point.transform tmatrix
 
             @rp = new paper.Path.Circle(point, @state.paint-brush-size)
+            is_erase = e.modifiers.shift
 
             add-path = (path) ~>
                 cpath = @paints[@state.paintState]
@@ -332,6 +360,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @drag-func = (e) ~>
                 point = e.point.transform tmatrix
                 lpoint = e.lastPoint.transform tmatrix
+                socket.emit \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
                 d = e.delta.normalize!.rotate 90 .multiply @state.paint-brush-size
                 p = new paper.Path
                 @offset-group.addChild p

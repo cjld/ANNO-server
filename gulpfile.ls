@@ -13,6 +13,7 @@ gulp.task \vendor-js, ->
         './bower_components/toastr/toastr.js'
         './bower_components/semantic/dist/semantic.js'
         './bower_components/jquery-ui/jquery-ui.js'
+        './node_modules/socket.io/node_modules/socket.io-client/socket.io.js'
     ]   .pipe gulp-concat \vendor.js
         .pipe gulp-if production, gulp-uglify mangle:false
         .pipe gulp.dest \public/js

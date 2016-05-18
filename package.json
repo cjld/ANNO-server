@@ -34,6 +34,7 @@
     "react-dom": "^0.14.6",
     "react-router": "^1.0.3",
     "react-timer-mixin": "^0.13.3",
+    "socket.io": "^1.4.6",
     "swig": "^1.4.2"
   }
 }
