@@ -21,12 +21,22 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paintState = "foreground" # background foreground hair
         @state.paint-brush-size = 10
         @autosave!
+        @contour-anime!
 
     autosave: ->
         if @state.autosave and @state.saveStatus == \changed
             @save!
             console.log "autosave"
         @set-timeout @autosave, @state.autosave-interval
+
+    contour-anime: ->
+        if @contour-path
+            if not @anime-dashOffset
+                @anime-dashOffset = 0
+            @anime-dashOffset += 1
+            @contour-path.dashOffset = @anime-dashOffset
+            paper.view.draw!
+        @set-timeout @contour-anime, 100
 
     create-typeimage-symbol: ->
         @typeimages = {}
@@ -96,6 +106,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             for k,v of @paints
                 v.importJSON paint-json[k]
 
+        # draw contours
+        contours = @state.marks[@state.cMark]?contours
+        if contours
+            @gen-contours contours
+
         # draw segments
         @segments-group = new paper.Group
         @rebuild-group.addChild @segments-group
@@ -133,6 +148,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     instance.scale 0.3 * wfactor
                     instance.position = spot
                     @rebuild-group.addChild instance
+
         paper.view.draw!
 
     componentWillMount: ->
@@ -145,9 +161,72 @@ module.exports = class Editor extends React.Component implements TimerMixin
         catch error
             toastr.error "Error when parsing marks: #{error.to-string!}"
 
+    get-current-mark: ->
+        c = @state.cMark
+        if c then mark = @state.marks[c]
+        unless mark then return
+        return mark
+
+    set-changed: ->
+        if @state.saveStatus != \changed
+            @set-state saveStatus:\changed
+
+    gen-contours: (contours) ->
+        if @contour-path
+            @contour-path.remove!
+            @contour-path = null
+
+        paths = contours.map ~>
+            seg = it.map ~> [it.x, it.y]
+            new paper.Path do
+                segments: seg.reverse!
+                closed: true
+
+        path = new paper.CompoundPath do
+            children: paths.reverse!
+            fillColor: new paper.Color 0,1,0,0.3
+            fillRule: \evenodd
+            strokeColor: \black
+            strockWidth: 2
+            opacity: 1
+            dashArray: [10,4]
+        @rebuild-group.addChild path
+        @contour-path = path
+
+    send-cmd: (cmd, data) ->
+        @ts ?= 0
+        @cts ?= -1
+        @ts += 1
+        data.ts = @ts
+        @socket.emit cmd, data
+
+    # drop command before
+    drop-cmd: ->
+        @cts = @ts
+
+    receive-cmd: (data) ~>
+        if data.pcmd == \open-session
+            toastr.success "Session load success, total seg: #{data.return.regCount}"
+        else if data.pcmd == \load-region
+            toastr.success "Region load success, total seg selected: #{data.return.segCount}"
+        if data.ts and data.ts <= @cts
+            return
+
+        mark = @get-current-mark!
+        unless mark then return
+
+        if data.pcmd == \paint
+            @gen-contours data.contours
+            paper.view.draw!
+
+            mark.contours = data.contours
+            @set-changed!
+
     componentDidMount: ->
         socket = io!
-        socket.emit \open-session, @state.currentItem._id
+        @socket = socket
+        @send-cmd \open-session, id:@state.currentItem._id
+        @on-current-mark-change!
 
         imgUrl = @state.currentItem.url
 
@@ -181,7 +260,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if hit-result?item?mydata
                 {i,j} = that
                 if @state.cMark != i
-                    @set-state cMark:i
+                    @switchCurrentMark i
                 if e.modifiers.shift
                     @state.marks[i].spots.splice j,1
                     @rebuild!
@@ -302,35 +381,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @cursor.position = point
             paper.view.draw!
 
-
-
-        socket.on \ok, (data) ~>
-            if data.pcmd == \paint
-                if @result-path
-                    @result-path.remove!
-                    @result-path = null
-                paths = data.contours.map ~>
-                    seg = it.map ~> [it.x, it.y]
-                    new paper.Path do
-                        segments: seg.reverse!
-                        closed: true
-                console.log paths.map -> it.area
-
-                path = new paper.CompoundPath do
-                    children: paths.reverse!
-                    fillColor: \black
-                    fillRule: \evenodd
-                    selected: true
-                @offset-group.addChild path
-                @result-path = path
-                paper.view.draw!
-
+        socket.on \ok, @receive-cmd
 
         @paint-tool.on-mouse-down = (e) ~>
             @paint-tool.minDistance = 10
             @drag-func = undefined
+            # get current mark
             c = @state.cMark
-            if c then mark = @state.marks[c]
+            if c? then mark = @state.marks[c]
             unless mark then return
             tmatrix = @segments-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
@@ -350,9 +408,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @paints[@state.paintState] = cpath = npath
                 @rebuild-group.addChild cpath
                 mark.paints = { [k, v.exportJSON!] for k,v of @paints }
-                #@state.saveStatus = \changed
-                if @state.saveStatus != \changed
-                    @set-state saveStatus:\changed
+
+                @set-changed!
                 #cpath.smooth!
 
             add-path @rp
@@ -360,7 +417,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @drag-func = (e) ~>
                 point = e.point.transform tmatrix
                 lpoint = e.lastPoint.transform tmatrix
-                socket.emit \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+                @send-cmd \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
                 d = e.delta.normalize!.rotate 90 .multiply @state.paint-brush-size
                 p = new paper.Path
                 @offset-group.addChild p
@@ -412,21 +469,37 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 if @state.saveStatus == \saving
                     @set-state saveStatus: \saved
 
+    switchCurrentMark: ~>
+        @set-state cMark:it
+        @on-current-mark-change it
+
     addMark: ~>
+        # TODO : fix the model initial
         @state.marks.push type:"",state:"set-type",spots:[],segments:{active:{},data:[]}
+        @state.cMark = @state.marks.length - 1
+        @on-current-mark-change!
         @forceUpdate!
     delMark: ~>
-        @state.marks.splice @cMark, 1
+        @state.marks.splice @state.cMark, 1
+        if @state.marks.length > 0 and @state.cMark >= @state.marks.length
+            @state.cMark = @state.marks.length - 1
+        @on-current-mark-change!
         @forceUpdate!
+
+    on-current-mark-change: (mark) ->
+        @drop-cmd!
+        mark ?= @get-current-mark!
+        if mark?contours
+            @send-cmd \load-region, contours:that
+        else
+            @send-cmd \load-region, contours:[]
 
     render: ->
         imgUrl = @state.currentItem?.url
         {marks,cMark} = @state
         imgSizeStr = @background?size?to-string!
         marksUI = for i of marks
-            switchCMark = ->
-                @set-state cMark:it
-            switchCMark .= bind @, i
+            switchCMark = @switchCurrentMark.bind @, i
             switchType = (i, data) ->
                 @state.marks[i].type = data
                 @forceUpdate!

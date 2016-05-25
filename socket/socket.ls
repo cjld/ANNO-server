@@ -43,7 +43,7 @@ module.exports = (io) ->
 
         socket.on \open-session, ->
             kill-proc!
-            my-object.find-one {_id:it}, (err, obj) ->
+            my-object.find-one {_id:it.id}, (err, obj) ->
                 if err then socket.emit \s-error, err
                 url = obj?url
                 if url then
@@ -60,3 +60,6 @@ module.exports = (io) ->
 
         socket.on \paint, ->
             send-cmd {cmd:'paint', data:it}
+
+        socket.on \load-region, ->
+            send-cmd {cmd:'load-region', data:it}
