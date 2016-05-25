@@ -163,7 +163,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     get-current-mark: ->
         c = @state.cMark
-        if c then mark = @state.marks[c]
+        if c? then mark = @state.marks[c]
         unless mark then return
         return mark
 
@@ -367,17 +367,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @paint-tool = new paper.Tool
         #@paint-tool.minDistance = 10
 
-        @cursor = new paper.Path.Circle [0,0], 10
+        @cursor = new paper.Path.Circle [0,0], @state.paint-brush-size - 1
             ..fillColor = undefined
             ..strokeColor = \green
             ..strokeWidth = 2
+        @cursor.apply-matrix = false
         @offset-group.addChild @cursor
 
         # TODO: weird drawing
         @paint-tool.on-mouse-move = (e) ~>
             tmatrix = @segments-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
-            #@cursor.scaling = @state.paint-brush-size
+            #@cursor.scaling = 10.0 / @state.paint-brush-size
             @cursor.position = point
             paper.view.draw!
 
@@ -395,6 +396,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
             @rp = new paper.Path.Circle(point, @state.paint-brush-size)
             is_erase = e.modifiers.shift
+            @send-cmd \paint, {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
 
             add-path = (path) ~>
                 cpath = @paints[@state.paintState]
@@ -432,6 +434,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         @paint-tool.on-mouse-up = ~>
             @paint-tool.minDistance = 0
+
+        @paint-tool.on-key-down = (e) ~>
+            console.log e.key
+            if e.key == 'z'
+                @state.paint-brush-size++
+            else
+                @state.paint-brush-size--
+            if @state.paint-brush-size < 1 then @state.paint-brush-size = 1
+            if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
+            @cursor.scaling =  @state.paint-brush-size / 10.0
 
         @empty-tool = new paper.Tool
         @empty-tool.activate!
