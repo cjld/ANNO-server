@@ -14,7 +14,9 @@ class MyComponent extends React.Component
         if @props.dataOwner?
             [@dataOwner, @dataKey] = @props.dataOwner
             @set-state data:@dataOwner.state[@dataKey]
-            @onChange = (data) ~> @dataOwner.set-state "#{@dataKey}":data
+            @onChange = (data) ~>
+                if @dataOwner.state?[@dataKey] != data
+                    @dataOwner.set-state "#{@dataKey}":data
         else if @props.data?
             @set-state @props{data}
             @onChange = @props.onChange
@@ -45,9 +47,13 @@ class MyCheckbox extends MyComponent
 class MyDropdown extends MyComponent
     componentDidMount: ->
         jq = $ ReactDOM.findDOMNode this
-        dd = jq.dropdown do
+        @dd = jq.dropdown do
             onChange: @onChange
-        dd.dropdown 'set selected', @state.data
+        @dd.dropdown 'set selected', @state.data
+
+    componentDidUpdate: ->
+        if @props.data
+            @dd.dropdown 'set selected', that
 
     render: ->
         optList = for opt in @props.options

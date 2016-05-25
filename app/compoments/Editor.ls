@@ -11,6 +11,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
     ->
         super ...
         store.connect-to-component this, [\currentItem]
+        @modeOption = [
+            *   value:"pan", text:"Pan"
+            *   value:"spotting", text:"Instance Spotting"
+            *   value:"segment", text:"Instance Segmentation"
+            *   value:"paint", text:"Paint Selection"
+        ]
         @state.cMark = \0
         @state.smooth = false
         @state.showMark = false
@@ -222,6 +228,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
             mark.contours = data.contours
             @set-changed!
 
+    check-tool-switch: (e) ~>
+        if e.key >= '1' and e.key <= '9'
+            v = -1 + parse-int e.key
+            v = @modeOption[v]?.value
+            if v then
+                @set-state editMode:v
+
     componentDidMount: ->
         socket = io!
         @socket = socket
@@ -280,6 +293,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             #console.log \on-mouse-up, e
         @spotting-tool.on-mouse-drag = (e) ~>
             @drag-func? e
+        @spotting-tool.on-key-down = (e) ~>
+            @check-tool-switch e
 
         @segment-tool = new paper.Tool
 
@@ -356,6 +371,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @segment-tool.on-mouse-drag = (e) ~>
             @drag-func? e
 
+        @segment-tool.on-key-down = (e) ~>
+            @check-tool-switch e
+
         @pan-tool = new paper.Tool
         @pan-tool.on-mouse-drag = (e) ~>
             if e.modifiers.control
@@ -363,6 +381,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
             else
                 @layer.translate e.delta
             @rebuild!
+        @pan-tool.on-key-down = (e) ~>
+            @check-tool-switch e
+            if e.key == 'z'
+                ...
+            else if e.key == 'x'
+                ...
 
         @paint-tool = new paper.Tool
         #@paint-tool.minDistance = 10
@@ -436,17 +460,17 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @paint-tool.minDistance = 0
 
         @paint-tool.on-key-down = (e) ~>
-            console.log e.key
+            @check-tool-switch e
             if e.key == 'z'
                 @state.paint-brush-size++
-            else
+            else if e.key == 'x'
                 @state.paint-brush-size--
             if @state.paint-brush-size < 1 then @state.paint-brush-size = 1
             if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
             @cursor.scaling =  @state.paint-brush-size / 10.0
 
         @empty-tool = new paper.Tool
-        @empty-tool.activate!
+        @componentDidUpdate!
 
     componentDidUpdate: ->
         @cursor.visible = @state.editMode == \paint
@@ -500,7 +524,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     on-current-mark-change: (mark) ->
         @drop-cmd!
-        mark ?= @get-current-mark!
+        if mark
+            mark = @state.marks[mark]
+        else
+            mark = @get-current-mark!
         if mark?contours
             @send-cmd \load-region, contours:that
         else
@@ -545,13 +572,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         onClick={this.save}>Save</div>
                     <div className="ui divider" />
                     <MyDropdown
+                        data={this.state.editMode}
                         dataOwner={[this, "editMode"]}
                         defaultText="Edit mode"
-                        options={[
-                            {value:"pan",text:"Pan"},
-                            {value:"spotting",text:"Instance Spotting"},
-                            {value:"segment",text:"Instance Segmentation"},
-                            {value:"paint", text:"Paint Selection"}]} />
+                        options={this.modeOption} />
                     {paintDropdown}
                     <div className="ui divider" />
 
