@@ -15,6 +15,7 @@ class MyComponent extends React.Component
             [@dataOwner, @dataKey] = @props.dataOwner
             @set-state data:@dataOwner.state[@dataKey]
             @onChange = (data) ~>
+                @state.data = data
                 if @dataOwner.state?[@dataKey] != data
                     @dataOwner.set-state "#{@dataKey}":data
         else if @props.data?
@@ -51,11 +52,13 @@ class MyDropdown extends MyComponent
             onChange: @onChange
         @dd.dropdown 'set selected', @state.data
 
-    componentDidUpdate: ->
-        if @props.data
-            @dd.dropdown 'set selected', that
+    shouldComponentUpdate: (next-props, next-state)->
+        if next-props.data and @props.data != next-props.data
+            @dd.dropdown 'set selected', next-props.data
+        return false
 
     render: ->
+        console.log \dd-render
         optList = for opt in @props.options
             ``<div className="item" data-value={opt.value} key={opt.value}>{opt.text}</div>
             ``

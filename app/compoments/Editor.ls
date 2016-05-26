@@ -14,6 +14,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @modeOption = [
             *   value:"pan", text:"Pan"
             *   value:"spotting", text:"Instance Spotting"
+            *   value:"box", text:"Bounding box"
             *   value:"segment", text:"Instance Segmentation"
             *   value:"ps", text:"Paint selection"
             *   value:"paint", text:"Free Paint"
@@ -29,6 +30,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paint-brush-size = 10
         @autosave!
         @contour-anime!
+
+        @time-evaluate = true
 
     autosave: ->
         if @state.autosave and @state.saveStatus == \changed
@@ -77,11 +80,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
             instance.rotate Math.random! * 360
             instance.scale 0.25 + Math.random! * 1.75
 
-    rebuild: ->
+
+    set-changed: ->
+        if @state.saveStatus != \changed
+            @set-state saveStatus:\changed
+
+    check-changed: ->
         if @state.marks and
             @state.currentItem.marks != JSON.stringify @state.marks
-            if @state.saveStatus != \changed
-                @set-state saveStatus:\changed
+            @set-changed!
+
+    rebuild: ->
+        @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
         @rebuild-group = new paper.Group
@@ -174,10 +184,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
         unless mark then return
         return mark
 
-    set-changed: ->
-        if @state.saveStatus != \changed
-            @set-state saveStatus:\changed
-
     gen-contours: (contours) ->
         if @contour-path
             @contour-path.remove!
@@ -206,6 +212,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @ts += 1
         data.ts = @ts
         @socket.emit cmd, data
+        if @time-evaluate
+            console.time @ts
 
     # drop command before
     drop-cmd: ->
@@ -218,16 +226,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
             toastr.success "Region load success, total seg selected: #{data.return.segCount}"
         if data.ts and data.ts <= @cts
             return
+        if @time-evaluate
+            console.timeEnd data.ts
 
         mark = @get-current-mark!
         unless mark then return
 
-        if data.pcmd == \paint
+        if data.pcmd == \paint and data.contours?
             @gen-contours data.contours
             paper.view.draw!
 
             mark.contours = data.contours
-            @set-changed!
+            @check-changed!
 
     check-tool-switch: (e) ~>
         if e.key >= '1' and e.key <= '9'
@@ -402,7 +412,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @cursor.apply-matrix = false
         @offset-group.addChild @cursor
 
-        # TODO: weird drawing
         @paint-tool.on-mouse-move = (e) ~>
             tmatrix = @segments-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
@@ -423,8 +432,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             point = e.point.transform tmatrix
 
             @rp = new paper.Path.Circle(point, @state.paint-brush-size)
-            is_erase = e.modifiers.shift
-            @send-cmd \paint, {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
 
             add-path = (path) ~>
                 cpath = @paints[@state.paintState]
@@ -447,7 +454,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @drag-func = (e) ~>
                 point = e.point.transform tmatrix
                 lpoint = e.lastPoint.transform tmatrix
-                @send-cmd \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
                 d = e.delta.normalize!.rotate 90 .multiply @state.paint-brush-size
                 p = new paper.Path
                 @offset-group.addChild p
@@ -473,11 +479,52 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
             @cursor.scaling =  @state.paint-brush-size / 10.0
 
+        @ps-tool = new paper.Tool
+        @ps-tool.minDistance = 0
+        @ps-tool.on-key-down = (e) ~>
+            @check-tool-switch e
+            if e.key == 'z'
+                @state.paint-brush-size++
+            else if e.key == 'x'
+                @state.paint-brush-size--
+            else if e.key == 'shift'
+                @cursor.strokeColor = \red
+            if @state.paint-brush-size < 1 then @state.paint-brush-size = 1
+            if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
+            @cursor.scaling =  @state.paint-brush-size / 10.0
+        @ps-tool.on-key-up = (e) ~>
+            if e.key == 'shift'
+                @cursor.strokeColor = \green
+
+        @ps-tool.on-mouse-drag = ~> @drag-func? it
+        @ps-tool.on-mouse-down = (e) ~>
+            @drag-func = undefined
+            # get current mark
+            mark = @get-current-mark!
+            unless mark then return
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+
+            is_erase = e.modifiers.shift
+            @send-cmd \paint, {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+
+            @drag-func = (e) ~>
+                point = e.point.transform tmatrix
+                lpoint = e.lastPoint.transform tmatrix
+                @send-cmd \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+                @cursor.position = point
+        @ps-tool.on-mouse-move = (e) ~>
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            #@cursor.scaling = 10.0 / @state.paint-brush-size
+            @cursor.position = point
+            paper.view.draw!
+
         @empty-tool = new paper.Tool
         @componentDidUpdate!
 
     componentDidUpdate: ->
-        @cursor.visible = @state.editMode == \paint
+        @cursor.visible = false
         if @state.editMode == \spotting
             @spotting-tool.activate!
         else if @state.editMode == \segment
@@ -486,6 +533,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @pan-tool.activate!
         else if @state.editMode == \paint
             @paint-tool.activate!
+            @cursor.visible = true
+        else if @state.editMode == \ps
+            @ps-tool.activate!
+            @cursor.visible = true
         else
             @empty-tool.activate!
         @rebuild!
@@ -538,6 +589,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @send-cmd \load-region, contours:[]
 
     render: ->
+        console.log \editor-render
         imgUrl = @state.currentItem?.url
         {marks,cMark} = @state
         imgSizeStr = @background?size?to-string!

@@ -2,8 +2,11 @@
 // fix init session change bug
 // tool switch
 // z/x zoom in/out
-new tool
+// new tool
+// eleminate ps
+time evaluate
 next img
+weird crash
 
 ## content editing
 // *   add flash

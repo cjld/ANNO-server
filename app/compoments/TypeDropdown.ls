@@ -17,6 +17,9 @@ module.exports = class TypeDropdown extends MyComponent
             # avoid popup set width
             setFluidWidth: false
 
+    shouldComponentUpdate: (next-props, next-state) ->
+        next-state.data != @state.data
+
     render: ->
         text = if @state.data == "" then "Please select" else @state.data
         img-url = types.url-map[@state.data]
