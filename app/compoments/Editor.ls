@@ -7,6 +7,8 @@ require! {
     \../models/types
 }
 
+inte = (a,b) -> parseInt(a) == parseInt(b)
+
 module.exports = class Editor extends React.Component implements TimerMixin
     ->
         super ...
@@ -91,7 +93,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @set-changed!
 
     rebuild: ->
-        inte = (a,b) -> parseInt(a) == parseInt(b)
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
@@ -175,7 +176,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 instance = @cross-symbol.place!
                 instance.position = spot
                 instance.scale wfactor
-                instance.opacity = spot-op * if @state.cMark == i then 1 else 0.5
+                instance.opacity = spot-op * if inte(@state.cMark,i) then 1 else 0.5
                 @spots-group.addChild instance
                 instance.mydata = {i,j}
                 if type-symbol
@@ -312,7 +313,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     @rebuild!
                 @drag-func = @drag-func i,j
             else
-                if @state.cMark and @state.marks[@state.cMark]
+                if @state.cMark? and @state.marks[@state.cMark]
                     @state.marks[@state.cMark].spots.push point{x,y}
                     @rebuild!
                     return @forceUpdate!
@@ -411,6 +412,45 @@ module.exports = class Editor extends React.Component implements TimerMixin
             unless mark then return
             tmatrix = @rebuild-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
+
+            hitOptions =
+                stroke: true
+                fill: true
+                segments: true
+                tolerance: 5
+            hit-result = @box-group.hit-test point, hitOptions
+            if hit-result?item
+                i = hit-result.item.mydata.i
+                if not inte i, @state.cMark
+                    @set-state cMark:i
+                    mark = @get-current-mark!
+                if hit-result.segment?
+                    p = hit-result.segment.point
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else if hit-result.location?
+                    pa = hit-result.location._segment1.point
+                    pb = hit-result.location._segment2.point
+                    p = (pa.add pb).multiply 0.5
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else
+                    q1 = q2 = q3 = q4 = true
+
+                @drag-func = (e) ~>
+                    delta = e.delta.multiply tmatrix.scaling
+                    if q1 then mark.bbox.p1.x += delta.x
+                    if q2 then mark.bbox.p2.x += delta.x
+                    if q3 then mark.bbox.p1.y += delta.y
+                    if q4 then mark.bbox.p2.y += delta.y
+                    @rebuild!
+                @rebuild!
+                return
+
             mark.bbox = p1: point{x,y}, p2: point{x,y}
             @rebuild!
             @drag-func = (e) ~>
