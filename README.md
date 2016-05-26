@@ -1,7 +1,9 @@
 # TODO
 // fix init session change bug
-tool switch
-z/x zoom in/out
+// tool switch
+// z/x zoom in/out
+new tool
+next img
 
 ## content editing
 // *   add flash

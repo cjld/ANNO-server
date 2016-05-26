@@ -15,7 +15,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             *   value:"pan", text:"Pan"
             *   value:"spotting", text:"Instance Spotting"
             *   value:"segment", text:"Instance Segmentation"
-            *   value:"paint", text:"Paint Selection"
+            *   value:"ps", text:"Paint selection"
+            *   value:"paint", text:"Free Paint"
         ]
         @state.cMark = \0
         @state.smooth = false
@@ -365,6 +366,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     poly?.push point{x,y}
             @rebuild!
 
+
         @segment-tool.on-mouse-up = (e) ~>
             @up-func? e
 
@@ -375,6 +377,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @check-tool-switch e
 
         @pan-tool = new paper.Tool
+        @pan-tool.on-mouse-move = (e) ~>
+            @mouse-position = e.point
         @pan-tool.on-mouse-drag = (e) ~>
             if e.modifiers.control
                 @layer.scale(e.delta.y / 100.0 + 1, e.downPoint)
@@ -384,9 +388,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @pan-tool.on-key-down = (e) ~>
             @check-tool-switch e
             if e.key == 'z'
-                ...
+                @layer.scale 1.1, @mouse-position
             else if e.key == 'x'
-                ...
+                @layer.scale 1/1.1, @mouse-position
 
         @paint-tool = new paper.Tool
         #@paint-tool.minDistance = 10
