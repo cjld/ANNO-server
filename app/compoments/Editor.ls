@@ -91,6 +91,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @set-changed!
 
     rebuild: ->
+        inte = (a,b) -> parseInt(a) == parseInt(b)
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
@@ -128,17 +129,34 @@ module.exports = class Editor extends React.Component implements TimerMixin
         if contours
             @gen-contours contours
 
+        # draw box
+        @box-group = new paper.Group
+        @rebuild-group.addChild @box-group
+        for i,mark of @state.marks
+            unless mark.bbox? then continue
+            p1 = new paper.Point mark.bbox.p1
+            p2 = new paper.Point mark.bbox.p2
+            path = new paper.Path.Rectangle p1, p2
+            path.opacity = if inte(i,@state.cMark) then 1 else 0.5
+            @box-group.addChild path
+            path.mydata = {i}
+            if inte(i,@state.cMark)
+                path.selected = true
+            path.closed = true
+            # add rect
+
+
         # draw segments
         @segments-group = new paper.Group
         @rebuild-group.addChild @segments-group
         for i,mark of @state.marks
             for j,segment of mark.segments.data
                 path = new paper.Path
-                path.opacity = segm-op * if i==@state.cMark then 1 else 0.5
+                path.opacity = segm-op * if inte(i,@state.cMark) then 1 else 0.5
                 @segments-group.addChild path
                 path.mydata = {i,j}
-                if i==@state.cMark and
-                   j==mark.segments.active.j
+                if inte(i,@state.cMark) and
+                   inte(j,mark.segments.active.j)
                     path.selected = true
                 path.closed = true
                 for k,p of segment
@@ -386,6 +404,21 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @segment-tool.on-key-down = (e) ~>
             @check-tool-switch e
 
+        @box-tool = new paper.Tool
+        @box-tool.on-mouse-down = (e) ~>
+            @drag-func = undefined
+            mark = @get-current-mark!
+            unless mark then return
+            tmatrix = @rebuild-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            mark.bbox = p1: point{x,y}, p2: point{x,y}
+            @rebuild!
+            @drag-func = (e) ~>
+                point = e.point.transform tmatrix
+                mark.bbox.p2 = point{x,y}
+                @rebuild!
+        @box-tool.on-mouse-drag = ~> @drag-func it
+
         @pan-tool = new paper.Tool
         @pan-tool.on-mouse-move = (e) ~>
             @mouse-position = e.point
@@ -537,6 +570,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else if @state.editMode == \ps
             @ps-tool.activate!
             @cursor.visible = true
+        else if @state.editMode == \box
+            @box-tool.activate!
         else
             @empty-tool.activate!
         @rebuild!
