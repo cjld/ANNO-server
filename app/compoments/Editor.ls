@@ -5,6 +5,7 @@ require! \./common
 require! {
     \./TypeDropdown
     \../models/types
+    \../history : myhistory
 }
 
 inte = (a,b) -> parseInt(a) == parseInt(b)
@@ -12,19 +13,21 @@ inte = (a,b) -> parseInt(a) == parseInt(b)
 module.exports = class Editor extends React.Component implements TimerMixin
     ->
         super ...
-        store.connect-to-component this, [\currentItem]
+        #store.connect-to-component this, [\currentItem]
+        @state = {} # currentItem:store.get-state!.currentItem
         @modeOption = [
-            *   value:"pan", text:"Pan"
-            *   value:"spotting", text:"Instance Spotting"
-            *   value:"box", text:"Bounding box"
-            *   value:"segment", text:"Instance Segmentation"
-            *   value:"ps", text:"Paint selection"
-            *   value:"paint", text:"Free Paint"
+            *   value:"pan", text:``<div><i className="move icon"></i>Pan</div>``
+            *   value:"spotting", text:``<div><i className="crosshairs icon"></i>Instance Spotting</div>``
+            *   value:"box", text:``<div><i className="square outline icon"></i>Bounding box</div>``
+            *   value:"segment", text:``<div><i className="cube icon"></i>Instance Segmentation</div>``
+            *   value:"ps", text: ``<div><i className="wizard icon"></i>Paint selection</div>``
+            *   value:"paint", text: ``<div><i className="paint brush icon"></i>Free Paint</div>``
         ]
         @state.cMark = \0
         @state.smooth = false
-        @state.showMark = false
+        @state.showMark = true
         @state.editMode = "spotting"
+        @state.listState = "all"
         @state.autosave = true
         @state.saveStatus = "saved"
         @state.autosave-interval = 5000
@@ -33,7 +36,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @autosave!
         @contour-anime!
 
-        @time-evaluate = true
+        @time-evaluate = false
 
     autosave: ->
         if @state.autosave and @state.saveStatus == \changed
@@ -105,7 +108,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeColor : \black
             strokeWidth : wfactor
         segm-op = if @state.editMode==\pan then 0.5 else 1
-        spot-op = if @state.editMode==\pan then 0.8 else 1
+        spot-op = if @state.editMode==\pan then 0.8 else 0.8
 
         # draw paints
         @paints = {}
@@ -138,7 +141,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             p1 = new paper.Point mark.bbox.p1
             p2 = new paper.Point mark.bbox.p2
             path = new paper.Path.Rectangle p1, p2
-            path.opacity = if inte(i,@state.cMark) then 1 else 0.5
+            path.opacity = if inte(i,@state.cMark) then 0.8 else 0.3
             @box-group.addChild path
             path.mydata = {i}
             if inte(i,@state.cMark)
@@ -187,7 +190,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         paper.view.draw!
 
-    componentWillMount: ->
+    componentWillReceiveProps: (next-props) ->
+        if @props.currentItem._id != next-props.currentItem._id
+            @state.currentItem = next-props.currentItem
+            @parse-mark!
+            @load-session!
+
+    parse-mark: ->
         mark-str = @state.currentItem.marks
         if mark-str == undefined or mark-str == ""
             @state.marks = []
@@ -196,6 +205,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @state.marks = JSON.parse @state.currentItem.marks
         catch error
             toastr.error "Error when parsing marks: #{error.to-string!}"
+
+    componentWillMount: ->
+        @state.currentItem = @props.currentItem
+        @parse-mark!
 
     get-current-mark: ->
         c = @state.cMark
@@ -265,26 +278,33 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if v then
                 @set-state editMode:v
 
-    componentDidMount: ->
+    load-session: ~>
+        if @socket then that.disconnect!
+        @drop-cmd!
         socket = io!
         @socket = socket
         @send-cmd \open-session, id:@state.currentItem._id
         @on-current-mark-change!
 
         imgUrl = @state.currentItem.url
-
-        paper.setup 'canvas'
-        @layer = paper.project.activeLayer
-            ..apply-matrix = false
+        if @background then @background.remove!
         raster = new paper.Raster imgUrl
         @background = raster
-        @offset-group = new paper.Group
-            ..apply-matrix = false
         raster.on-load = ~>
-            console.log "The image has loaded."
+            console.log "The image has loaded.", imgUrl
             @background.position = paper.view.center
             @offset-group.translate @background.bounds.point
-            @rebuild!
+            @forceUpdate!
+
+
+    componentDidMount: ->
+        paper.setup 'canvas'
+
+        @load-session!
+        @layer = paper.project.activeLayer
+            ..apply-matrix = false
+        @offset-group = new paper.Group
+            ..apply-matrix = false
 
         @create-cross-symbol!
         @create-typeimage-symbol!
@@ -324,14 +344,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @spotting-tool.on-mouse-drag = (e) ~>
             @drag-func? e
         @spotting-tool.on-key-down = (e) ~>
-            @check-tool-switch e
+            @pan-tool.on-key-down e
+        @spotting-tool.on-mouse-move = (e) ~>
+            @pan-tool.on-mouse-move e
 
         @segment-tool = new paper.Tool
 
         @segment-tool.on-mouse-down = (e) ~>
             @drag-func = undefined
             c = @state.cMark
-            if c then mark = @state.marks[c]
+            if c? then mark = @state.marks[c]
             unless mark then return
             tmatrix = @segments-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
@@ -342,7 +364,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 tolerance: 5
             hit-result = @segments-group.hit-test point, hitOptions
             console.log hit-result
-            if e.modifiers.control
+            if e.modifiers.control or mark.segments.data.length == 0
                 data = mark.segments.data
                 data.push [point{x,y}]
                 mark.segments.active = {i:c,j:(data.length-1).to-string!}
@@ -352,7 +374,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 #    @set-state cMark:i
                 if hit-result?item?mydata
                     {i,j} = that
-                    if i == @state.cMark
+                    if inte i,@state.cMark
                         mark = @state.marks[i]
                         poly = mark.segments.data[j]
                         if hit-result.segment
@@ -403,7 +425,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @drag-func? e
 
         @segment-tool.on-key-down = (e) ~>
-            @check-tool-switch e
+            @pan-tool.on-key-down e
+        @segment-tool.on-mouse-move = (e) ~>
+            @pan-tool.on-mouse-move e
 
         @box-tool = new paper.Tool
         @box-tool.on-mouse-down = (e) ~>
@@ -458,6 +482,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 mark.bbox.p2 = point{x,y}
                 @rebuild!
         @box-tool.on-mouse-drag = ~> @drag-func it
+        @box-tool.on-key-down = ~> @pan-tool.on-key-down it
+        @box-tool.on-mouse-move = ~> @pan-tool.on-mouse-move it
 
         @pan-tool = new paper.Tool
         @pan-tool.on-mouse-move = (e) ~>
@@ -492,7 +518,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @cursor.position = point
             paper.view.draw!
 
-        socket.on \ok, @receive-cmd
+        @socket.on \ok, @receive-cmd
 
         @paint-tool.on-mouse-down = (e) ~>
             @paint-tool.minDistance = 10
@@ -594,7 +620,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
             paper.view.draw!
 
         @empty-tool = new paper.Tool
+        $ document .on \keypress, @on-key-down
         @componentDidUpdate!
+
+    componentWillUnmount: ->
+        $ document .off \keypress, @on-key-down
+        @socket.disconnect!
+
 
     componentDidUpdate: ->
         @cursor.visible = false
@@ -646,6 +678,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @on-current-mark-change!
         @forceUpdate!
     delMark: ~>
+        if @state.marks.length == 0
+            toastr.error "No item to delete."
+            return
         @state.marks.splice @state.cMark, 1
         if @state.marks.length > 0 and @state.cMark >= @state.marks.length
             @state.cMark = @state.marks.length - 1
@@ -663,7 +698,38 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else
             @send-cmd \load-region, contours:[]
 
+    on-key-down: (e) ~>
+        key = String.from-char-code e.char-code
+        if key == 'a'
+            @addMark!
+        else if key == 'd'
+            @delMark!
+
+    find-neighbour: (is-next) ~>
+        data = {is-next} <<< @state.currentItem{_id,parent}
+        if @state.listState != 'all'
+            data.state = @state.listState
+        $.ajax do
+            method: \POST
+            data: data
+            url: \/api/find-neighbour
+            error: -> toastr.error it.response-text
+            success: (data) ~>
+                if data._id?
+                    myhistory.push "/i/"+data._id
+                else
+                    toastr.info "Reaching the end of files."
+
+    on-next-click: (e) ~> @find-neighbour 1
+    on-prev-click: (e) ~> @find-neighbour 0
+
+
     render: ->
+        list-option =
+            *   value: 'all'
+            *   value: 'annotated'
+            *   value: 'un-annotated'
+            *   value: 'issued'
         console.log \editor-render
         imgUrl = @state.currentItem?.url
         {marks,cMark} = @state
@@ -701,6 +767,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     <div className="ui divider" />
                     <div className="ui button"
                         onClick={this.save}>Save</div>
+                    <div className="ui divider" />
+                    <MyDropdown
+                        dataOwner={[this, "listState"]}
+                        defaultText="List state"
+                        options={listOption} />
+                    <br />
+                    <div className="ui button"
+                        onClick={this.onPrevClick}>prev</div>
+                    <div className="ui button"
+                        onClick={this.onNextClick}>next</div>
                     <div className="ui divider" />
                     <MyDropdown
                         data={this.state.editMode}

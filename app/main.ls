@@ -2,13 +2,13 @@ require! {
     \react : React
     \react-router : {Router}
     \react-dom : ReactDOM
-    \history/lib/createBrowserHistory
+    \./history
 
     \./routes
 }
 
 console.log \hello-from-livescript
-history = createBrowserHistory!
+if window? then window.myhistory = history
 
 $ document .ready ->
     root = $ \#app

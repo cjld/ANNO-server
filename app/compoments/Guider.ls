@@ -1,5 +1,6 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+{MyComponent, MyCheckbox, MyDropdown} = common
 
 
 require! {
@@ -114,9 +115,19 @@ module.exports = class Guider extends React.Component
         availItems = []
         for key of my-object.tree
             if my-object.tree[key] == String
+                if key == 'marks' then continue
+                if key == 'state'
+                    # TODO
+                    option =
+                        *   value: 'annotated'
+                        *   value: 'un-annotated'
+                        *   value: 'issued'
+                    valui = ``<MyDropdown name={key} options={option} data={'un-annotated'}/>``
+                else
+                    valui = ``<input type="text" name={key} placeholder={key}/>``
                 availItems.push ``<div className="field" key={key}>
-                  <label>{key}</label>
-                  <input type="text" name={key} placeholder={key}/>
+                    <label>{key}</label>
+                    {valui}
                 </div>
                 ``
 

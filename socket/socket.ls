@@ -63,3 +63,8 @@ module.exports = (io) ->
 
         socket.on \load-region, ->
             send-cmd {cmd:'load-region', data:it}
+
+process.on 'uncaughtException', (err) ->
+    console.error err.stack
+    console.error err
+    console.log "Node NOT Exiting..."

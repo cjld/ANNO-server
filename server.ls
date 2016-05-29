@@ -41,7 +41,7 @@ app.use (req, res) ->
 server = http.Server(app)
 io = socket-io(server)
 
-server.listen config.port, ->
+server.listen {host:'localhost',port:config.port}, ->
     console.log "Listen on #{config.port}..."
 
 # set up socket io

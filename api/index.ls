@@ -27,6 +27,29 @@ app.use \/find-objects, (req, res, next) ->
         if err then return next err
         res.send objs
 
+find-neighbour = (is-next, req, res, next) ->
+    func = (err, docs) ->
+        if err then return next err
+        if docs[0]?
+            res.send docs[0]{_id}
+        else
+            res.send {}
+    if is-next == \1
+        qobj = {'_id':{'$lt':req.body._id}}
+    else
+        qobj = {'_id':{'$gt':req.body._id}}
+    if req.body.parent?
+        qobj.parent = req.body.parent
+    if req.body.state?
+        qobj.state = req.body.state
+    console.log qobj, req.body
+    my-object.find qobj, func
+        .sort [['_id', if is-next==\1 then -1 else 1]]
+        .limit 1
+
+app.use \/find-neighbour, (req, res, next) ->
+    find-neighbour req.body.is-next, req, res, next
+
 app.post \/new-object, (req, res, next) ->
     # just test
     if req.body.url == '404'

@@ -8,9 +8,6 @@ module.exports = class Navbar extends React.Component
         @state = onlineUserCount:0
         socket.on \user-count, ~> @set-state onlineUserCount:it
 
-        socket2 = io!
-        socket.on \user-count, ~> console.log \hhh, it
-
     render: ->
         onlineUserCount = this.state?onlineUserCount
         navList = [ \Explore \Datasets \Stats \Category \Whatever ]

@@ -4,9 +4,23 @@
 // z/x zoom in/out
 // new tool
 // eleminate ps
-time evaluate
+// time evaluate
+// add/delete shortcut
+// tool icon
 next img
+img fit
+check state
 weird crash
+tips
+
+
+# help
+number key[123456] for tool switching
+z/x zoom in zoom out in tool 1234
+z/x increase/decrease brush size in tool 1234
+a/d add/delete item
+
+
 
 ## content editing
 // *   add flash

@@ -19,7 +19,7 @@ class MainPage extends React.Component
         ``<div className="ui container">
             <Guider />
             {
-                type == "item"? <Editor /> : <Displayer />
+                type == "item"? <Editor currentItem={this.state.currentItem} /> : <Displayer />
             }
         </div>
         ``

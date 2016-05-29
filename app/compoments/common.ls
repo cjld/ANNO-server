@@ -60,10 +60,11 @@ class MyDropdown extends MyComponent
     render: ->
         console.log \dd-render
         optList = for opt in @props.options
+            opt.text ?= opt.value
             ``<div className="item" data-value={opt.value} key={opt.value}>{opt.text}</div>
             ``
         ``<div className="ui selection dropdown">
-          <input type="hidden" />
+          <input type="hidden" name={this.props.name}/>
           <i className="dropdown icon"></i>
           <div className="default text">{this.props.defaultText}</div>
           <div className="menu">
