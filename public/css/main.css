@@ -21,4 +21,7 @@
     border-width: 2px;
     width:600px;
     height: 480px;
+    background-image: url("/img/base.png");
+    background-repeat: repeat;
+    background-size: 300px 300px;
 }

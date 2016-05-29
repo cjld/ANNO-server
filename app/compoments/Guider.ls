@@ -17,6 +17,9 @@ module.exports = class Guider extends React.Component
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
+        @formValue =
+            *   state: \un-annotated
+                type: \item
 
         store.connect-to-component this, [
             \currentItem
@@ -53,9 +56,12 @@ module.exports = class Guider extends React.Component
             else
                 item = store.get-state!.items[ids[0]]
             for k,v of item
-                # attribute selector
-                dom = addItemForm.find "input[name='#{k}']"
-                dom.val(v)
+                if @formValue[k]?
+                    @formValue[k] = v
+                else
+                    # attribute selector
+                    dom = addItemForm.find "input[name='#{k}']"
+                    dom.val(v)
 
             @set-state modalType:\edit
             @edit-id = item._id
@@ -122,7 +128,12 @@ module.exports = class Guider extends React.Component
                         *   value: 'annotated'
                         *   value: 'un-annotated'
                         *   value: 'issued'
-                    valui = ``<MyDropdown name={key} options={option} data={'un-annotated'}/>``
+                    valui = ``<MyDropdown name={key} options={option} data={this.formValue.state}/>``
+                else if key == 'type'
+                    option =
+                        *   value: 'directory'
+                        *   value: 'item'
+                    valui = ``<MyDropdown name={key} options={option} data={this.formValue.type}/>``
                 else
                     valui = ``<input type="text" name={key} placeholder={key}/>``
                 availItems.push ``<div className="field" key={key}>

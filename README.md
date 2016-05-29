@@ -7,10 +7,10 @@
 // time evaluate
 // add/delete shortcut
 // tool icon
-next img
-img fit
+// next img
+// img fit
 check state
-weird crash
+// weird crash
 tips
 
 

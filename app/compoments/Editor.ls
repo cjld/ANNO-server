@@ -294,17 +294,24 @@ module.exports = class Editor extends React.Component implements TimerMixin
             console.log "The image has loaded.", imgUrl
             @background.position = paper.view.center
             @offset-group.translate @background.bounds.point
+            s1 = paper.view.size
+            s2 = @background.size
+            @layer.matrix.reset!
+            @layer.scaling = Math.min s1.width/s2.width, s1.height/s2.height
             @forceUpdate!
 
 
     componentDidMount: ->
-        paper.setup 'canvas'
+        @helpModal = $ \#helpModal
+            ..modal!
 
-        @load-session!
+        paper.setup 'canvas'
         @layer = paper.project.activeLayer
             ..apply-matrix = false
         @offset-group = new paper.Group
             ..apply-matrix = false
+
+        @load-session!
 
         @create-cross-symbol!
         @create-typeimage-symbol!
@@ -723,6 +730,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
     on-next-click: (e) ~> @find-neighbour 1
     on-prev-click: (e) ~> @find-neighbour 0
 
+    show-help: ~> @helpModal.modal \show
 
     render: ->
         list-option =
@@ -757,6 +765,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {value:"hair", text:"hair"}
                 ]} />``
         ``<div className="ui segment">
+            <div className="ui modal" id="helpModal">
+                <i className="close icon"></i>
+                <div className="header">
+                    Help
+                </div>
+                <div className="content">
+                    <p>number <b>key[123456]</b> for tool switching</p>
+                    <p><b>z/x</b> zoom in zoom out in tool 1234</p>
+                    <p><b>z/x</b> increase/decrease brush size in tool 1234</p>
+                    <p><b>a/d</b> add/delete item</p>
+                </div>
+            </div>
             <div className="ui grid">
                 <div className="myCanvas ten wide column">
                     <canvas id='canvas'></canvas>
@@ -767,6 +787,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     <div className="ui divider" />
                     <div className="ui button"
                         onClick={this.save}>Save</div>
+                    <div className="ui button"
+                        onClick={this.loadSession}>Reload</div>
+                    <div className="ui button"
+                        onClick={this.showHelp}>Help</div>
                     <div className="ui divider" />
                     <MyDropdown
                         dataOwner={[this, "listState"]}
