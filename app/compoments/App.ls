@@ -27,10 +27,10 @@ class MainPage extends React.Component
 class App extends React.Component
 
     componentDidMount: ->
-        actions.set-store fatherId:@props.params.itemId
+        actions.set-store {fatherId:@props.params.itemId, page:@props.params.page}
 
     componentWillUpdate: ->
-        actions.set-store fatherId:it.params.itemId
+        actions.set-store {fatherId:it.params.itemId, page:it.params.page}
 
     render: ->
         ``<div>

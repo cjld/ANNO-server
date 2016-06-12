@@ -308,10 +308,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
         paper.setup 'canvas'
         @layer = paper.project.activeLayer
             ..apply-matrix = false
+        @load-session!
+
         @offset-group = new paper.Group
             ..apply-matrix = false
 
-        @load-session!
 
         @create-cross-symbol!
         @create-typeimage-symbol!

@@ -15,6 +15,7 @@ def-vals =
 
     tabType: \total
 
+    page: 1
     fatherId: undefined
     currentItem: undefined
     ancestors: []
@@ -33,7 +34,7 @@ class MainActions extends Actions
             return {showed-items}
 
         # update items
-        @gen-dep [\fatherId], ~>
+        @gen-dep [\fatherId, \page], ~>
             # dirty here
             actions.fetchContent!
             actions.findAncestor!
@@ -85,10 +86,11 @@ class MainActions extends Actions
 
     fetchItems: ->
         @set-store loadingItems:true
+        state = store.get-state!
         $ .ajax do
             method: \POST
             url: \/api/list-objects
-            data: {parent:store.get-state!.fatherId}
+            data: {parent:state.fatherId, page:state.page}
             error: ->
                 toastr.error it.response-text
             success: ~>

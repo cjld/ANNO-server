@@ -1,4 +1,6 @@
 require! {
+    \prelude : _
+
     \express
     \mongoose
     \async
@@ -18,9 +20,14 @@ app.get \/test, (req, res) ->
     res.send \ok!
 
 app.use \/list-objects, (req, res, next) ->
+    page = parseInt req.body.page
+    if page == NaN then page = 1
     my-object.find req.body.{parent}, (err, objs) ->
         if err then return next err
         res.send objs
+    .sort [['_id', -1]]
+    .skip (page - 1) * config.page-size
+    .limit config.page-size
 
 app.use \/find-objects, (req, res, next) ->
     my-object.find req.body, (err, objs) ->
@@ -105,6 +112,7 @@ app.post \/counter, (req, res, next) ->
             my-counter {state:'issued'}, callback
     }, (err, results) ->
         if err then return next err
+        results.page-size = config.page-size
         res.send results
 app.use (req, res) ->
     res.status 404 .send "api #{req.url} not found."

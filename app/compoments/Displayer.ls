@@ -1,5 +1,42 @@
 require! \./common
+require! \prelude : _
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+
+my-parse-int = ->
+    a = parseInt it
+    if a==NaN then a=1
+    return a
+
+class Pagebar extends React.Component
+    ->
+        super ...
+        store.connect-to-component this, [
+            \counter
+            \page
+            \tabType
+            \fatherId
+        ]
+
+    render: ->
+        page-size = my-parse-int @state.counter.page-size
+        totalPage = Math.ceil (my-parse-int @state.counter[@state.tabType]) / page-size
+        page = my-parse-int @state.page
+        showpage = [1,2,3,page-1,page,page+1,totalPage-2, totalPage-1, totalPage].sort!
+            |> _.array.unique |> _.array.filter -> it>0 and it<=totalPage
+        pageUI = []
+        fatherId = this.state.fatherId
+        unless fatherId? then fatherId = ""
+        for p,i in showpage
+            if i!=0 and showpage[i-1] != p-1
+                pageUI.push ``<div className="disabled item" key={"."+i}>...</div>``
+            cstr = if p==page then "active item" else "item"
+            furl = if fatherId? and fatherId!="" then "/"+fatherId else ""
+            pageUI.push ``<Link key={i} to={"/i"+furl+"/page/"+p} className={cstr}>{p}</Link>``
+        ``<div className="ui pagination secondary pointing menu">
+            {pageUI}
+        </div>
+        ``
+
 
 module.exports = class Displayer extends React.Component
     ->
@@ -75,7 +112,12 @@ module.exports = class Displayer extends React.Component
                         <i className={iconname}></i>
                     </a>
                     <Link className="imgGalleryBox" to={"/i/"+obj._id}>
-                        <img className="ui bordered image" src={it.url} alt="" />
+                    {
+                        (it.type=="item")?
+                            <img className="ui bordered image" src={it.url} alt="" />
+                        :
+                            <h3><i className="ui huge folder open icon" />{it.name}</h3>
+                    }
                     </Link>
                 </div>
                 <div className="ui special popup">
@@ -92,22 +134,6 @@ module.exports = class Displayer extends React.Component
             <div className="ui three column grid">
                 {imgsUI}
             </div>
-            <div className="ui pagination secondary pointing menu">
-              <a className="active item">
-                1
-              </a>
-              <div className="disabled item">
-                ...
-              </div>
-              <a className="item">
-                10
-              </a>
-              <a className="item">
-                11
-              </a>
-              <a className="item">
-                12
-              </a>
-            </div>
+            <Pagebar />
         </div></div>
         ``
