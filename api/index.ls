@@ -34,6 +34,13 @@ app.use \/find-objects, (req, res, next) ->
         if err then return next err
         res.send objs
 
+app.use \/find-one, (req, res, next) ->
+    if req.body.parent == ''
+        req.body.parent = undefined
+    my-object.find-one req.body, (err, obj) ->
+        if err then return next err
+        res.send obj
+
 find-neighbour = (is-next, req, res, next) ->
     func = (err, docs) ->
         if err then return next err

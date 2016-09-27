@@ -1,7 +1,8 @@
 export
-    port: 8080
+    port: 9200
     secret: \my-secret
     database: \mongodb://localhost:27017/pro5
-    paint-bin: "/home/cjld/workspace/sumsang-test/build-sumsang-Desktop_Qt_5_6_0_GCC_64bit-Debug/sumsang"
-    paint-bin-args: ['server']
+    paint-bin: "./../ANNOTATE-server/build/sumsang"
+    paint-bin-args: ['server', '-platform', 'offscreen']
     page-size: 20
+    listen-all: true

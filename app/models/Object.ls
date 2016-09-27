@@ -1,7 +1,7 @@
 require! \mongoose
 
 schema = new mongoose.Schema {
-    # database, folder, item
+    # database, directory, item
     type: String
     name: String
     description: String

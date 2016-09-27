@@ -40,6 +40,10 @@ class MainActions extends Actions
             actions.findAncestor!
             return {}
 
+    connect-socket: ->
+        if not window.socket then
+            window.socket = io!
+
     fetchContent: ->
         @resetSelects!
         @fetchCounter!

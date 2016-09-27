@@ -13,6 +13,11 @@ check state
 // weird crash
 tips
 pagination
+hi delete
+switch mark reset
+next move bug
+3 pop bug
+prev bug
 
 
 # help

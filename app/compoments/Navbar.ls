@@ -4,7 +4,7 @@ require! \./common
 module.exports = class Navbar extends React.Component
 
     componentDidMount: ->
-        socket = io!
+        actions.connect-socket!
         @state = onlineUserCount:0
         socket.on \user-count, ~> @set-state onlineUserCount:it
 

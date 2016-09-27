@@ -41,7 +41,10 @@ app.use (req, res) ->
 server = http.Server(app)
 io = socket-io(server)
 
-server.listen {host:'localhost',port:config.port}, ->
+server-opt = port:config.port
+if not config.listen-all
+    server-opt.host = \localhost
+server.listen server-opt, ->
     console.log "Listen on #{config.port}..."
 
 # set up socket io

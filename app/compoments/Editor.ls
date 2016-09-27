@@ -26,7 +26,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.cMark = \0
         @state.smooth = false
         @state.showMark = true
-        @state.editMode = "spotting"
+        @state.editMode = "ps"
         @state.listState = "all"
         @state.autosave = true
         @state.saveStatus = "saved"
@@ -279,24 +279,26 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @set-state editMode:v
 
     load-session: ~>
-        if @socket then that.disconnect!
         @drop-cmd!
-        socket = io!
+        actions.connect-socket!
         @socket = socket
         @send-cmd \open-session, id:@state.currentItem._id
         @on-current-mark-change!
+
+        @layer.matrix.reset!
+        @offset-group.matrix.reset!
 
         imgUrl = @state.currentItem.url
         if @background then @background.remove!
         raster = new paper.Raster imgUrl
         @background = raster
+        @layer.insertChild 0, @background
         raster.on-load = ~>
             console.log "The image has loaded.", imgUrl
             @background.position = paper.view.center
             @offset-group.translate @background.bounds.point
             s1 = paper.view.size
             s2 = @background.size
-            @layer.matrix.reset!
             @layer.scaling = Math.min s1.width/s2.width, s1.height/s2.height
             @forceUpdate!
 
@@ -308,10 +310,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         paper.setup 'canvas'
         @layer = paper.project.activeLayer
             ..apply-matrix = false
-        @load-session!
-
         @offset-group = new paper.Group
             ..apply-matrix = false
+        @load-session!
 
 
         @create-cross-symbol!
@@ -633,7 +634,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     componentWillUnmount: ->
         $ document .off \keypress, @on-key-down
-        @socket.disconnect!
+        @socket.off \ok, @receive-cmd
+        #@socket.disconnect!
 
 
     componentDidUpdate: ->
@@ -714,6 +716,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @delMark!
 
     find-neighbour: (is-next) ~>
+        if @state.saveStatus == \changed
+            @save!
         data = {is-next} <<< @state.currentItem{_id,parent}
         if @state.listState != 'all'
             data.state = @state.listState
@@ -749,6 +753,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @state.marks[i].type = data
                 @forceUpdate!
             switchType .= bind @, i
+            console.log marks[i]
             hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
             ``<tr key={i}>
                 <td><a onClick={switchCMark}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>

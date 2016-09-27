@@ -18,7 +18,9 @@ module.exports = class TypeDropdown extends MyComponent
             setFluidWidth: false
 
     shouldComponentUpdate: (next-props, next-state) ->
-        next-state.data != @state.data
+        res = next-props.data != @state.data
+        @state.data = next-props.data
+        res
 
     render: ->
         text = if @state.data == "" then "Please select" else @state.data

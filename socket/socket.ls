@@ -17,6 +17,8 @@ module.exports = (io) ->
 
         kill-proc = ->
             if proc
+                proc.my-rl.close!
+                proc.stdin.pause!
                 proc.kill \SIGKILL
                 proc := null
 
@@ -42,6 +44,7 @@ module.exports = (io) ->
             kill-proc!
 
         socket.on \open-session, ->
+            console.log \open-session, it
             kill-proc!
             my-object.find-one {_id:it.id}, (err, obj) ->
                 if err then socket.emit \s-error, err
@@ -53,7 +56,6 @@ module.exports = (io) ->
                         console.log "proc exit with ", {code, signal}
                     proc.my-rl = readline.create-interface input:proc.stdout
                         ..on \line, get-result
-                        ..on \close, -> proc := null
                     send-cmd {cmd:\open-session, data:{url}}
                 else
                     socket.emit \s-error, 'url-not-found'
@@ -62,6 +64,7 @@ module.exports = (io) ->
             send-cmd {cmd:'paint', data:it}
 
         socket.on \load-region, ->
+            console.log \load-region
             send-cmd {cmd:'load-region', data:it}
 
 process.on 'uncaughtException', (err) ->

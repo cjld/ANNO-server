@@ -109,7 +109,7 @@ module.exports = class Guider extends React.Component
 
     render: ->
         mainDescription = @state.currentItem?.description
-        unless mainDescription? then mainDescription=\Home
+        unless mainDescription? then mainDescription="No description."
         self = this
         displayBar = [ \grid \list \block ].map (it) ->
             ``<a
