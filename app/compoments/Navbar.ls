@@ -10,14 +10,15 @@ module.exports = class Navbar extends React.Component
 
     render: ->
         onlineUserCount = this.state?onlineUserCount
-        navList = [ \Explore \Datasets \Stats \Category \Whatever ]
+        #navList = [ \Explore \Datasets \Stats \Category \Help ]
+        navList = [ \Help ]
         navs = navList.map (it) ->
-            ``<a href={it.toLowerCase()} className="item" key={it}>
+            ``<a href={"/"+it.toLowerCase()} className="item" key={it}>
                 {it}
             </a>
             ``
         ``<div className="ui menu">
-                    <a className="header item" href="/">ANNOTATE
+                    <a className="header item" href="/i">ANNOTATE
                         <div className="floating ui red circular mini label" style={{top:'20%'}}>
                             {onlineUserCount}
                         </div>

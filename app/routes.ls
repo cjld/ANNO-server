@@ -1,14 +1,16 @@
 require! {
     \react : React
     \react-router : {Route}
-    \./compoments/App
+    \./compoments/App : {App, MainPage}
+    \./compoments/Help
 }
 
 console.log \hello-from-routes
 
-module.exports = ``<Route path='/'>
-    <Route path='i' component={App} />
-    <Route path='i/page/:page' component={App} />
-    <Route path='i/:itemId/page/:page' component={App} />
-    <Route path='i/:itemId' component={App} />
+module.exports = ``<Route path='/' component={App}>
+    <Route path='i' component={MainPage} />
+    <Route path='i/page/:page' component={MainPage} />
+    <Route path='i/:itemId/page/:page' component={MainPage} />
+    <Route path='i/:itemId' component={MainPage} />
+    <Route path='help' component={Help} />
 </Route>``

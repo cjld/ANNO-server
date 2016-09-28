@@ -4,6 +4,7 @@ require! \./common
 
 require! {
     \./TypeDropdown
+    \./Help
     \../models/types
     \../history : myhistory
 }
@@ -777,10 +778,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     Help
                 </div>
                 <div className="content">
-                    <p>number <b>key[123456]</b> for tool switching</p>
-                    <p><b>z/x</b> zoom in zoom out in tool 1234</p>
-                    <p><b>z/x</b> increase/decrease brush size in tool 1234</p>
-                    <p><b>a/d</b> add/delete item</p>
+                    <Help />
                 </div>
             </div>
             <div className="ui grid">

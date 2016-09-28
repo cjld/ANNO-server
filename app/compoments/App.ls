@@ -35,9 +35,9 @@ class App extends React.Component
     render: ->
         ``<div>
             <Navbar />
-            <MainPage />
+            {this.props.children}
             <Footer />
         </div>
         ``
 
-module.exports = App
+module.exports = {App, MainPage}
