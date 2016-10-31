@@ -285,9 +285,53 @@ all-data = {
     }
 }
 
+foods = '''﻿苹果	#FFEC8B
+橙子	#FFC125
+柠檬	#FFB6C1
+香蕉	#FCFCFC
+猕猴桃	#EE30A7
+梨	#EE0000
+苦瓜	#DDA0DD
+南瓜	#D2B48C
+西葫芦	#CDC8B1
+姜	#CAE1FF
+竹笋	#CAFF70
+生菜	#AEEEEE
+油菜	#8B3E2F
+胡萝卜	#8B008B
+西红柿	#7AC5CD
+土豆	#6E8B3D
+西兰花	#636363
+香菇	#48D1CC
+口蘑	#4169E1
+茄子	#1C86EE
+红辣椒	#00FF7F
+青辣椒	#0000FF
+灯笼椒	#FFBBFF
+四季豆	#F4A460
+芋头	#FFFF00
+洋葱	#8B4513
+大蒜	#FF0000
+山药	#FF00FF
+藕	#FFA500
+芒果	#CD8500
+不确定	#FFFAFA
+其他	#BBFFFF'''
+
+food-info = for k in foods.split '\n'
+    v = k.split '\t'
+    {title: v[0], color: v[1]}
+
+all-data = {
+    '0': {
+        description: "食物"
+        types: food-info
+    }
+}
+
 url-map = {}
 for k,v of all-data
     for i in v.types
-        url-map[i.title] = i.src
+        url-map[i.title] = i.{src, color}
 
-module.exports = {all-data,url-map}
+module.exports = {all-data,url-map, foods}

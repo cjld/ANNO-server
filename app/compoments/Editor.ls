@@ -27,6 +27,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.cMark = \0
         @state.smooth = false
         @state.showMark = true
+        @state.hideImage = false
         @state.editMode = "ps"
         @state.listState = "all"
         @state.autosave = true
@@ -97,6 +98,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @set-changed!
 
     rebuild: ->
+        if @state.hideImage
+            @background.opacity = 0
+        else
+            @background.opacity = 1
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
@@ -130,10 +135,40 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 v.importJSON paint-json[k]
 
         # draw contours
-        contours = @state.marks[@state.cMark]?contours
+        mark = @state.marks[@state.cMark]
+        contours = mark?contours
         if contours
-            @gen-contours contours
+            color = types.url-map[mark.type]?.color
+            @gen-contours contours, color
 
+        #draw other contours
+        if @state.showMark
+            for mark in @state.marks
+                if mark == @state.marks[@state.cMark]
+                    continue
+                contours = mark?contours
+                if contours
+                    color = types.url-map[mark.type]?.color
+                    @other-contours = new paper.Group
+                    @rebuild-group.addChild @other-contours
+
+                    paths = contours.map ~>
+                        seg = it.map ~> [it.x, it.y]
+                        new paper.Path do
+                            segments: seg.reverse!
+                            closed: true
+
+                    fillColor = new paper.Color color
+                    fillColor.alpha = if @state.hideImage then 1 else 0.5
+                    path = new paper.CompoundPath do
+                        children: paths.reverse!
+                        fillColor: fillColor
+                        fillRule: \evenodd
+                        strokeColor: \black
+                        strockWidth: 2
+                        opacity: if @state.hideImage then 1 else 0.3
+                        dashArray: [10,4]
+                    @other-contours.addChild path
         # draw box
         @box-group = new paper.Group
         @rebuild-group.addChild @box-group
@@ -217,7 +252,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         unless mark then return
         return mark
 
-    gen-contours: (contours) ->
+    gen-contours: (contours, color) ->
         if @contour-path
             @contour-path.remove!
             @contour-path = null
@@ -228,9 +263,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 segments: seg.reverse!
                 closed: true
 
+        fillColor = new paper.Color color
+        if not @state.hideImage
+            fillColor.alpha = 0.5
         path = new paper.CompoundPath do
             children: paths.reverse!
-            fillColor: new paper.Color 0,1,0,0.3
+            fillColor: fillColor
             fillRule: \evenodd
             strokeColor: \black
             strockWidth: 2
@@ -266,7 +304,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         unless mark then return
 
         if data.pcmd == \paint and data.contours?
-            @gen-contours data.contours
+            color = types.url-map[mark.type]?.color
+            @gen-contours data.contours, color
             paper.view.draw!
 
             mark.contours = data.contours
@@ -306,7 +345,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     componentDidMount: ->
         @helpModal = $ \#helpModal
-            ..modal!
+            ..modal detachable:false
 
         paper.setup 'canvas'
         @layer = paper.project.activeLayer
@@ -684,8 +723,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     addMark: ~>
         # TODO : fix the model initial
-        @state.marks.push type:"",state:"set-type",spots:[],segments:{active:{},data:[]}
-        @state.cMark = @state.marks.length - 1
+        @state.marks = [type:"",state:"set-type",spots:[],segments:{active:{},data:[]}].concat @state.marks
+        @state.cMark = 0
         @on-current-mark-change!
         @forceUpdate!
     delMark: ~>
@@ -715,6 +754,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @addMark!
         else if key == 'd'
             @delMark!
+        else if key == 'n'
+            @on-next-click!
+        else if key == 'p'
+            @on-prev-click!
 
     find-neighbour: (is-next) ~>
         if @state.saveStatus == \changed
@@ -814,6 +857,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {paintDropdown}
                     <div className="ui divider" />
 
+                    <MyCheckbox
+                        text="Hide Image"
+                        dataOwner={[this,"hideImage"]}/>
                     <MyCheckbox
                         text="Show mark"
                         dataOwner={[this,"showMark"]}/>
