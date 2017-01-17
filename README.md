@@ -1,55 +1,55 @@
 # TODO
-// fix init session change bug
-// tool switch
-// z/x zoom in/out
-// new tool
-// eleminate ps
-// time evaluate
-// add/delete shortcut
-// tool icon
-// next img
-// img fit
-check state
-// weird crash
-tips
-pagination
-hi delete
-switch mark reset
-next move bug
-3 pop bug
-prev bug
+- [x] fix init session change bug
+- [x] tool switch
+- [x] z/x zoom in/out
+- [x] new tool
+- [x] eleminate ps
+- [x] time evaluate
+- [x] add/delete shortcut
+- [x] tool icon
+- [x] next img
+- [x] img fit
+- [ ] check state
+- [x] weird crash
+- [x] tips
+- [x] pagination
+- [ ] hi delete
+- [ ] switch mark reset
+- [ ] next move bug
+- [ ] 3 pop bug
+- [ ] prev bug
 
 
 # help
-number key[123456] for tool switching
-z/x zoom in zoom out in tool 1234
-z/x increase/decrease brush size in tool 1234
-a/d add/delete item
+*  number key[123456] for tool switching
+*  z/x zoom in zoom out in tool 1234
+*  z/x increase/decrease brush size in tool 1234
+*  a/d add/delete item
 
 
 
 ## content editing
-// *   add flash
-// *   counter
-// *   type tab and color
-// *   select
-// *   edit info
-//    *   edit button
-//    *   edit modal
-//    *   edit ajax
-//    *   edit api
-//    *   edit info hold
-// *   delete
-*   better edit page
-*   annotate page
-    *   route page
-*   react devTools
+- [x]   add flash
+- [x]   counter
+- [x]   type tab and color
+- [x]   select
+- [x]  edit info
+- [x] *   edit button
+- [x] *   edit modal
+- [x] *   edit ajax
+- [x] *   edit api
+- [x] *   edit info hold
+- [x]  delete
+- [ ]   better edit page
+- [ ]  annotate page
+    - [ ]   route page
+- [ ]   react devTools
 
 ## hierarchical model
 *   models
 *   hierarchical database
-    // *   Navbar
-    // *   description
+    *   Navbar
+    *   description
     *   dir icon
 
 
@@ -62,10 +62,10 @@ a/d add/delete item
 *   log out
 *   user-base annotate
 
-# small TODO
+# tiny TODO
 *   ajax default actions
 *   encapsule semantic to react
-*   mantian utils function
+*   maintian utils function
 
 
 
