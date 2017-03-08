@@ -50,6 +50,7 @@ module.exports = (io) ->
                 if err then socket.emit \s-error, err
                 url = obj?url
                 if url then
+                    url = url.replace \166.111.69.68, \localhost
                     proc := child_process.spawn config.paint-bin, config.paint-bin-args
                     proc.stderr.pipe process.stdout
                     proc.on \exit, (code, signal) ->

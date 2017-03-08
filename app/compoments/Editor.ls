@@ -97,11 +97,20 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @state.currentItem.marks != JSON.stringify @state.marks
             @set-changed!
 
+    update-backgroud: ->
+        s = @layer.scaling
+        t = @layer.matrix.translation
+        @background.style.width = (@origin-width * s.x) + 'px'
+        @background.style.height = (@origin-height * s.y) + 'px'
+        @background.style.left = t.x + 'px'
+        @background.style.top = t.y + 'px'
+
+
     rebuild: ->
         if @state.hideImage
-            @background.opacity = 0
+            @background?style.opacity = 0
         else
-            @background.opacity = 1
+            @background?style.opacity = 1
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
@@ -329,17 +338,20 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @offset-group.matrix.reset!
 
         imgUrl = @state.currentItem.url
-        if @background then @background.remove!
-        raster = new paper.Raster imgUrl
-        @background = raster
-        @layer.insertChild 0, @background
-        raster.on-load = ~>
+        @background.style = ""
+        @background.src = imgUrl
+        @background.onload = ~>
             console.log "The image has loaded.", imgUrl
-            @background.position = paper.view.center
-            @offset-group.translate @background.bounds.point
+            @origin-width = @background.width
+            @origin-height = @background.height
+            #@background.position = paper.view.center
+            #@offset-group.translate @background.bounds.point
             s1 = paper.view.size
-            s2 = @background.size
-            @layer.scaling = Math.min s1.width/s2.width, s1.height/s2.height
+            s2 = @background.{width, height}
+            ss = Math.min s1.width/s2.width, s1.height/s2.height
+            @layer.scale ss, [0,0]
+            #@layer.translate @layer.matrix.translation
+            @update-backgroud!
             @forceUpdate!
 
 
@@ -348,6 +360,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..modal detachable:false
 
         paper.setup 'canvas'
+        @background = $ '.myCanvas img' .0
         @layer = paper.project.activeLayer
             ..apply-matrix = false
         @offset-group = new paper.Group
@@ -540,15 +553,19 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @pan-tool.on-mouse-drag = (e) ~>
             if e.modifiers.control
                 @layer.scale(e.delta.y / 100.0 + 1, e.downPoint)
+                @update-backgroud!
             else
                 @layer.translate e.delta
+                @update-backgroud!
             @rebuild!
         @pan-tool.on-key-down = (e) ~>
             @check-tool-switch e
             if e.key == 'z'
                 @layer.scale 1.1, @mouse-position
+                @update-backgroud!
             else if e.key == 'x'
                 @layer.scale 1/1.1, @mouse-position
+                @update-backgroud!
 
         @paint-tool = new paper.Tool
         #@paint-tool.minDistance = 10
@@ -790,14 +807,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
         console.log \editor-render
         imgUrl = @state.currentItem?.url
         {marks,cMark} = @state
-        imgSizeStr = @background?size?to-string!
+        imgSizeStr = \width: + @origin-width + ', ' + \height: + @origin-height
         marksUI = for i of marks
             switchCMark = @switchCurrentMark.bind @, i
             switchType = (i, data) ->
                 @state.marks[i].type = data
                 @forceUpdate!
             switchType .= bind @, i
-            console.log marks[i]
             hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
             ``<tr key={i}>
                 <td><a onClick={switchCMark}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>
@@ -826,7 +842,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             </div>
             <div className="ui grid">
                 <div className="myCanvas ten wide column">
-                    <canvas id='canvas'></canvas>
+                    <div className="canvas-border">
+                        <img id='canvas-bg' src='http://localhost:8080/ID56-5000-124/4380.jpg'/>
+                        <canvas id='canvas'></canvas>
+                    </div>
                 </div>
                 <div className="six wide column">
                     <div><b>Save status:</b> {this.state.saveStatus}</div>
