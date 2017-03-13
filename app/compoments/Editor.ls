@@ -34,7 +34,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.saveStatus = "saved"
         @state.autosave-interval = 5000
         @state.paintState = "foreground" # background foreground hair
-        @state.paint-brush-size = 10
+        @state.default-brush-size = 15.0
+        @state.paint-brush-size = @state.default-brush-size
         @autosave!
         @contour-anime!
 
@@ -246,10 +247,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         if mark-str == undefined or mark-str == ""
             @state.marks = []
         else
-        try
-            @state.marks = JSON.parse @state.currentItem.marks
-        catch error
-            toastr.error "Error when parsing marks: #{error.to-string!}"
+            try
+                @state.marks = JSON.parse @state.currentItem.marks
+            catch error
+                toastr.error "Error when parsing marks: #{error.to-string!}"
 
     componentWillMount: ->
         @state.currentItem = @props.currentItem
@@ -328,6 +329,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @set-state editMode:v
 
     load-session: ~>
+        @state.paint-brush-size = @state.default-brush-size
+
         @drop-cmd!
         actions.connect-socket!
         @socket = socket
@@ -349,6 +352,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             s1 = paper.view.size
             s2 = @background.{width, height}
             ss = Math.min s1.width/s2.width, s1.height/s2.height
+            @state.paint-brush-size /= ss
+            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
             @layer.scale ss, [0,0]
             #@layer.translate @layer.matrix.translation
             @update-backgroud!
@@ -356,6 +361,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
 
     componentDidMount: ->
+        $ \body .css \overflow, \hidden
+
         @helpModal = $ \#helpModal
             ..modal detachable:false
 
@@ -547,30 +554,38 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @box-tool.on-key-down = ~> @pan-tool.on-key-down it
         @box-tool.on-mouse-move = ~> @pan-tool.on-mouse-move it
 
+        @zoom = (factor, center) ~>
+            @state.paint-brush-size /= factor
+            @layer.scale factor, center
+            @update-backgroud!
+            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
+            paper.view.draw!
+
+        @pan = (delta) ~>
+            @layer.translate delta
+            @update-backgroud!
+            paper.view.draw!
+
         @pan-tool = new paper.Tool
         @pan-tool.on-mouse-move = (e) ~>
             @mouse-position = e.point
         @pan-tool.on-mouse-drag = (e) ~>
             if e.modifiers.control
-                @layer.scale(e.delta.y / 100.0 + 1, e.downPoint)
-                @update-backgroud!
+                @zoom(e.delta.y / 100.0 + 1, e.downPoint)
             else
-                @layer.translate e.delta
-                @update-backgroud!
+                @pan e.delta
             @rebuild!
         @pan-tool.on-key-down = (e) ~>
             @check-tool-switch e
             if e.key == 'z'
-                @layer.scale 1.1, @mouse-position
-                @update-backgroud!
+                @zoom 1.1, @mouse-position
             else if e.key == 'x'
-                @layer.scale 1/1.1, @mouse-position
-                @update-backgroud!
+                @zoom 1/1.1, @mouse-position
 
         @paint-tool = new paper.Tool
         #@paint-tool.minDistance = 10
 
-        @cursor = new paper.Path.Circle [0,0], @state.paint-brush-size - 1
+        @cursor = new paper.Path.Circle [0,0], @state.paint-brush-size
             ..fillColor = undefined
             ..strokeColor = \green
             ..strokeWidth = 2
@@ -642,7 +657,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @state.paint-brush-size--
             if @state.paint-brush-size < 1 then @state.paint-brush-size = 1
             if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
-            @cursor.scaling =  @state.paint-brush-size / 10.0
+            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
 
         @ps-tool = new paper.Tool
         @ps-tool.minDistance = 0
@@ -656,7 +671,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @cursor.strokeColor = \red
             if @state.paint-brush-size < 1 then @state.paint-brush-size = 1
             if @state.paint-brush-size > 1000 then @state.paint-brush-size = 1000
-            @cursor.scaling =  @state.paint-brush-size / 10.0
+            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
         @ps-tool.on-key-up = (e) ~>
             if e.key == 'shift'
                 @cursor.strokeColor = \green
@@ -683,14 +698,25 @@ module.exports = class Editor extends React.Component implements TimerMixin
             point = e.point.transform tmatrix
             #@cursor.scaling = 10.0 / @state.paint-brush-size
             @cursor.position = point
-            paper.view.draw!
+            #paper.view.draw!
 
         @empty-tool = new paper.Tool
-        $ document .on \keypress, @on-key-down
+        $ document .on \keydown, @on-key-down
+        $ document .on \keyup, @on-key-up
+        $ \canvas .on \wheel, (e) ~>
+            ee = e.originalEvent
+            if ee.deltaY > 0
+                @zoom 1.1, {x:ee.offsetX, y:ee.offsetY}
+            else
+                @zoom 1/1.1, {x:ee.offsetX, y:ee.offsetY}
+            e.prevent-default!
         @componentDidUpdate!
 
     componentWillUnmount: ->
-        $ document .off \keypress, @on-key-down
+        $ \body .css \overflow, \auto
+        $ document .off \keydown, @on-key-down
+        $ document .off \keyup, @on-key-up
+        $ \canvas .off \wheel
         @socket.off \ok, @receive-cmd
         #@socket.disconnect!
 
@@ -765,8 +791,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else
             @send-cmd \load-region, contours:[]
 
+    keys: {}
+
     on-key-down: (e) ~>
-        key = String.from-char-code e.char-code
+        key = e.key
         if key == 'a'
             @addMark!
         else if key == 'd'
@@ -775,6 +803,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @on-next-click!
         else if key == 'p'
             @on-prev-click!
+        else if key == ' '
+            e.prevent-default!
+            if not @keys[key]
+                @prev-tool = paper.tool
+                @pan-tool.activate!
+        @keys[key] = true
+
+    on-key-up: (e) ~>
+        key = e.key
+        if key == ' '
+            @prev-tool.activate!
+        @keys[key] = false
 
     find-neighbour: (is-next) ~>
         if @state.saveStatus == \changed
@@ -815,12 +855,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @forceUpdate!
             switchType .= bind @, i
             hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
-            ``<tr key={i}>
-                <td><a onClick={switchCMark}><div className={i==cMark?"ui ribbon label":""}>{i}</div></a></td>
+            ``<tr key={i} className={i==cMark?"positive":""} onClick={switchCMark}>
+                <td className='selectable'><a><div className={i==cMark?"ui green ribbon label":""}>{i}</div></a></td>
                 <td>{}<TypeDropdown data={marks[i].type} onChange={switchType}/></td>
-                <td>{hitStr}, {marks[i].state}</td>
+                <td>{hitStr}</td>
             </tr>
             ``
+        markAs = (str) ~>
+            @state.currentItem.state = str
+            @save!
+
         if @state.editMode == \paint
             paintDropdown = ``<MyDropdown
                 dataOwner={[this, "paintState"]}
@@ -844,38 +888,28 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <div className="myCanvas ten wide column">
                     <div className="canvas-border">
                         <img id='canvas-bg' src='http://localhost:8080/ID56-5000-124/4380.jpg'/>
-                        <canvas id='canvas'></canvas>
+                        <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>
-                <div className="six wide column">
-                    <div><b>Save status:</b> {this.state.saveStatus}</div>
-                    <div><b>Image size:</b>{imgSizeStr}</div>
-                    <div className="ui divider" />
-                    <div className="ui button"
-                        onClick={this.save}>Save</div>
-                    <div className="ui button"
-                        onClick={this.loadSession}>Reload</div>
-                    <div className="ui button"
-                        onClick={this.showHelp}>Help</div>
-                    <div className="ui divider" />
-                    <MyDropdown
-                        dataOwner={[this, "listState"]}
-                        defaultText="List state"
-                        options={listOption} />
-                    <br />
-                    <div className="ui button"
-                        onClick={this.onPrevClick}>prev</div>
-                    <div className="ui button"
-                        onClick={this.onNextClick}>next</div>
-                    <div className="ui divider" />
+                <div className="six wide column editor-utils">
+                    <div className="ui horizontal divider" >Mark as</div>
+                    <div className="ui mini green button"
+                        onClick={markAs.bind(this,'annotated')}>annotated</div>
+                    <div className="ui mini red button"
+                        onClick={markAs.bind(this,'un-annotated')}>un-annotated</div>
+                    <div className="ui mini yellow button"
+                        onClick={markAs.bind(this,'issued')}>issued</div>
+
+
+                    <div className="ui horizontal divider" >Tool</div>
                     <MyDropdown
                         data={this.state.editMode}
                         dataOwner={[this, "editMode"]}
                         defaultText="Edit mode"
                         options={this.modeOption} />
                     {paintDropdown}
-                    <div className="ui divider" />
 
+                    <div className="ui horizontal divider" >View</div>
                     <MyCheckbox
                         text="Hide Image"
                         dataOwner={[this,"hideImage"]}/>
@@ -889,12 +923,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         text="Autosave"
                         dataOwner={[this, "autosave"]}/>
 
-                    <div className="ui divider" />
-                    <div className="ui button"
+                    <div className="ui horizontal divider" >Marks</div>
+                    <div className="ui mini positive button"
                         onClick={this.addMark}>add</div>
-                    <div className="ui button"
+                    <div className="ui mini negtive button"
                         onClick={this.delMark}>delete</div>
-                    <table className="ui celled table">
+                    <table className="ui selectable celled small compact table">
                         <thead>
                             <tr><th>Mark ID</th>
                             <th>type</th>
@@ -904,8 +938,32 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         {marksUI}
                         </tbody>
                     </table>
+
+                    <div className="ui horizontal divider">Status</div>
+                    <div><b>Save status:</b> {this.state.saveStatus}</div>
+                    <div><b>Image size:</b>{imgSizeStr}</div>
+
+                    <div className="ui horizontal divider">File</div>
+                    <div className="ui mini button"
+                        onClick={this.save}>Save</div>
+                    <div className="ui mini button"
+                        onClick={this.loadSession}>Reload</div>
+                    <div className="ui mini button"
+                        onClick={this.showHelp}>Help</div>
+
+                    <div className="ui horizontal divider" >Navigation</div>
+                    <MyDropdown
+                        dataOwner={[this, "listState"]}
+                        defaultText="List state"
+                        options={listOption} />
+                    <div className="ui mini button"
+                        onClick={this.onPrevClick}>prev</div>
+                    <div className="ui mini button"
+                        onClick={this.onNextClick}>next</div>
                 </div>
             </div>
+            <style>
+            </style>
         </div>``
 
 movePolygon = (poly, delta) ->

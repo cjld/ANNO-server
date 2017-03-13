@@ -42,10 +42,10 @@ module.exports = class TypeDropdown extends MyComponent
                 else
                     ``<div className='ui button'
                         style={{
-                            'background-color':i.color,
+                            'backgroundColor':i.color,
                             'color':'#FFF',
-                            'margin-bottom': '5px',
-                            'text-shadow': '1px 0 1px #000000, 0 1px 1px #000000, 0 -1px 1px #000000, -1px 0 1px #000000'}}>{i.title}</div>``
+                            'marginBottom': '5px',
+                            'textShadow': '1px 0 1px #000000, 0 1px 1px #000000, 0 -1px 1px #000000, -1px 0 1px #000000'}}>{i.title}</div>``
                 subList.push ``<a onClick={f} key={id}> {tagUi} </a>``
             types-ui.push ``<div className="column" style={{padding:'3px'}} key={k}>
                 <h4 className="ui header">{v.description}</h4>

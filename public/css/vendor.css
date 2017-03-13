@@ -15,13 +15,18 @@
     position: relative;
 }
 
+.myCanvas {
+    /* http://stackoverflow.com/questions/1575141/make-div-100-height-of-browser-window */
+    height: 75vh;
+}
+
 .myCanvas .canvas-border {
     position: relative;
     border-color: black;
     border-style: solid;
     border-width: 2px;
-    width:600px;
-    height: 480px;
+    width:95%;
+    height: 95%;
     background-image: url("/img/base.png");
     background-repeat: repeat;
     background-size: 300px 300px;
@@ -40,9 +45,27 @@
 }
 
 .myCanvas canvas {
-    width:600px;
-    height: 480px;
+    width:100%;
+    height: 100%;
     position: absolute;
+}
+
+.editor-utils .divider {
+
+}
+
+.editor-utils .checkbox {
+    margin-right: 10px;
+}
+.editor-utils table .menu {
+    margin: 0 !important;
+    height: 20px;
+}
+
+.editor-utils {
+    height: 75vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
  /*

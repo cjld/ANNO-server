@@ -35,6 +35,9 @@ root-content =
                     <video controls="controls" src="/video/add_delete_mark.ogv" style={{width:'100%'}}></video>
                 </div>
                 <p>你可以使用add，delete按钮来添加删除标注，也可以通过快捷键a，d来删除添加</p>
+                <p>标注如果完成，你可以点击上方的annotated绿色按钮，表示标注已经完成</p>
+                <p>如果你是检查人员，你可以通过下方的navigation来浏览所有标注好的或者是没有标注好的图片，如果
+                存在标注问题，你可以点击issued黄色按钮表示该图片存在问题。</p>
             </div>``
         *   title: "如何使用Paint Selection工具"
             content: ``<div>
@@ -44,6 +47,7 @@ root-content =
                 <p>通过快捷键5切换到Paint Selection工具</p>
                 <p>快捷键z、x来放大缩小笔刷</p>
                 <p>按住shift，光标变红，笔刷变为删除笔刷，可以删除选区</p>
+                <p>按住空格键可以切换回pan工具，用于拖动画布</p>
             </div>``
         *   title: "如何使用Pan工具"
             content: ``<div>
@@ -72,8 +76,8 @@ module.exports = class Help extends React.Component
             cstack = @state.stack.splice 0, i
             goStack = -> @set-state stack:it
             goStack .= bind @, cstack
-            stacks.push ``<a onClick={goStack}>{node.title}</a>``
-            stacks.push ``<div className="divider">/</div>``
+            stacks.push ``<a key={i+'1'} onClick={goStack}>{node.title}</a>``
+            stacks.push ``<div key={i+'2'} className="divider">/</div>``
         stacks = ``<div className="ui breadcrumb">
             {stacks}
         </div>``

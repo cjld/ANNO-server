@@ -100,7 +100,8 @@ module.exports = class Displayer extends React.Component
                 actions.selectToggle obj._id
 
             colorMap = {
-                '' : ''
+                '' : \red
+                undefined: \red
                 \annotated : \green
                 \un-annotated : \red
                 \issued : \yellow

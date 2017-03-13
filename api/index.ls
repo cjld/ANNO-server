@@ -56,7 +56,10 @@ find-neighbour = (is-next, req, res, next) ->
     if req.body.parent?
         qobj.parent = req.body.parent
     if req.body.state?
-        qobj.state = req.body.state
+        if req.body.state in ['un-annotated', '', null]
+            qobj.state = {'$in': ['un-annotated', '', null]}
+        else
+            qobj.state = req.body.state
     console.log qobj, req.body
     my-object.find qobj, func
         .sort [['_id', if is-next==\1 then -1 else 1]]
@@ -115,7 +118,7 @@ app.post \/counter, (req, res, next) ->
         \annotated : (callback) ->
             my-counter {state:'annotated'}, callback
         \un-annotated : (callback) ->
-            my-counter {state:'un-annotated'}, callback
+            my-counter {state:{'$in':['un-annotated', null, '']}}, callback
         \issued : (callback) ->
             my-counter {state:'issued'}, callback
     }, (err, results) ->
