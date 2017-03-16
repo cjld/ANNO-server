@@ -28,6 +28,7 @@ root-content =
                     <video controls="controls" src="/video/browse_mark.ogv" style={{width:'100%'}}></video>
                 </div>
                 <p>在标注列表中点击标注的编号来浏览不同的标注。</p>
+                <p>按下键盘上的n键或者点击工具栏的next按钮来切换浏览不同的图片</p>
             </div>``
         *   title: "如何添加/删除标注"
             content: ``<div>
@@ -46,6 +47,7 @@ root-content =
                 </div>
                 <p>通过快捷键5切换到Paint Selection工具</p>
                 <p>快捷键z、x来放大缩小笔刷</p>
+                <p>鼠标滚轮放大缩小画布</p>
                 <p>按住shift，光标变红，笔刷变为删除笔刷，可以删除选区</p>
                 <p>按住空格键可以切换回pan工具，用于拖动画布</p>
             </div>``

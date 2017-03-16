@@ -20,25 +20,42 @@ def-vals =
     currentItem: undefined
     ancestors: []
 
+    config: {}
+    typeMap: {}
+
 class MainActions extends Actions
     ->
         super ...
 
         # update showed-items
-        @gen-dep [\tabType, \items], (data) ->
-            {tabType, items} = data
+        @gen-dep [\items], (data) ->
+            {items} = data
+            tabType = store.get-state!.tabType
             showed-items = [v for k,v of items].filter ~>
                 if tabType == \total
                     return 1
-                return it.state == tabType
+                state = it.state
+                state ?= "un-annotated"
+                return state == tabType
             return {showed-items}
 
         # update items
-        @gen-dep [\fatherId, \page], ~>
+        @gen-dep [\fatherId, \page, \tabType], ~>
             # dirty here
             actions.fetchContent!
             actions.findAncestor!
             return {}
+
+        @gen-dep [\tabType], ~>
+            actions.fetchItems!
+            return {}
+
+        @gen-dep [\config], ~>
+            typeMap = {}
+            for k,v of it.config.types
+                for i in v.types
+                    typeMap[i.title] = i.{src, color}
+            return {typeMap}
 
     connect-socket: ->
         if not window.socket then
@@ -73,9 +90,16 @@ class MainActions extends Actions
 
     findAncestor: ->
         ancestors = []
+        @config = undefined
         my-func = ~>
             i = it[0]
             if i
+                if i.config and not @config
+                    try
+                        @config = JSON.parse i.config
+                        if store.get-state!.config !== @config
+                            @set-store {config: @config}
+                    catch error
                 ancestors.push(i)
                 if ancestors.length == 1
                     @set-store currentItem:i
@@ -94,7 +118,7 @@ class MainActions extends Actions
         $ .ajax do
             method: \POST
             url: \/api/list-objects
-            data: {parent:state.fatherId, page:state.page}
+            data: {parent:state.fatherId, page:state.page, state:state.tabType}
             error: ->
                 toastr.error it.response-text
             success: ~>

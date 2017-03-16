@@ -22,7 +22,13 @@ app.get \/test, (req, res) ->
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page
     if page == NaN then page = 1
-    my-object.find req.body.{parent}, (err, objs) ->
+    qobj = {parent:req.body.parent}
+    if req.body.state != 'total'
+        if req.body.state == 'un-annotated'
+            qobj.state = {'$in': ['un-annotated', '', null]}
+        else
+            qobj.state = req.body.state
+    my-object.find qobj, (err, objs) ->
         if err then return next err
         res.send objs
     .sort [['_id', -1]]

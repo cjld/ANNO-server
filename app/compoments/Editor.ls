@@ -40,6 +40,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @contour-anime!
 
         @time-evaluate = false
+        store.connect-to-component this, [\typeMap]
 
     autosave: ->
         if @state.autosave and @state.saveStatus == \changed
@@ -56,12 +57,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
             paper.view.draw!
         @set-timeout @contour-anime, 100
 
+    shouldComponentUpdate: (next-props, next-state) ->
+        if next-state.typeMap !== @state.typeMap
+            @create-typeimage-symbol!
+        return true
+
     create-typeimage-symbol: ->
         @typeimages = {}
-        for k,v of types.url-map
-            raster = new paper.Raster v
-            @typeimages[k] = new paper.Symbol raster
-            raster.remove!
+        for k,v of @state.typeMap
+            if v.src
+                raster = new paper.Raster v.src
+                @typeimages[k] = new paper.Symbol raster
+                raster.remove!
         #@test-symbol @typeimages[k]
 
     create-cross-symbol: ->
@@ -148,7 +155,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         mark = @state.marks[@state.cMark]
         contours = mark?contours
         if contours
-            color = types.url-map[mark.type]?.color
+            color = @state.typeMap[mark.type]?.color
             @gen-contours contours, color
 
         #draw other contours
@@ -158,7 +165,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     continue
                 contours = mark?contours
                 if contours
-                    color = types.url-map[mark.type]?.color
+                    color = @state.typeMap[mark.type]?.color
                     @other-contours = new paper.Group
                     @rebuild-group.addChild @other-contours
 
@@ -314,7 +321,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         unless mark then return
 
         if data.pcmd == \paint and data.contours?
-            color = types.url-map[mark.type]?.color
+            color = @state.typeMap[mark.type]?.color
             @gen-contours data.contours, color
             paper.view.draw!
 
@@ -341,7 +348,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @offset-group.matrix.reset!
 
         imgUrl = @state.currentItem.url
-        @background.style = ""
+        @background.style.cssText = ""
         @background.src = imgUrl
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
@@ -718,6 +725,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         $ document .off \keyup, @on-key-up
         $ \canvas .off \wheel
         @socket.off \ok, @receive-cmd
+        (TimerMixin.componentWillUnmount.bind @)!
         #@socket.disconnect!
 
 
@@ -741,7 +749,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @empty-tool.activate!
         @rebuild!
 
-    save: ~>
+    save: (savestr)~>
         if @state.saveStatus == \saving
             toastr.info "Saving request is pending, please wait."
             return
@@ -759,6 +767,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             success: ~>
                 if @state.saveStatus == \saving
                     @set-state saveStatus: \saved
+                toastr.success savestr
 
     switchCurrentMark: ~>
         @set-state cMark:it
@@ -863,7 +872,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ``
         markAs = (str) ~>
             @state.currentItem.state = str
-            @save!
+            @save "Marked!"
 
         if @state.editMode == \paint
             paintDropdown = ``<MyDropdown
@@ -887,7 +896,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             <div className="ui grid">
                 <div className="myCanvas ten wide column">
                     <div className="canvas-border">
-                        <img id='canvas-bg' src='http://localhost:8080/ID56-5000-124/4380.jpg'/>
+                        <img id='canvas-bg'/>
                         <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>

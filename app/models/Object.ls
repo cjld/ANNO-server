@@ -1,7 +1,7 @@
 require! \mongoose
 
 schema = new mongoose.Schema {
-    # database, directory, item
+    # database, directory, item, config
     type: String
     name: String
     description: String
@@ -11,6 +11,8 @@ schema = new mongoose.Schema {
     # annotated, un-annotated, issued
     state: String
     marks: String
+    # config file for directory
+    config: String
     parent: mongoose.Schema.Types.ObjectId
 }
 

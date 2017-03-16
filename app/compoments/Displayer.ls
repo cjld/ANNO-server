@@ -131,7 +131,7 @@ module.exports = class Displayer extends React.Component
 
         return ``<div>
         {tabsUI}
-        <div className={"ui bottom attached "+(self.state.ajaxing?"loading":"")+" segment"}>
+        <div className={"ui bottom attached "+((self.state.ajaxing || self.state.loadingItems)?"loading":"")+" segment"}>
             <div className="ui three column grid">
                 {imgsUI}
             </div>

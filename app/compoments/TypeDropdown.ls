@@ -7,6 +7,11 @@ require! {
 }
 
 module.exports = class TypeDropdown extends MyComponent
+    ->
+        super ...
+        store.connect-to-component this, [
+            \config
+        ]
 
     componentDidMount: ->
         jq = $ ReactDOM.findDOMNode this
@@ -16,9 +21,10 @@ module.exports = class TypeDropdown extends MyComponent
             position : 'bottom left'
             # avoid popup set width
             setFluidWidth: false
+            # target: 'body'
 
     shouldComponentUpdate: (next-props, next-state) ->
-        res = next-props.data != @state.data
+        res = next-props.data != @state.data or next-state.config !== @state.config
         @state.data = next-props.data
         res
 
@@ -29,7 +35,10 @@ module.exports = class TypeDropdown extends MyComponent
         if img-url? then imgui = ``<img src={imgUrl} />``
 
         types-ui = []
-        for k,v of types.all-data
+        type-data = types.all-data
+        if @state.config?types
+            type-data = that
+        for k,v of type-data
             # if k>4 then break
             subList = []
             for id,i of v.types
@@ -40,7 +49,7 @@ module.exports = class TypeDropdown extends MyComponent
                 tag-ui = if i.src?
                     ``<img src={i.src} title={i.title} className="ui mini left floated image" style={{margin:'1px'}}/>``
                 else
-                    ``<div className='ui button'
+                    ``<div className='ui tiny button'
                         style={{
                             'backgroundColor':i.color,
                             'color':'#FFF',
@@ -64,7 +73,7 @@ module.exports = class TypeDropdown extends MyComponent
           </a>
         </div>
         <div className="ui flowing basic admission fluid popup"
-        style={{width: '960px'}}>
+        style={{maxWidth:'60%', maxHeight:'50%', overflowY:'scroll'}}>
           <div className="ui one column relaxed divided grid">
                 {typesUi}
           </div>

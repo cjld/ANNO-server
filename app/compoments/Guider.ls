@@ -40,50 +40,53 @@ module.exports = class Guider extends React.Component
                 {selects} = store.get-state!
                 actions.deleteItems selects
 
+        if $.cookie('user') == 'admin'
+            $ \#addItemBtn .click ~>
+                @set-state modalType:\add
+                dialog.modal \show
 
-        $ \#addItemBtn .click ~>
-            @set-state modalType:\add
-            dialog.modal \show
-
-        $ \#editItemBtn .click ~>
-            {selects} = store.get-state!
-            ids = Object.keys(selects)
-            if ids.length == 0
-                item = @state.currentItem
-            else if ids.length != 1
-                toastr.error "Please select only one item."
-                return
-            else
-                item = store.get-state!.items[ids[0]]
-            for k,v of item
-                if @formValue[k]?
-                    @formValue[k] = v
+            $ \#editItemBtn .click ~>
+                {selects} = store.get-state!
+                ids = Object.keys(selects)
+                if ids.length == 0
+                    item = @state.currentItem
+                else if ids.length != 1
+                    toastr.error "Please select only one item."
+                    return
                 else
-                    # attribute selector
-                    dom = addItemForm.find "input[name='#{k}']"
-                    dom.val(v)
+                    item = store.get-state!.items[ids[0]]
+                for k,v of item
+                    if @formValue[k]?
+                        @formValue[k] = v
+                    else
+                        # attribute selector
+                        dom = addItemForm.find "[name='#{k}']"
+                        dom.val(v)
 
-            @set-state modalType:\edit
-            @edit-id = item._id
-            dialog.modal \show
+                @set-state modalType:\edit
+                @edit-id = item._id
+                dialog.modal \show
 
-        $ \#delItemBtn .click ->
-            del-dialog.modal \show
+            $ \#delItemBtn .click ->
+                del-dialog.modal \show
 
-        $ \#selectAllBtn .click ->
-            self.set-state select-all-state: !self.state.select-all-state
-            if self.state.select-all-state
-                actions.selectShowed!
-            else
-                actions.resetSelects!
+            $ \#selectAllBtn .click ->
+                self.set-state select-all-state: !self.state.select-all-state
+                if self.state.select-all-state
+                    actions.selectShowed!
+                else
+                    actions.resetSelects!
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ~>
             e.prevent-default!
             inputs = addItemForm.find \input
+            textareas = addItemForm.find \textarea
             values = {}
             for input in inputs
                 values[input.name] = $(input).val!
+            for textarea in textareas
+                values[textarea.name] = $(textarea).val!
 
             if self.state.modalType == \edit
                 id = @edit-id
@@ -93,6 +96,7 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
             self.set-state ajaxing: true
+            self.state.currentItem <<< values
             $.ajax do
                 method: \POST
                 url: \/api/new-object
@@ -134,6 +138,8 @@ module.exports = class Guider extends React.Component
                         *   value: 'directory'
                         *   value: 'item'
                     valui = ``<MyDropdown name={key} options={option} data={this.formValue.type}/>``
+                else if key == 'config'
+                    valui = ``<textarea type="text" name={key} placeholder={key}/>``
                 else
                     valui = ``<input type="text" name={key} placeholder={key}/>``
                 availItems.push ``<div className="field" key={key}>
@@ -156,6 +162,10 @@ module.exports = class Guider extends React.Component
             </div>
         </div>
         ``
+
+        opClass = "ui disabled item"
+        if $?.cookie('user') == 'admin'
+            opClass = "ui item"
 
         ``<div>
         {delModal}
@@ -180,12 +190,12 @@ module.exports = class Guider extends React.Component
                     {displayBar}
                 </div>
 
-                <div className="ui right floated small menu">
-                    <a className="ui item" id="selectAllBtn"><i className=
+                <div className={"ui right floated small menu"}>
+                    <a className={opClass} id="selectAllBtn"><i className=
                     {self.state.selectAllState?"check circle icon":"check circle outline icon"}></i></a>
-                    <a className="ui item" id="addItemBtn"><i className="green add circle icon"></i></a>
-                    <a className="ui item" id="delItemBtn"><i className="red minus circle icon"></i></a>
-                    <a className="ui item" id="editItemBtn"><i className="edit icon"></i></a>
+                    <a className={opClass} id="addItemBtn"><i className="green add circle icon"></i></a>
+                    <a className={opClass} id="delItemBtn"><i className="red minus circle icon"></i></a>
+                    <a className={opClass} id="editItemBtn"><i className="edit icon"></i></a>
                 </div>
 
                 <Breadcrumb/>

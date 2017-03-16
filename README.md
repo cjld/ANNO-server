@@ -1,23 +1,35 @@
 # TODO
-- [x] fix init session change bug
-- [x] tool switch
-- [x] z/x zoom in/out
-- [x] new tool
-- [x] eleminate ps
-- [x] time evaluate
-- [x] add/delete shortcut
-- [x] tool icon
-- [x] next img
-- [x] img fit
-- [ ] check state
-- [x] weird crash
-- [x] tips
-- [x] pagination
-- [ ] hi delete
-- [ ] switch mark reset
-- [ ] next move bug
-- [ ] 3 pop bug
-- [ ] prev bug
+[x]  dataset config
+[ ]  speed up big image
+[ ]  well git maintain
+[ ]  file uploader
+[ ]  crash restart
+[ ]  admin
+[ ]  help update
+[x]  type bug
+[x]  config refresh
+[x]  page error
+[ ]  less request
+
+// fix init session change bug
+// tool switch
+// z/x zoom in/out
+// new tool
+// eleminate ps
+// time evaluate
+// add/delete shortcut
+// tool icon
+// next img
+// img fit
+check state
+// weird crash
+tips
+pagination
+hi delete
+switch mark reset
+next move bug
+3 pop bug
+prev bug
 
 
 # help
