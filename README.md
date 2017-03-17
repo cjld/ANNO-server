@@ -10,6 +10,7 @@
 [x]  config refresh
 [x]  page error
 [ ]  less request
+[ ]  mask cache
 
 // fix init session change bug
 // tool switch
@@ -37,6 +38,7 @@ prev bug
 *  z/x zoom in zoom out in tool 1234
 *  z/x increase/decrease brush size in tool 1234
 *  a/d add/delete item
+
 
 
 

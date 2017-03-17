@@ -11,6 +11,7 @@ gulp.task \vendor-js, ->
     gulp.src [
         './bower_components/jquery/dist/jquery.js'
         './bower_components/jquery.cookie/jquery.cookie.js'
+        './bower_components/jquery-form/dist/jquery.form.min.js'
         './bower_components/toastr/toastr.js'
         './bower_components/semantic/dist/semantic.js'
         './bower_components/jquery-ui/jquery-ui.js'

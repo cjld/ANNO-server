@@ -6,6 +6,8 @@ require! {
     \async
     \../config
     \../app/models
+
+    \multer
 }
 
 app = express!
@@ -18,6 +20,36 @@ mongoose.connection.on \error ->
 
 app.get \/test, (req, res) ->
     res.send \ok!
+
+storage = multer.disk-storage do
+    destination: (req, file, callback) ->
+        callback null, config.image-server-dir + config.upload-path
+    filename: (req, file, callback) ->
+        callback null Date.now!+'-'+file.originalname
+
+upload = multer {storage} .array \userPhoto, config.upload-limit
+app.post \/upload, (req, res) ->
+    console.log req.body
+    upload req, res, (err) ->
+        console.log req.body
+        console.log req.files
+        if err
+            console.log err
+            res.status 500 .end "Error uploading files."
+        else
+            files = for file in req.files then do
+                name: file.originalname
+                state: \un-annotated
+                type: \item
+                url: config.image-server-url + config.upload-path + file.filename
+                parent: req.body.parent
+
+            console.log files
+            my-object.create files, (err) ->
+                if err
+                    res.status 500 .end "Items creation failure."
+                else
+                    res.end "Files is uploaded."
 
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page

@@ -40,7 +40,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @contour-anime!
 
         @time-evaluate = false
-        store.connect-to-component this, [\typeMap]
+        store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
         if @state.autosave and @state.saveStatus == \changed
@@ -60,6 +60,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
     shouldComponentUpdate: (next-props, next-state) ->
         if next-state.typeMap !== @state.typeMap
             @create-typeimage-symbol!
+            if next-state.config.autoType
+                if @state.marks[0].type==""
+                    @state.marks[0].type = next-state.config.types[0].types[0].title
         return true
 
     create-typeimage-symbol: ->
@@ -250,9 +253,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @load-session!
 
     parse-mark: ->
+        @state.marks = undefined
         mark-str = @state.currentItem.marks
         if mark-str == undefined or mark-str == ""
-            @state.marks = []
+            @state.marks = @new-mark!
+            @state.cMark = 0
         else
             try
                 @state.marks = JSON.parse @state.currentItem.marks
@@ -773,9 +778,20 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @set-state cMark:it
         @on-current-mark-change it
 
+    new-mark: ->
+        if @state.config?autoType
+            if @state.marks == undefined
+                tid = 0
+            else
+                tid = @state.marks.length
+            if @state.config?types?0?types
+                if tid>=that.length then tid = 0
+                return [type:that[tid].title,state:"set-type",spots:[],segments:{active:{},data:[]}]
+        [type:"",state:"set-type",spots:[],segments:{active:{},data:[]}]
+
     addMark: ~>
         # TODO : fix the model initial
-        @state.marks = [type:"",state:"set-type",spots:[],segments:{active:{},data:[]}].concat @state.marks
+        @state.marks = @new-mark!.concat @state.marks
         @state.cMark = 0
         @on-current-mark-change!
         @forceUpdate!
@@ -791,19 +807,24 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     on-current-mark-change: (mark) ->
         @drop-cmd!
+        bgContours = []
         if mark
             mark = @state.marks[mark]
         else
             mark = @get-current-mark!
+        if not @state.config.allowedOverlap
+            for omk in @state.marks
+                if omk != mark and omk.contours then
+                    bgContours.=concat omk.contours
         if mark?contours
-            @send-cmd \load-region, contours:that
+            @send-cmd \load-region, {contours:that, bgContours}
         else
-            @send-cmd \load-region, contours:[]
+            @send-cmd \load-region, {contours:[], bgContours}
 
     keys: {}
 
     on-key-down: (e) ~>
-        key = e.key
+        key = String.fromCharCode(e.keyCode).to-lower-case!
         if key == 'a'
             @addMark!
         else if key == 'd'
@@ -820,7 +841,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @keys[key] = true
 
     on-key-up: (e) ~>
-        key = e.key
+        key = String.fromCharCode(e.keyCode).to-lower-case!
         if key == ' '
             @prev-tool.activate!
         @keys[key] = false

@@ -20,6 +20,7 @@
     "semantic": "~2.1.8",
     "toastr": "~2.1.2",
     "jquery-ui": "~1.11.4",
-    "jquery.cookie": "jquery-cookie#^1.4.1"
+    "jquery.cookie": "jquery-cookie#^1.4.1",
+    "jquery-form": "^4.1.0"
   }
 }

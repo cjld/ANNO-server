@@ -33,6 +33,10 @@ module.exports = class Guider extends React.Component
         dialog = $ \#addModal
         dialog.modal detachable:false
 
+        upload-dialog = $ \#uploadModal
+        upload-dialog.modal detachable:false
+        @upload-progress = $('#upload-progress').progress();
+
         del-dialog = $ \#delModal
         del-dialog.modal do
             detachable:false
@@ -40,10 +44,43 @@ module.exports = class Guider extends React.Component
                 {selects} = store.get-state!
                 actions.deleteItems selects
 
+        $ \#uploadForm .ajax-form do
+            before-send: ->
+                console.log \before-send
+
+                self.upload-progress.progress 'set active'
+                self.upload-progress.progress 'set label', "File is uploading..."
+                self.upload-progress.progress percent:0
+            upload-progress: (event, position, total, percentComplete) ->
+                console.log &
+                self.upload-progress.progress percent:percentComplete
+            complete: (xhr) ->
+                self.upload-progress.progress 'remove active'
+                self.upload-progress.progress 'set label', "Complete"
+                if xhr.statusText == 'OK'
+                    toastr.success xhr.response-text
+                    self.upload-progress.progress 'set success'
+                else
+                    toastr.error xhr.response-text
+                    self.upload-progress.progress 'set error'
+
+        #$ \#uploadForm .submit ->
+        #    $ \#status .empty!.text "File is uploading..."
+        #    #$ this .ajax-submit do
+        #    #    error: (xhr) ->
+        #    #        toastr.error "Error: " + xhr.status
+        #    #    success: (response) ->
+        #    #        toastr.success response
+        #    return false
+
         if $.cookie('user') == 'admin'
             $ \#addItemBtn .click ~>
                 @set-state modalType:\add
                 dialog.modal \show
+
+            $ \#uploadBtn .click ~>
+                upload-dialog.modal \show
+                $ \#upload-parent .val @state.currentItem?._id
 
             $ \#editItemBtn .click ~>
                 {selects} = store.get-state!
@@ -96,7 +133,10 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
             self.set-state ajaxing: true
-            self.state.currentItem <<< values
+            {selects} = store.get-state!
+            ids = Object.keys(selects)
+            if ids.length == 0
+                self.state.currentItem <<< values
             $.ajax do
                 method: \POST
                 url: \/api/new-object
@@ -163,12 +203,37 @@ module.exports = class Guider extends React.Component
         </div>
         ``
 
+        uploadModal = ``<div className="ui modal" id="uploadModal">
+            <i className="close icon"></i>
+            <div className="header">
+                Upload Items
+            </div>
+            <div className="content">
+            <form id="uploadForm"
+            encType="multipart/form-data"
+            action="/api/upload"
+            method="post">
+                <input type="file" name="userPhoto" multiple/>
+                <input type="submit" value="Upload Image" name="submit" />
+                <input type='text' id='upload-parent' name='parent' style={{display:'none'}} />
+                <div className="ui active progress" id="upload-progress">
+                  <div className="bar">
+                    <div className="progress"></div>
+                  </div>
+                  <div className="label"><span id = "status"></span></div>
+                </div>
+            </form>
+            </div>
+        </div>
+        ``
+
         opClass = "ui disabled item"
         if $?.cookie('user') == 'admin'
             opClass = "ui item"
 
         ``<div>
         {delModal}
+        {uploadModal}
         <div className="ui modal" id="addModal">
             <i className="close icon"></i>
             <div className="header">
@@ -196,6 +261,7 @@ module.exports = class Guider extends React.Component
                     <a className={opClass} id="addItemBtn"><i className="green add circle icon"></i></a>
                     <a className={opClass} id="delItemBtn"><i className="red minus circle icon"></i></a>
                     <a className={opClass} id="editItemBtn"><i className="edit icon"></i></a>
+                    <a className={opClass} id="uploadBtn"><i className="upload icon"></i></a>
                 </div>
 
                 <Breadcrumb/>
