@@ -73,6 +73,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @typeimages = {}
         pending = 0
         for k,v of typeMap
+            text = new paper.PointText
+            text.style =
+                fillColor: 'black'
+                strokeColor: \#666666
+                strokeWidth: 1
+                fontWeight: 'bold'
+            text.content = k
+            g = new paper.Group [text, new paper.Path.Rectangle [0,23,0,0]]
+            @typeimages[k] = new paper.Symbol g
+            g.remove!
             if v.src
                 pending++
                 raster = new paper.Raster v.src
@@ -80,23 +90,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 func = (raster, k) ->
                     raster.visible = true
                     raster.fit-bounds new paper.Rectangle(0,0,35,35)
-                    this.typeimages[k] = new paper.Symbol raster
-                    raster.remove!
+                    g = new paper.Group [raster, new paper.Path.Rectangle [0,70,0,0]]
+                    this.typeimages[k] = new paper.Symbol g
+                    g.remove!
                     pending--
                     if pending == 0
                         @rebuild!
                 raster.on-load = func.bind this, raster, k
-            else
-                text = new paper.PointText
-                text.style =
-                    fillColor: 'black'
-                    strokeColor: \#666666
-                    strokeWidth: 1
-                    fontWeight: 'bold'
-                text.content = k
-                @typeimages[k] = new paper.Symbol text
-                text.remove!
-                #@test-symbol @typeimages[k]
 
     create-cross-symbol: ->
         w = 7
@@ -140,6 +140,49 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @background.style.left = t.x + 'px'
         @background.style.top = t.y + 'px'
 
+    calc-bbox: ->
+        # auto bbox
+        autobox = false
+        updatebox = (obj)->
+            if obj.bounds.area == 0 then return
+            if autobox
+                autobox := autobox.unite obj.bounds
+            else
+                autobox := obj.bounds
+
+        mark = @state.marks[@state.cMark]
+        if mark
+            if mark.contours
+                updatebox @contour-path
+            if mark.paints
+                updatebox @paints.foreground
+                updatebox @paints.background
+            updatebox @current-segments-group
+
+        if @state.autobox
+            if autobox == false
+                if mark?bbox
+                    if @current-box
+                        @current-box.remove!
+                        @current-box = undefined
+                    mark.bbox = undefined
+                    @set-changed!
+                return
+            newbox = {p1:autobox.topLeft{x,y}, p2:autobox.bottomRight{x,y}}
+            if newbox !== mark.bbox
+                mark.bbox = newbox
+                if @current-box
+                    @current-box.remove!
+                paper.project.current-style = @box-style
+                p1 = new paper.Point newbox.p1
+                p2 = new paper.Point newbox.p2
+                @current-box = new paper.Path.Rectangle p1, p2
+                @current-box.selected = true
+                @current-box.closed = true
+                @current-box.mydata = {i:@state.cMark}
+                @box-group.addChild @current-box
+                @set-changed!
+
 
     rebuild: ->
         if @state.hideImage
@@ -157,16 +200,44 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @offset-group.addChild @rebuild-group
         @rebuild-group.apply-matrix = false
         wfactor = 1 / @layer.scaling.x
+        segm-op = if @state.editMode==\pan then 0.5 else 0.5
+        spot-op = if @state.editMode==\pan then 0.8 else 0.8
 
-        paper.project.current-style =
+        @boxtype-group = new paper.Group
+        @rebuild-group.addChild @boxtype-group
+        # draw box
+        @box-style = paper.project.current-style =
             fillColor : new paper.Color 0,0,0,0
             strokeColor : \red
             strokeWidth : 2
             strokeScaling: false
-        segm-op = if @state.editMode==\pan then 0.5 else 0.5
-        spot-op = if @state.editMode==\pan then 0.8 else 0.8
+        @box-group = new paper.Group
+        @rebuild-group.addChild @box-group
+        @current-box = undefined
+        if @state.showMark
+            for i,mark of @state.marks
+                unless mark.bbox? then continue
+                p1 = new paper.Point mark.bbox.p1
+                p2 = new paper.Point mark.bbox.p2
+                path = new paper.Path.Rectangle p1, p2
+                paper.project.current-style = @box-style
+                @box-group.addChild path
+                if @state.showMark and mark.type and @typeimages[mark.type]
+                    paper.project.current-style = {}
+                    type-symbol = @typeimages[mark.type]
+                    symbol = type-symbol.place path.bounds.topLeft.add [path.bounds.width / 2, 0]
+                    # strokeScaling affact symbol, dont know why, TODO
+                    symbol.scale wfactor
+                    @boxtype-group.addChild symbol
+
+                path.mydata = {i}
+                if inte(i,@state.cMark)
+                    @current-box = path
+                    path.selected = true
+                path.closed = true
 
         # draw paints
+        paper.project.current-style = {}
         @paints = {}
         @paints.foreground = new paper.CompoundPath
             ..fillColor = \green
@@ -219,21 +290,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         opacity: if @state.hideImage then 1 else 0.3
                         dashArray: [10, 4]
                     @other-contours.addChild path
-        # draw box
-        @box-group = new paper.Group
-        @rebuild-group.addChild @box-group
-        if @state.showMark
-            for i,mark of @state.marks
-                unless mark.bbox? then continue
-                p1 = new paper.Point mark.bbox.p1
-                p2 = new paper.Point mark.bbox.p2
-                path = new paper.Path.Rectangle p1, p2
-                @box-group.addChild path
-                path.mydata = {i}
-                if inte(i,@state.cMark)
-                    path.selected = true
-                path.closed = true
-                # add rect
 
         paper.project.current-style =
             fillColor : \red
@@ -243,11 +299,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
         # draw segments
         @segments-group = new paper.Group
         @rebuild-group.addChild @segments-group
+        @current-segments-group = new paper.Group
+        @segments-group.addChild @current-segments-group
         for i,mark of @state.marks
             for j,segment of mark.segments.data
                 path = new paper.Path
                 path.opacity = segm-op * if inte(i,@state.cMark) then 1 else 0.5
-                @segments-group.addChild path
                 path.mydata = {i,j}
                 if inte(i,@state.cMark) and
                    inte(j,mark.segments.active.j)
@@ -257,6 +314,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     pt = new paper.Point p
                     path.add pt
                 if @state.smooth then path.smooth!
+                if inte(i,@state.cMark)
+                    @current-segments-group.addChild path
+                else
+                    @segments-group.addChild path
+
+        @calc-bbox!
 
         # draw spots
         @spots-group = new paper.Group
@@ -273,11 +336,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @spots-group.addChild instance
                 instance.mydata = {i,j}
                 if type-symbol
-                    instance = type-symbol.place!
+                    instance = type-symbol.place spot
                     instance.scale wfactor
-                    instance.position = spot
                     @spots-group.addChild instance
 
+        @boxtype-group.bring-to-front!
         paper.view.draw!
 
     componentWillReceiveProps: (next-props) ->
@@ -363,6 +426,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         if data.pcmd == \paint and data.contours?
             color = @state.typeMap[mark.type]?.color
             @gen-contours data.contours, color
+            @calc-bbox!
             paper.view.draw!
 
             mark.contours = data.contours
@@ -410,6 +474,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @layer.scale factor, center
         for ins in @spots-group.children
             ins.scale 1.0/factor
+        for ins in @boxtype-group.children
+            ins.scale 1.0/factor
 
     componentDidMount: ->
         $ \body .css \overflow, \hidden
@@ -439,7 +505,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 stroke: true
                 tolerance: 5
             hit-result = @spots-group.hit-test point, hitOptions
-            console.log hit-result
             @drag-func = undefined
             if hit-result?item?mydata
                 {i,j} = that
@@ -794,9 +859,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 cpath.strokeWidth = 0
                 cpath.remove!
                 path.remove!
+                paper.project.current-style = {}
+                npath = new paper.CompoundPath [npath]
+                npath.fillColor = cpath.fillColor
                 @paints[@state.paintState] = cpath = npath
                 @rebuild-group.addChild cpath
                 mark.paints = { [k, v.exportJSON!] for k,v of @paints }
+                @calc-bbox!
 
                 @set-changed!
                 #cpath.smooth!
@@ -805,6 +874,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
             @drag-func = (e) ~>
                 point = e.point.transform tmatrix
+                @cursor.position = point
                 lpoint = e.lastPoint.transform tmatrix
                 d = e.delta.normalize!.rotate 90 .multiply @state.paint-brush-size
                 p = new paper.Path
@@ -1114,7 +1184,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         options={this.modeOption} />
                     {paintDropdown}
 
-                    <div className="ui horizontal divider" >View</div>
+                    <div className="ui horizontal divider" >Config</div>
                     <MyCheckbox
                         text="Hide image"
                         dataOwner={[this,"hideImage"]}/>

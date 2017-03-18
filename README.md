@@ -2,7 +2,7 @@
 [x]  dataset config
 [ ]  speed up big image
 [ ]  well git maintain
-[ ]  file uploader
+[x]  file uploader
 [ ]  crash restart
 [ ]  admin
 [ ]  help update
@@ -11,7 +11,8 @@
 [x]  page error
 [ ]  less request
 [ ]  mask cache
-[ ]  bbox delete
+[x]  bbox delete
+[ ]  write tester
 
 // fix init session change bug
 // tool switch
