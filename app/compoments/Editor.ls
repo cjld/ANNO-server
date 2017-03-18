@@ -27,6 +27,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.cMark = \0
         @state.smooth = false
         @state.showMark = true
+        @state.autobox = false
         @state.hideImage = false
         @state.hideAnnotation = false
         @state.editMode = "ps"
@@ -60,7 +61,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     shouldComponentUpdate: (next-props, next-state) ->
         if next-state.typeMap !== @state.typeMap
-            @create-typeimage-symbol!
+            @create-typeimage-symbol next-state.typeMap
             if next-state.config.autoType
                 if @state.marks[0].type==""
                     @state.marks[0].type = next-state.config.types[0].types[0].title
@@ -68,14 +69,34 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @switchTool next-state.editMode
         return true
 
-    create-typeimage-symbol: ->
+    create-typeimage-symbol: (typeMap)->
         @typeimages = {}
-        for k,v of @state.typeMap
+        pending = 0
+        for k,v of typeMap
             if v.src
+                pending++
                 raster = new paper.Raster v.src
-                @typeimages[k] = new paper.Symbol raster
-                raster.remove!
-        #@test-symbol @typeimages[k]
+                raster.visible = false
+                func = (raster, k) ->
+                    raster.visible = true
+                    raster.fit-bounds new paper.Rectangle(0,0,35,35)
+                    this.typeimages[k] = new paper.Symbol raster
+                    raster.remove!
+                    pending--
+                    if pending == 0
+                        @rebuild!
+                raster.on-load = func.bind this, raster, k
+            else
+                text = new paper.PointText
+                text.style =
+                    fillColor: 'black'
+                    strokeColor: \#666666
+                    strokeWidth: 1
+                    fontWeight: 'bold'
+                text.content = k
+                @typeimages[k] = new paper.Symbol text
+                text.remove!
+                #@test-symbol @typeimages[k]
 
     create-cross-symbol: ->
         w = 7
@@ -201,17 +222,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
         # draw box
         @box-group = new paper.Group
         @rebuild-group.addChild @box-group
-        for i,mark of @state.marks
-            unless mark.bbox? then continue
-            p1 = new paper.Point mark.bbox.p1
-            p2 = new paper.Point mark.bbox.p2
-            path = new paper.Path.Rectangle p1, p2
-            @box-group.addChild path
-            path.mydata = {i}
-            if inte(i,@state.cMark)
-                path.selected = true
-            path.closed = true
-            # add rect
+        if @state.showMark
+            for i,mark of @state.marks
+                unless mark.bbox? then continue
+                p1 = new paper.Point mark.bbox.p1
+                p2 = new paper.Point mark.bbox.p2
+                path = new paper.Path.Rectangle p1, p2
+                @box-group.addChild path
+                path.mydata = {i}
+                if inte(i,@state.cMark)
+                    path.selected = true
+                path.closed = true
+                # add rect
 
         paper.project.current-style =
             fillColor : \red
@@ -252,7 +274,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 instance.mydata = {i,j}
                 if type-symbol
                     instance = type-symbol.place!
-                    instance.scale 0.3 * wfactor
+                    instance.scale wfactor
                     instance.position = spot
                     @spots-group.addChild instance
 
@@ -406,7 +428,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
 
         @create-cross-symbol!
-        @create-typeimage-symbol!
+        @create-typeimage-symbol @state.typeMap
         #@rebuild!
         @spotting-tool = new paper.Tool
 
@@ -1100,7 +1122,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         text="Hide annotation"
                         dataOwner={[this,"hideAnnotation"]}/>
                     <MyCheckbox
-                        text="Show mark"
+                        text="Auto bounding box"
+                        dataOwner={[this,"autobox"]}/>
+                    <MyCheckbox
+                        text="Show bounding box"
                         dataOwner={[this,"showMark"]}/>
                     <MyCheckbox
                         text="Smooth"
