@@ -68,6 +68,10 @@
     overflow-x: hidden;
 }
 
+a:hover {
+    cursor: pointer;
+}
+
  /*
  * # Semantic UI - 2.1.7
  * https://github.com/Semantic-Org/Semantic-UI

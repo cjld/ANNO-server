@@ -11,6 +11,7 @@
 [x]  page error
 [ ]  less request
 [ ]  mask cache
+[ ]  bbox delete
 
 // fix init session change bug
 // tool switch

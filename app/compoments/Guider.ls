@@ -60,6 +60,8 @@ module.exports = class Guider extends React.Component
                 if xhr.statusText == 'OK'
                     toastr.success xhr.response-text
                     self.upload-progress.progress 'set success'
+                    upload-dialog.modal \hide
+                    actions.fetchContent!
                 else
                     toastr.error xhr.response-text
                     self.upload-progress.progress 'set error'
@@ -213,9 +215,11 @@ module.exports = class Guider extends React.Component
             encType="multipart/form-data"
             action="/api/upload"
             method="post">
-                <input type="file" name="userPhoto" multiple/>
-                <input type="submit" value="Upload Image" name="submit" />
+                <input type="file" name="userPhoto" multiple className="ui small button"/>
+                <div className="ui hidden divider" />
+                <input type="submit" value="Upload Image" name="submit" className="ui green button"/>
                 <input type='text' id='upload-parent' name='parent' style={{display:'none'}} />
+                <div className="ui hidden divider" />
                 <div className="ui active progress" id="upload-progress">
                   <div className="bar">
                     <div className="progress"></div>

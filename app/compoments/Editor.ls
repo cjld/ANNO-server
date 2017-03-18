@@ -28,6 +28,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.smooth = false
         @state.showMark = true
         @state.hideImage = false
+        @state.hideAnnotation = false
         @state.editMode = "ps"
         @state.listState = "all"
         @state.autosave = true
@@ -63,6 +64,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if next-state.config.autoType
                 if @state.marks[0].type==""
                     @state.marks[0].type = next-state.config.types[0].types[0].title
+        if next-state.editMode != @state.editMode
+            @switchTool next-state.editMode
         return true
 
     create-typeimage-symbol: ->
@@ -122,6 +125,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @background?style.opacity = 0
         else
             @background?style.opacity = 1
+        if @state.hideAnnotation
+            @canvas.style.opacity = 0
+        else
+            @canvas.style.opacity = 1
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
@@ -129,11 +136,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @offset-group.addChild @rebuild-group
         @rebuild-group.apply-matrix = false
         wfactor = 1 / @layer.scaling.x
+
         paper.project.current-style =
-            fillColor : \red
-            strokeColor : \black
-            strokeWidth : wfactor
-        segm-op = if @state.editMode==\pan then 0.5 else 1
+            fillColor : new paper.Color 0,0,0,0
+            strokeColor : \red
+            strokeWidth : 2
+            strokeScaling: false
+        segm-op = if @state.editMode==\pan then 0.5 else 0.5
         spot-op = if @state.editMode==\pan then 0.8 else 0.8
 
         # draw paints
@@ -187,7 +196,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         strokeColor: \black
                         strockWidth: 2
                         opacity: if @state.hideImage then 1 else 0.3
-                        dashArray: [10,4]
+                        dashArray: [10, 4]
                     @other-contours.addChild path
         # draw box
         @box-group = new paper.Group
@@ -197,7 +206,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             p1 = new paper.Point mark.bbox.p1
             p2 = new paper.Point mark.bbox.p2
             path = new paper.Path.Rectangle p1, p2
-            path.opacity = if inte(i,@state.cMark) then 0.8 else 0.3
             @box-group.addChild path
             path.mydata = {i}
             if inte(i,@state.cMark)
@@ -205,6 +213,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             path.closed = true
             # add rect
 
+        paper.project.current-style =
+            fillColor : \red
+            strokeColor : \black
+            strokeWidth : 2
 
         # draw segments
         @segments-group = new paper.Group
@@ -242,7 +254,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     instance = type-symbol.place!
                     instance.scale 0.3 * wfactor
                     instance.position = spot
-                    @rebuild-group.addChild instance
+                    @spots-group.addChild instance
 
         paper.view.draw!
 
@@ -295,7 +307,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeColor: \black
             strockWidth: 2
             opacity: 1
-            dashArray: [10,4]
+            dashArray: [10, 4]
+            strokeScaling: false
         @rebuild-group.addChild path
         @contour-path = path
 
@@ -366,11 +379,15 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ss = Math.min s1.width/s2.width, s1.height/s2.height
             @state.paint-brush-size /= ss
             @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
-            @layer.scale ss, [0,0]
+            @scale ss, [0,0]
             #@layer.translate @layer.matrix.translation
             @update-backgroud!
             @forceUpdate!
 
+    scale: (factor, center)->
+        @layer.scale factor, center
+        for ins in @spots-group.children
+            ins.scale 1.0/factor
 
     componentDidMount: ->
         $ \body .css \overflow, \hidden
@@ -379,6 +396,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..modal detachable:false
 
         paper.setup 'canvas'
+        @canvas = $ \canvas .0
         @background = $ '.myCanvas img' .0
         @layer = paper.project.activeLayer
             ..apply-matrix = false
@@ -428,6 +446,21 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @pan-tool.on-key-down e
         @spotting-tool.on-mouse-move = (e) ~>
             @pan-tool.on-mouse-move e
+            tmatrix = @spots-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            hitOptions =
+                stroke: true
+                tolerance: 5
+            hit-result = @spots-group.hit-test point, hitOptions
+            if hit-result?item?mydata
+                {i,j} = that
+                if e.modifiers.shift
+                    @canvas.style.cursor = "no-drop"
+                    return
+                @canvas.style.cursor = "move"
+            else
+                @canvas.style.cursor = "crosshair"
+
 
         @segment-tool = new paper.Tool
 
@@ -509,8 +542,55 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @pan-tool.on-key-down e
         @segment-tool.on-mouse-move = (e) ~>
             @pan-tool.on-mouse-move e
+            c = @state.cMark
+            if c? then mark = @state.marks[c]
+            unless mark then return
+            tmatrix = @segments-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+            hitOptions =
+                stroke: true
+                fill: true
+                segments: true
+                tolerance: 5
+            hit-result = @segments-group.hit-test point, hitOptions
+            if e.modifiers.control or mark.segments.data.length == 0
+                @canvas.style.cursor = \copy
+            else
+                #if hit-result?item?mydata?i != @state.cMark
+                #    @set-state cMark:i
+                if hit-result?item?mydata
+                    {i,j} = that
+                    if inte i,@state.cMark
+                        mark = @state.marks[i]
+                        poly = mark.segments.data[j]
+                        if hit-result.segment
+                            k = hit-result.item.segments.index-of that
+                            point = poly[k]
+                        if hit-result.location
+                            k = hit-result.location.index + 1
+                        switch hit-result?type
+                        case \fill
+                            if e.modifiers.shift
+                                @canvas.style.cursor = \no-drop
+                            else
+                                @canvas.style.cursor = \move
+                        case \segment
+                            if e.modifiers.shift
+                                @canvas.style.cursor = \no-drop
+                            else
+                                @canvas.style.cursor = \pointer
+                        case \stroke
+                            if e.modifiers.shift
+                                @canvas.style.cursor = \no-drop
+                            else
+                                @canvas.style.cursor = \pointer
+                        return
+                @canvas.style.cursor = \crosshair
 
         @box-tool = new paper.Tool
+
+
+
         @box-tool.on-mouse-down = (e) ~>
             @drag-func = undefined
             mark = @get-current-mark!
@@ -546,13 +626,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 else
                     q1 = q2 = q3 = q4 = true
 
-                @drag-func = (e) ~>
-                    delta = e.delta.multiply tmatrix.scaling
-                    if q1 then mark.bbox.p1.x += delta.x
-                    if q2 then mark.bbox.p2.x += delta.x
-                    if q3 then mark.bbox.p1.y += delta.y
-                    if q4 then mark.bbox.p2.y += delta.y
-                    @rebuild!
+                if e.modifiers.shift
+                    mark.bbox = undefined
+                else
+                    @drag-func = (e) ~>
+                        delta = e.delta.multiply tmatrix.scaling
+                        if q1 then mark.bbox.p1.x += delta.x
+                        if q2 then mark.bbox.p2.x += delta.x
+                        if q3 then mark.bbox.p1.y += delta.y
+                        if q4 then mark.bbox.p2.y += delta.y
+                        @rebuild!
                 @rebuild!
                 return
 
@@ -564,11 +647,66 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @rebuild!
         @box-tool.on-mouse-drag = ~> @drag-func it
         @box-tool.on-key-down = ~> @pan-tool.on-key-down it
-        @box-tool.on-mouse-move = ~> @pan-tool.on-mouse-move it
+        @box-tool.on-mouse-move = (e) ~>
+            @pan-tool.on-mouse-move e
+            mark = @get-current-mark!
+            unless mark then return
+            tmatrix = @rebuild-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+
+            hitOptions =
+                stroke: true
+                fill: true
+                segments: true
+                tolerance: 5
+            hit-result = @box-group.hit-test point, hitOptions
+            if hit-result?item
+                if e.modifiers.shift
+                    @canvas.style.cursor = 'no-drop'
+                    return
+                i = hit-result.item.mydata.i
+                if not inte i, @state.cMark
+                    @set-state cMark:i
+                    mark = @get-current-mark!
+                if hit-result.segment?
+                    p = hit-result.segment.point
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else if hit-result.location?
+                    pa = hit-result.location._segment1.point
+                    pb = hit-result.location._segment2.point
+                    p = (pa.add pb).multiply 0.5
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else
+                    q1 = q2 = q3 = q4 = true
+                count = 0
+                if mark.bbox.p1.x > mark.bbox.p2.x
+                    [q1,q2] = [q2,q1]
+                if mark.bbox.p1.y > mark.bbox.p2.y
+                    [q3,q4] = [q4,q3]
+                for q in [q1,q2,q3,q4]
+                    if q then count++
+                if count == 4
+                    @canvas.style.cursor = "move"
+                else if count == 1 and (q1 or q2)
+                    @canvas.style.cursor = "ew-resize"
+                else if count == 1 and (q3 or q4)
+                    @canvas.style.cursor = "ns-resize"
+                else if count == 2 and ((q1 and q3) or (q2 and q4))
+                    @canvas.style.cursor = "nwse-resize"
+                else
+                    @canvas.style.cursor = "nesw-resize"
+            else
+                @canvas.style.cursor = "crosshair"
 
         @zoom = (factor, center) ~>
             @state.paint-brush-size /= factor
-            @layer.scale factor, center
+            @scale factor, center
             @update-backgroud!
             @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
             paper.view.draw!
@@ -722,6 +860,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             else
                 @zoom 1/1.1, {x:ee.offsetX, y:ee.offsetY}
             e.prevent-default!
+
+        @switchTool!
         @componentDidUpdate!
 
     componentWillUnmount: ->
@@ -733,25 +873,37 @@ module.exports = class Editor extends React.Component implements TimerMixin
         (TimerMixin.componentWillUnmount.bind @)!
         #@socket.disconnect!
 
-
-    componentDidUpdate: ->
+    switchTool: (editMode) ->
         @cursor.visible = false
-        if @state.editMode == \spotting
+        ucursor = ""
+        if not editMode
+            editMode = @state.editMode
+        if editMode == \spotting
             @spotting-tool.activate!
-        else if @state.editMode == \segment
+            ucursor = "crosshair"
+        else if editMode == \segment
             @segment-tool.activate!
-        else if @state.editMode == \pan
+            ucursor = "crosshair"
+        else if editMode == \pan
             @pan-tool.activate!
-        else if @state.editMode == \paint
+            ucursor = "move"
+        else if editMode == \paint
             @paint-tool.activate!
             @cursor.visible = true
-        else if @state.editMode == \ps
+            ucursor = "none"
+        else if editMode == \ps
             @ps-tool.activate!
             @cursor.visible = true
-        else if @state.editMode == \box
+            ucursor = "none"
+        else if editMode == \box
             @box-tool.activate!
+            ucursor = "crosshair"
         else
             @empty-tool.activate!
+        @canvas.style.cursor = ucursor
+
+
+    componentDidUpdate: ->
         @rebuild!
 
     save: (savestr)~>
@@ -772,7 +924,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             success: ~>
                 if @state.saveStatus == \saving
                     @set-state saveStatus: \saved
-                toastr.success savestr
+                if savestr
+                    toastr.success savestr
 
     switchCurrentMark: ~>
         @set-state cMark:it
@@ -836,14 +989,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else if key == ' '
             e.prevent-default!
             if not @keys[key]
-                @prev-tool = paper.tool
-                @pan-tool.activate!
+                @prev-mode = @state.editMode
+                @set-state editMode:\pan
         @keys[key] = true
 
     on-key-up: (e) ~>
         key = String.fromCharCode(e.keyCode).to-lower-case!
         if key == ' '
-            @prev-tool.activate!
+            @set-state editMode:@prev-mode
         @keys[key] = false
 
     find-neighbour: (is-next) ~>
@@ -941,8 +1094,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
                     <div className="ui horizontal divider" >View</div>
                     <MyCheckbox
-                        text="Hide Image"
+                        text="Hide image"
                         dataOwner={[this,"hideImage"]}/>
+                    <MyCheckbox
+                        text="Hide annotation"
+                        dataOwner={[this,"hideAnnotation"]}/>
                     <MyCheckbox
                         text="Show mark"
                         dataOwner={[this,"showMark"]}/>
