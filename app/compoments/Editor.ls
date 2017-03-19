@@ -205,6 +205,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @check-changed!
         if @rebuild-group
             @rebuild-group.remove!
+        paper.project.current-style = {}
         @rebuild-group = new paper.Group
         @offset-group.addChild @rebuild-group
         @rebuild-group.apply-matrix = false
@@ -220,7 +221,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeColor : \red
             strokeWidth : 2
             strokeScaling: false
-        paper.project.current-style = {}
         @box-group = new paper.Group
         @rebuild-group.addChild @box-group
         @current-box = undefined
@@ -259,10 +259,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..fillColor = \red
         @paints.hair = new paper.CompoundPath
             ..fillColor = \yellow
+        @strokeStyle =
+            strokeWidth: 0
+            opacity: 0.7
+            closed: true
         for k,v of @paints
-            v.strokeWidth = 0
-            v.opacity = 0.7
-            v.closed = true
+            v <<< @strokeStyle
         @rebuild-group.addChildren [ v for k,v of @paints ]
         paint-json = @state.marks[@state.cMark]?paints
         if paint-json
@@ -877,6 +879,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 paper.project.current-style = {}
                 npath = new paper.CompoundPath [npath]
                 npath.fillColor = cpath.fillColor
+                npath <<< @strokeStyle
                 @paints[@state.paintState] = cpath = npath
                 @rebuild-group.addChild cpath
                 mark.paints = { [k, v.exportJSON!] for k,v of @paints }

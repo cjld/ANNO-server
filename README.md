@@ -15,6 +15,7 @@
 [ ]  write tester
 [ ]  auto zoom bbox
 [ ]  right mouse select
+[ ]  strock disappear
 
 // fix init session change bug
 // tool switch
