@@ -31,10 +31,15 @@ class MyComponent extends React.Component
 class MyCheckbox extends MyComponent
     componentDidMount: ->
         jq = $ ReactDOM.findDOMNode this
-        cb = jq.checkbox do
+        @cb = jq.checkbox do
             onChecked: ~> @set-data true
             onUnchecked: ~> @set-data false
-        cb.checkbox if @state.data then "set checked" else "set unchecked"
+        @cb.checkbox if @state.data then "set checked" else "set unchecked"
+
+    shouldComponentUpdate: (next-props, next-state)->
+        if next-props.data == undefined then return false
+        @cb.checkbox if next-props.data then "set checked" else "set unchecked"
+        return false
 
     render: ->
         ``<div className="ui checkbox">

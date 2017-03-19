@@ -65,6 +65,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if next-state.config.autoType
                 if @state.marks[0].type==""
                     @state.marks[0].type = next-state.config.types[0].types[0].title
+            for k,v of next-state.config
+                if (@state.has-own-property k) and @state[k] != v
+                    @set-state {"#{k}":v}
         if next-state.editMode != @state.editMode
             @switchTool next-state.editMode
         return true
@@ -165,6 +168,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     if @current-box
                         @current-box.remove!
                         @current-box = undefined
+                    if @current-type
+                        @current-type.remove!
+                        @current-type = undefined
                     mark.bbox = undefined
                     @set-changed!
                 return
@@ -180,6 +186,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @current-box.selected = true
                 @current-box.closed = true
                 @current-box.mydata = {i:@state.cMark}
+
+                if @current-type
+                    @current-type.position = @current-box.bounds.topLeft.add [@current-box.bounds.width / 2, 0]
                 @box-group.addChild @current-box
                 @set-changed!
 
@@ -206,29 +215,34 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @boxtype-group = new paper.Group
         @rebuild-group.addChild @boxtype-group
         # draw box
-        @box-style = paper.project.current-style =
+        @box-style =
             fillColor : new paper.Color 0,0,0,0
             strokeColor : \red
             strokeWidth : 2
             strokeScaling: false
+        paper.project.current-style = {}
         @box-group = new paper.Group
         @rebuild-group.addChild @box-group
         @current-box = undefined
+        @current-type = undefined
         if @state.showMark
             for i,mark of @state.marks
                 unless mark.bbox? then continue
                 p1 = new paper.Point mark.bbox.p1
                 p2 = new paper.Point mark.bbox.p2
                 path = new paper.Path.Rectangle p1, p2
-                paper.project.current-style = @box-style
+                path <<< @box-style
+                #paper.project.current-style = @box-style
                 @box-group.addChild path
                 if @state.showMark and mark.type and @typeimages[mark.type]
-                    paper.project.current-style = {}
+                    #paper.project.current-style = {}
                     type-symbol = @typeimages[mark.type]
                     symbol = type-symbol.place path.bounds.topLeft.add [path.bounds.width / 2, 0]
                     # strokeScaling affact symbol, dont know why, TODO
                     symbol.scale wfactor
                     @boxtype-group.addChild symbol
+                    if inte(i,@state.cMark)
+                        @current-type = symbol
 
                 path.mydata = {i}
                 if inte(i,@state.cMark)
@@ -289,6 +303,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         strockWidth: 2
                         opacity: if @state.hideImage then 1 else 0.3
                         dashArray: [10, 4]
+                        strokeScaling: false
                     @other-contours.addChild path
 
         paper.project.current-style =
@@ -1187,22 +1202,22 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     <div className="ui horizontal divider" >Config</div>
                     <MyCheckbox
                         text="Hide image"
-                        dataOwner={[this,"hideImage"]}/>
+                        dataOwner={[this,"hideImage"]} data={this.state.hideImage}/>
                     <MyCheckbox
                         text="Hide annotation"
-                        dataOwner={[this,"hideAnnotation"]}/>
+                        dataOwner={[this,"hideAnnotation"]} data={this.state.hideAnnotation}/>
                     <MyCheckbox
                         text="Auto bounding box"
-                        dataOwner={[this,"autobox"]}/>
+                        dataOwner={[this,"autobox"]} data={this.state.autobox}/>
                     <MyCheckbox
                         text="Show bounding box"
-                        dataOwner={[this,"showMark"]}/>
+                        dataOwner={[this,"showMark"]} data={this.state.showMark}/>
                     <MyCheckbox
                         text="Smooth"
-                        dataOwner={[this, "smooth"]}/>
+                        dataOwner={[this, "smooth"]} data={this.state.smooth}/>
                     <MyCheckbox
                         text="Autosave"
-                        dataOwner={[this, "autosave"]}/>
+                        dataOwner={[this, "autosave"]} data={this.state.autosave}/>
 
                     <div className="ui horizontal divider" >Marks</div>
                     <div className="ui mini positive button"

@@ -1,5 +1,549 @@
-all-data = {
-    "0": {
+traffic-sign = [
+{
+    "description": "Instruction traffic-sign",
+    "types":[
+            {
+                "src": "http://166.111.71.64:9201/marks/i10.png",
+                "title": "i10"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i11.png",
+                "title": "i11"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i12.png",
+                "title": "i12"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i13.png",
+                "title": "i13"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i14.png",
+                "title": "i14"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i15.png",
+                "title": "i15"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i1.png",
+                "title": "i1"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i2.png",
+                "title": "i2"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i3.png",
+                "title": "i3"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i4.png",
+                "title": "i4"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i5.png",
+                "title": "i5"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i6.png",
+                "title": "i6"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i7.png",
+                "title": "i7"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i8.png",
+                "title": "i8"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/i9.png",
+                "title": "i9"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/il50.png",
+                "title": "il50"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/ip.png",
+                "title": "ip"
+            },
+            {
+                "title": "io"
+                "color": "blue"
+            }
+    ]
+},
+{
+    "description": "Warning traffic-sign",
+    "types":[
+
+            {
+                "src": "http://166.111.71.64:9201/marks/w10.png",
+                "title": "w10"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w11.png",
+                "title": "w11"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w12.png",
+                "title": "w12"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w13.png",
+                "title": "w13"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w14.png",
+                "title": "w14"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w15.png",
+                "title": "w15"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w16.png",
+                "title": "w16"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w17.png",
+                "title": "w17"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w18.png",
+                "title": "w18"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w19.png",
+                "title": "w19"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w1.png",
+                "title": "w1"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w20.png",
+                "title": "w20"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w21.png",
+                "title": "w21"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w22.png",
+                "title": "w22"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w23.png",
+                "title": "w23"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w24.png",
+                "title": "w24"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w25.png",
+                "title": "w25"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w26.png",
+                "title": "w26"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w27.png",
+                "title": "w27"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w28.png",
+                "title": "w28"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w29.png",
+                "title": "w29"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w2.png",
+                "title": "w2"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w30.png",
+                "title": "w30"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w31.png",
+                "title": "w31"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w32.png",
+                "title": "w32"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w33.png",
+                "title": "w33"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w34.png",
+                "title": "w34"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w35.png",
+                "title": "w35"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w36.png",
+                "title": "w36"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w37.png",
+                "title": "w37"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w38.png",
+                "title": "w38"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w39.png",
+                "title": "w39"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w3.png",
+                "title": "w3"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w40.png",
+                "title": "w40"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w41.png",
+                "title": "w41"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w42.png",
+                "title": "w42"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w43.png",
+                "title": "w43"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w44.png",
+                "title": "w44"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w45.png",
+                "title": "w45"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w46.png",
+                "title": "w46"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w47.png",
+                "title": "w47"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w48.png",
+                "title": "w48"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w49.png",
+                "title": "w49"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w4.png",
+                "title": "w4"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w50.png",
+                "title": "w50"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w51.png",
+                "title": "w51"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w52.png",
+                "title": "w52"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w53.png",
+                "title": "w53"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w54.png",
+                "title": "w54"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w55.png",
+                "title": "w55"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w56.png",
+                "title": "w56"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w57.png",
+                "title": "w57"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w58.png",
+                "title": "w58"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w59.png",
+                "title": "w59"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w5.png",
+                "title": "w5"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w60.png",
+                "title": "w60"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w61.png",
+                "title": "w61"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w62.png",
+                "title": "w62"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w63.png",
+                "title": "w63"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w64.png",
+                "title": "w64"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w65.png",
+                "title": "w65"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w66.png",
+                "title": "w66"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w67.png",
+                "title": "w67"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w6.png",
+                "title": "w6"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w7.png",
+                "title": "w7"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w8.png",
+                "title": "w8"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/w9.png",
+                "title": "w9"
+            },
+            {
+                "color": "yellow"
+                "title": "wo"
+            }
+    ]
+},
+{
+    "description": "Prohibit traffic-sign",
+    "types":[
+
+            {
+                "src": "http://166.111.71.64:9201/marks/p10.png",
+                "title": "p10"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p11.png",
+                "title": "p11"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p12.png",
+                "title": "p12"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p13.png",
+                "title": "p13"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p14.png",
+                "title": "p14"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p15.png",
+                "title": "p15"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p16.png",
+                "title": "p16"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p17.png",
+                "title": "p17"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p18.png",
+                "title": "p18"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p19.png",
+                "title": "p19"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p1.png",
+                "title": "p1"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p20.png",
+                "title": "p20"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p21.png",
+                "title": "p21"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p22.png",
+                "title": "p22"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p23.png",
+                "title": "p23"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p24.png",
+                "title": "p24"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p25.png",
+                "title": "p25"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p26.png",
+                "title": "p26"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p27.png",
+                "title": "p27"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p28.png",
+                "title": "p28"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p29.png",
+                "title": "p29"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p2.png",
+                "title": "p2"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p3.png",
+                "title": "p3"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p4.png",
+                "title": "p4"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p5.png",
+                "title": "p5"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p6.png",
+                "title": "p6"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p7.png",
+                "title": "p7"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p8.png",
+                "title": "p8"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/p9.png",
+                "title": "p9"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pa10.png",
+                "title": "pa10"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pb.png",
+                "title": "pb"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pc.png",
+                "title": "pc"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pd.png",
+                "title": "pd"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pe.png",
+                "title": "pe"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pg.png",
+                "title": "pg"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/ph3.5.png",
+                "title": "ph3"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pl40.png",
+                "title": "pl40"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pm10.png",
+                "title": "pm10"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pne.png",
+                "title": "pne"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pnl.png",
+                "title": "pnl"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pn.png",
+                "title": "pn"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pr40.png",
+                "title": "pr40"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/ps.png",
+                "title": "ps"
+            },
+            {
+                "src": "http://166.111.71.64:9201/marks/pw3.png",
+                "title": "pw3"
+            },
+            {
+                "color": "red"
+                "title": "p0"
+            }
+    ]
+},
+]
+
+all-data = [
+    {
         "description": "person & Accessory",
         "types": [{
             "title": "person",
@@ -21,7 +565,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/33.jpg"
         }]
     },
-    "1": {
+    {
         "description": "Vehicle",
         "types": [{
             "title": "bicycle",
@@ -49,7 +593,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/9.jpg"
         }]
     },
-    "2": {
+    {
         "description": "Outdoor Obj.",
         "types": [{
             "title": "traffic light",
@@ -68,7 +612,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/15.jpg"
         }]
     },
-    "3": {
+    {
         "description": "Animal",
         "types": [{
             "title": "bird",
@@ -102,7 +646,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/25.jpg"
         }]
     },
-    "4": {
+    {
         "description": "Sports",
         "types": [{
             "title": "frisbee",
@@ -136,7 +680,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/43.jpg"
         }]
     },
-    "5": {
+    {
         "description": "Kitchenware",
         "types": [{
             "title": "bottle",
@@ -161,7 +705,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/51.jpg"
         }]
     },
-    "6": {
+    {
         "description": "food",
         "types": [{
             "title": "banana",
@@ -195,7 +739,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/61.jpg"
         }]
     },
-    "7": {
+    {
         "description": "Furniture",
         "types": [{
             "title": "chair",
@@ -217,7 +761,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/70.jpg"
         }]
     },
-    "8": {
+    {
         "description": "Electronics",
         "types": [{
             "title": "tv",
@@ -239,7 +783,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/77.jpg"
         }]
     },
-    "9": {
+    {
         "description": "Appliance",
         "types": [{
             "title": "microwave",
@@ -258,7 +802,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/82.jpg"
         }]
     },
-    "10": {
+    {
         "description": "Indoor objects",
         "types": [{
             "title": "book",
@@ -283,7 +827,7 @@ all-data = {
             "src": "http://mscoco.org/static/icons/90.jpg"
         }]
     }
-}
+]
 
 foods = '''﻿苹果	#FFEC8B
 橙子	#FFC125

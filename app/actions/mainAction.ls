@@ -3,6 +3,11 @@ require! {
     \./libs/mainAction : {Actions, create-main-actions}
 }
 
+
+rand-float-from-sth = (s) ->
+    md5s = md5 s
+    return parseInt(md5s, 16) / Math.pow(16, md5s.length)
+
 def-vals =
     loadingCounter: true
     counter: {}
@@ -41,7 +46,7 @@ class MainActions extends Actions
 
         # update items
         @gen-dep [\fatherId, \page, \tabType], ~>
-            # dirty here
+            # dirty here FIXME
             actions.fetchContent!
             actions.findAncestor!
             return {}
@@ -55,6 +60,12 @@ class MainActions extends Actions
             for k,v of it.config.types
                 for i in v.types
                     typeMap[i.title] = i.{src, color}
+                    if i.color == undefined
+                        c = new paper.Color \red
+                        c.hue = 255 * rand-float-from-sth i.title
+                        typeMap[i.title].color = c.toCSS!
+
+
             return {typeMap}
 
     connect-socket: ->

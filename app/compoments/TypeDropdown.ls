@@ -10,7 +10,7 @@ module.exports = class TypeDropdown extends MyComponent
     ->
         super ...
         store.connect-to-component this, [
-            \config
+            \config, \typeMap
         ]
 
     componentDidMount: ->
@@ -24,18 +24,18 @@ module.exports = class TypeDropdown extends MyComponent
             # target: 'body'
 
     shouldComponentUpdate: (next-props, next-state) ->
-        res = next-props.data != @state.data or next-state.config !== @state.config
+        res = next-props.data != @state.data or next-state.typeMap !== @state.typeMap
         @state.data = next-props.data
         res
 
     render: ->
         text = if @state.data == "" then "Please select" else @state.data
 
-        img-url = types.url-map[@state.data]?.src
+        img-url = @state.typeMap[@state.data]?.src
         if img-url? then imgui = ``<img src={imgUrl} />``
 
         types-ui = []
-        type-data = types.all-data
+        type-data = []
         if @state.config?types
             type-data = that
         for k,v of type-data

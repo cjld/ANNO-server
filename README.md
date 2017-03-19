@@ -13,6 +13,8 @@
 [ ]  mask cache
 [x]  bbox delete
 [ ]  write tester
+[ ]  auto zoom bbox
+[ ]  right mouse select
 
 // fix init session change bug
 // tool switch
