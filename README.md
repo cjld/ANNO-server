@@ -16,7 +16,10 @@
 [ ]  auto zoom bbox
 [ ]  right mouse select
 [x]  strock disappear
+[x]  spots disappear
 [ ]  free paint brush size bug
+[ ]  strock width change
+[ ]  complex path draw
 
 // fix init session change bug
 // tool switch

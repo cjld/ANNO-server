@@ -311,9 +311,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     @other-contours.addChild path
 
         paper.project.current-style =
-            fillColor : \red
-            strokeColor : \black
             strokeWidth : 2
+            strokeScaling: false
 
         # draw segments
         @segments-group = new paper.Group
@@ -344,6 +343,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @calc-bbox!
 
         # draw spots
+        paper.project.current-style = {}
         @spots-group = new paper.Group
         @rebuild-group.addChild @spots-group
         for i,mark of @state.marks
