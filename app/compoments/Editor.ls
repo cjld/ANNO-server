@@ -192,6 +192,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 if @current-type
                     @current-type.position = @current-box.bounds.topLeft.add [@current-box.bounds.width / 2, 0]
                 @box-group.addChild @current-box
+                paper.project.current-style = {}
                 @set-changed!
 
 

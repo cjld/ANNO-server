@@ -20,6 +20,10 @@
 [ ]  free paint brush size bug
 [ ]  strock width change
 [ ]  complex path draw
+[ ]  quick type
+        *   common Object
+        *   shortcut
+        *   addition text
 
 // fix init session change bug
 // tool switch
