@@ -142,6 +142,28 @@ root-content =
                 一个多边形。
                 shift加鼠标点击可以删除多边形或者多边形的某一个顶点，鼠标点击多边形的边缘可以增加多边形的顶点。</p>
             </div>``
+        *   title: "快捷键一览"
+            url: "shortcut"
+            content: ``<div>
+                <div className="ui segment">
+                    <video controls="controls" src="" style={{width:'100%'}}></video>
+                </div>
+                <p>z/x: 放大缩小笔刷（free paint模式或者paint selection模式），或者放大缩小画布</p>
+                <p>a/d: 添加/删除标注</p>
+                <p>n/p: 下一张/上一张图片</p>
+                <p>123456：切换使用不同的工具</p>
+                <p>方向键上/方向键下: 上一个标注/下一个标注</p>
+                <p>h：打开帮助</p>
+                <p>t：类型选择</p>
+                <p>q/w/e：标记此张图片为：已标注完成/未标注/标注存在问题</p>
+                <p>s:保存标注</p>
+                <p>v:隐藏/显示图片</p>
+                <p>b:隐藏/显示标注</p>
+                <p>鼠标左键点击：选择标注</p>
+                <p>shift+鼠标左键，删除标注</p>
+                <p>ctrl+鼠标左键，添加标注（segment模式下）</p>
+                <p>按住空格：切换回pan工具，可以拖动画布</p>
+            </div>``
     ]
 
 module.exports = class Help extends React.Component

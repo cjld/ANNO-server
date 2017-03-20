@@ -178,6 +178,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 return
             newbox = {p1:autobox.topLeft{x,y}, p2:autobox.bottomRight{x,y}}
             if newbox !== mark.bbox
+                # FIXME: duplicate code
                 mark.bbox = newbox
                 if @current-box
                     @current-box.remove!
@@ -188,6 +189,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @current-box.selected = true
                 @current-box.closed = true
                 @current-box.mydata = {i:@state.cMark}
+                @current-box.strockWidth = 4
 
                 if @current-type
                     @current-type.position = @current-box.bounds.topLeft.add [@current-box.bounds.width / 2, 0]
@@ -250,6 +252,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 path.mydata = {i}
                 if inte(i,@state.cMark)
                     @current-box = path
+                    @current-box.strockWidth = 4
                     path.selected = true
                 path.closed = true
 
@@ -1046,6 +1049,21 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @set-state cMark:it
         @on-current-mark-change it
 
+    nextMark: ~>
+        cMark = parseInt @state.cMark
+        if cMark == NaN then return
+        cMark++
+        if cMark >= @state.marks.length then return
+        @switchCurrentMark cMark
+
+
+    prevMark: ~>
+        cMark = parseInt @state.cMark
+        if cMark == NaN then return
+        cMark--
+        if cMark < 0 then return
+        @switchCurrentMark cMark
+
     new-mark: ->
         if @state.config?autoType
             if @state.marks == undefined
@@ -1101,6 +1119,30 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @on-next-click!
         else if key == 'p'
             @on-prev-click!
+        else if key == 'h'
+            @show-help!
+        else if key == 'q'
+            @markAs \annotated
+        else if key == 'w'
+            @markAs \un-annotated
+        else if key == 'e'
+            @markAs \issued
+        else if key == 's'
+            @save!
+        else if key == 'v'
+            @set-state hideImage: not @state.hideImage
+        else if key == 'b'
+            @set-state hideAnnotation: not @state.hideAnnotation
+        else if key == 'b'
+            @set-state hideAnnotation: not @state.hideAnnotation
+        else if key == 'b'
+            @set-state hideAnnotation: not @state.hideAnnotation
+        else if e.keyCode == 40 # up key
+            e.prevent-default!
+            @nextMark!
+        else if e.keyCode == 38 # down key
+            e.prevent-default!
+            @prevMark!
         else if key == ' '
             e.prevent-default!
             if not @keys[key]
@@ -1136,6 +1178,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     show-help: ~> @helpModal.modal \show
 
+    markAs: (str) ~>
+        @state.currentItem.state = str
+        @save "Marked!"
     render: ->
         list-option =
             *   value: 'all'
@@ -1159,9 +1204,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <td>{hitStr}</td>
             </tr>
             ``
-        markAs = (str) ~>
-            @state.currentItem.state = str
-            @save "Marked!"
 
         if @state.editMode == \paint
             paintDropdown = ``<MyDropdown
@@ -1192,11 +1234,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <div className="six wide column editor-utils">
                     <div className="ui horizontal divider" >Mark as</div>
                     <div className="ui mini green button"
-                        onClick={markAs.bind(this,'annotated')}>annotated</div>
+                        onClick={this.markAs.bind(this,'annotated')}>annotated</div>
                     <div className="ui mini red button"
-                        onClick={markAs.bind(this,'un-annotated')}>un-annotated</div>
+                        onClick={this.markAs.bind(this,'un-annotated')}>un-annotated</div>
                     <div className="ui mini yellow button"
-                        onClick={markAs.bind(this,'issued')}>issued</div>
+                        onClick={this.markAs.bind(this,'issued')}>issued</div>
 
 
                     <div className="ui horizontal divider" >Tool</div>
