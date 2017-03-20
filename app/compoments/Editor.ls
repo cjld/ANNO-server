@@ -114,7 +114,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         linegroup = new paper.Group [line,line2]
         linegroup.strokeColor = \yellow
         linegroup.strokeWidth = 3
-        @cross-symbol = new paper.Symbol linegroup
+        raster = linegroup.rasterize!
+        @cross-symbol = raster
+        raster.remove!
         linegroup.remove!
         #@test-symbol @cross-symbol
 
@@ -261,10 +263,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..fillColor = \yellow
         @strokeStyle =
             strokeWidth: 0
-            opacity: 0.7
             closed: true
+            #dont use opacity, use alpha instead
         for k,v of @paints
             v <<< @strokeStyle
+            v.fillColor.alpha = 0.7
         @rebuild-group.addChildren [ v for k,v of @paints ]
         paint-json = @state.marks[@state.cMark]?paints
         if paint-json
@@ -303,7 +306,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         fillRule: \evenodd
                         strokeColor: \black
                         strockWidth: 2
-                        opacity: if @state.hideImage then 1 else 0.3
                         dashArray: [10, 4]
                         strokeScaling: false
                     @other-contours.addChild path
@@ -321,7 +323,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         for i,mark of @state.marks
             for j,segment of mark.segments.data
                 path = new paper.Path
-                path.opacity = segm-op * if inte(i,@state.cMark) then 1 else 0.5
+                alpha = segm-op * if inte(i,@state.cMark) then 1 else 0.5
+                path.strokeColor = new paper.Color \black
+                path.fillColor = new paper.Color \red
+                    ..alpha = alpha
                 path.mydata = {i,j}
                 if inte(i,@state.cMark) and
                    inte(j,mark.segments.active.j)
@@ -346,7 +351,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if @state.showMark and mark.type and @typeimages[mark.type]
                 type-symbol = @typeimages[mark.type]
             for j,spot of mark.spots
-                instance = @cross-symbol.place!
+                instance = @cross-symbol.clone!
                 instance.position = spot
                 instance.scale wfactor
                 instance.opacity = spot-op * if inte(@state.cMark,i) then 1 else 0.5
@@ -408,7 +413,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             fillRule: \evenodd
             strokeColor: \black
             strockWidth: 2
-            opacity: 1
             dashArray: [10, 4]
             strokeScaling: false
         @rebuild-group.addChild path

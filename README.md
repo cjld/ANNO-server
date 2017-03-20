@@ -15,7 +15,8 @@
 [ ]  write tester
 [ ]  auto zoom bbox
 [ ]  right mouse select
-[ ]  strock disappear
+[x]  strock disappear
+[ ]  free paint brush size bug
 
 // fix init session change bug
 // tool switch
