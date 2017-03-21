@@ -1,29 +1,15 @@
 # TODO
-[x]  dataset config
-[ ]  speed up big image
-[ ]  well git maintain
-[x]  file uploader
-[ ]  crash restart
-[ ]  admin
-[ ]  help update
-[x]  type bug
-[x]  config refresh
-[x]  page error
-[ ]  less request
-[ ]  mask cache
-[x]  bbox delete
-[ ]  write tester
-[ ]  auto zoom bbox
-[ ]  right mouse select
-[x]  strock disappear
-[x]  spots disappear
-[ ]  free paint brush size bug
-[ ]  strock width change
-[ ]  complex path draw
-[ ]  quick type
-        *   common Object
-        *   shortcut
-        *   addition text
+*   [x]  dataset config
+*   [ ]  speed up big image
+*   [ ]  well git maintain
+*   [ ]  file uploader
+*   [ ]  crash restart
+*   [ ]  admin
+*   [ ]  help update
+*   [x]  type bug
+*   [x]  config refresh
+*   [x]  page error
+*   [ ]  less request
 
 // fix init session change bug
 // tool switch
@@ -51,7 +37,6 @@ prev bug
 *  z/x zoom in zoom out in tool 1234
 *  z/x increase/decrease brush size in tool 1234
 *  a/d add/delete item
-
 
 
 
