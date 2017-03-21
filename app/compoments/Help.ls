@@ -51,6 +51,12 @@ root-content =
                 <p>autoType：在编辑器工作的时候是否开启自动类别，是一个为了方便标注人员标注的选项，
                 开启时会自动将新建的标注按顺序赋予类别</p>
                 <p>allowedOverlap: 在使用PaintSelection时是否允许不同类别之间产生重叠</p>
+                <p>autosaveInterval: 自动保存的间隔，默认5000，单位毫秒</p>
+                <p>showMark: 是否显示包围盒和类别，默认为true</p>
+                <p>autobox: 是否自动计算包围盒，默认为true</p>>
+                <p>hideImage: 是否隐藏图片，默认为false</p>>
+                <p>hideAnnotation: 是否隐藏标注，默认为false</p>
+                <p>editMode: 初始使用的工具，默认为ps，paint selection工具，可选工具有[spotting, segment, pan, paint, ps, box]</p>
             </div>``
         *   title: "如何浏览图片"
             url: "browser"
@@ -154,12 +160,12 @@ root-content =
                 <p>123456：切换使用不同的工具</p>
                 <p>方向键上/方向键下: 上一个标注/下一个标注</p>
                 <p>h：打开帮助</p>
-                <p>t：类型选择</p>
+                <p>t：类型选择(todo)</p>
                 <p>q/w/e：标记此张图片为：已标注完成/未标注/标注存在问题</p>
                 <p>s:保存标注</p>
                 <p>v:隐藏/显示图片</p>
                 <p>b:隐藏/显示标注</p>
-                <p>鼠标左键点击：选择标注</p>
+                <p>鼠标左键点击：选择标注(todo)</p>
                 <p>shift+鼠标左键，删除标注</p>
                 <p>ctrl+鼠标左键，添加标注（segment模式下）</p>
                 <p>按住空格：切换回pan工具，可以拖动画布</p>
