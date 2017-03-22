@@ -12,6 +12,7 @@
 *   [ ]  less request
 *   [ ]  crash handle
 *   [ ]  electron
+*   [ ]  session reuse
 
 
 // fix init session change bug
