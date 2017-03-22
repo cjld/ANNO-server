@@ -1,3 +1,6 @@
+require! \./compoments/common
+{React, Link, ReactDOM, TimerMixin, actions, store} = common
+
 require! {
     \react : React
     \react-router : {Router}

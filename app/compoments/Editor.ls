@@ -7,6 +7,7 @@ require! {
     \./Help
     \../models/types
     \../history : myhistory
+    \../worker
 }
 
 inte = (a,b) -> parseInt(a) == parseInt(b)
@@ -427,7 +428,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @cts ?= -1
         @ts += 1
         data.ts = @ts
-        @socket.emit cmd, data
+        if @worker
+            @worker.get-cmd cmd, data
+        else
+            @socket.emit cmd, data
         if @state.time-evaluate
             console.time @ts
 
@@ -468,9 +472,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paint-brush-size = @state.default-brush-size
 
         @drop-cmd!
-        actions.connect-socket!
-        @socket = socket
-        @send-cmd \open-session, id:@state.currentItem._id
+        if @worker
+            @worker.open-url @state.currentItem.url
+        else
+            @send-cmd \open-session, id:@state.currentItem._id
         @on-current-mark-change!
 
         @layer.matrix.reset!
@@ -503,6 +508,21 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ins.scale 1.0/factor
 
     componentDidMount: ->
+
+        actions.connect-socket!
+        @socket = socket
+
+        if inElectron
+            @worker = new worker
+            @worker.on-data = (msg, data) ~>
+                if msg == \ok
+                    @receive-cmd data
+                else
+                    toastr.error "Worker error: "+data
+        else
+            @socket.on \ok, @receive-cmd
+            @socket.on \s-error, -> toastr.error "Worker error: "+it
+
         $ \body .css \overflow, \hidden
 
         @helpModal = $ \#helpModal
@@ -861,8 +881,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @cursor.position = point
             paper.view.draw!
 
-        @socket.on \ok, @receive-cmd
-
         @paint-tool.on-mouse-down = (e) ~>
             @paint-tool.minDistance = 10
             @drag-func = undefined
@@ -983,11 +1001,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @componentDidUpdate!
 
     componentWillUnmount: ->
+        if @worker
+            @worker.kill-proc!
+            @worker = undefined
+        else
+            @socket.off \ok, @receive-cmd
+            @socket.off \s-error
         $ \body .css \overflow, \auto
         $ document .off \keydown, @on-key-down
         $ document .off \keyup, @on-key-up
         $ \canvas .off \wheel
-        @socket.off \ok, @receive-cmd
         (TimerMixin.componentWillUnmount.bind @)!
         #@socket.disconnect!
 
