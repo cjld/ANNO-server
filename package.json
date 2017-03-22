@@ -40,6 +40,7 @@
     "react-router": "^1.0.3",
     "react-timer-mixin": "^0.13.3",
     "socket.io": "^1.4.6",
+    "socket.io-client": "^1.7.3",
     "swig": "^1.4.2"
   },
   "devDependencies": {
