@@ -32,6 +32,7 @@ module.exports = class TypeDropdown extends MyComponent
         text = if @state.data == "" then "Please select" else @state.data
 
         img-url = @state.typeMap[@state.data]?.src
+        ccolor = @state.typeMap[@state.data]?.color
         if img-url? then imgui = ``<img src={imgUrl} />``
 
         types-ui = []
@@ -46,12 +47,13 @@ module.exports = class TypeDropdown extends MyComponent
                     @set-data it
                     if @popup then @popup.popup \hide
                 f .= bind this, i.title
+                color = @state.typeMap[i.title]?.color
                 tag-ui = if i.src?
                     ``<img src={i.src} title={i.title} className="ui mini left floated image" style={{margin:'1px'}}/>``
                 else
                     ``<div className='ui tiny button'
                         style={{
-                            'backgroundColor':i.color,
+                            'backgroundColor':color,
                             'color':'#FFF',
                             'marginBottom': '5px',
                             'textShadow': '1px 0 1px #000000, 0 1px 1px #000000, 0 -1px 1px #000000, -1px 0 1px #000000'}}>{i.title}</div>``
@@ -64,7 +66,7 @@ module.exports = class TypeDropdown extends MyComponent
             </div>``
         ``<div>
         <div className="ui text menu">
-          <a className="item">
+          <a className="item" style={{backgroundColor:ccolor}}>
             {imgui}
           </a>
           <a className="browse item">

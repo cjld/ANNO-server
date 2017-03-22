@@ -2,12 +2,13 @@ require! {
     fs
     process
     request
+    \./../config
 }
 
 file-list = []
-api-url = 'http://localhost:9200'
+api-url = "http://localhost:#{config.port}"
 #img-url = 'http://123.57.147.168:8080'
-img-url = 'http://166.111.71.64:9201'
+img-url = "http://#{config.server-ip}:#{config.image-server-port}"
 
 new-object = (url, name, fatherid) ->
     console.log "post #{url} #{name} #{fatherid}"
