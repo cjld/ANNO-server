@@ -35,6 +35,9 @@ module.exports = (io) ->
                 socket.emit \s-error, res.error
             if res.status == \ok
                 socket.emit \ok, res.data
+                if config.time-evaluate
+                    if res.data.pcmd == \paint
+                        console.timeEnd res.data.ts
                 #console.log res.data
 
         socket.on \disconnect, ->
@@ -50,7 +53,7 @@ module.exports = (io) ->
                 if err then socket.emit \s-error, err
                 url = obj?url
                 if url then
-                    url = url.replace \166.111.69.68, \localhost
+                    # url = url.replace \166.111.69.68, \localhost
                     proc := child_process.spawn config.paint-bin, config.paint-bin-args
                     proc.stderr.pipe process.stdout
                     proc.on \exit, (code, signal) ->
@@ -62,6 +65,8 @@ module.exports = (io) ->
                     socket.emit \s-error, 'url-not-found'
 
         socket.on \paint, ->
+            if config.time-evaluate
+                console.time it.ts
             send-cmd {cmd:'paint', data:it}
 
         socket.on \load-region, ->

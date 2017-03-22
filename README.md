@@ -10,6 +10,9 @@
 *   [x]  config refresh
 *   [x]  page error
 *   [ ]  less request
+*   [ ]  crash handle
+*   [ ]  electron
+
 
 // fix init session change bug
 // tool switch

@@ -41,7 +41,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @autosave!
         @contour-anime!
 
-        @time-evaluate = false
+        @state.time-evaluate = false
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
@@ -428,7 +428,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @ts += 1
         data.ts = @ts
         @socket.emit cmd, data
-        if @time-evaluate
+        if @state.time-evaluate
             console.time @ts
 
     # drop command before
@@ -442,7 +442,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             toastr.success "Region load success, total seg selected: #{data.return.segCount}"
         if data.ts and data.ts <= @cts
             return
-        if @time-evaluate
+        if @state.time-evaluate
             console.timeEnd data.ts
 
         mark = @get-current-mark!
