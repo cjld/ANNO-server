@@ -20,7 +20,7 @@ class worker
         buffer = @cmd-buffer
         @cmd-buffer = []
         for data in buffer
-            send-cmd data
+            @send-cmd data
 
     spawn: ->
         @kill-proc!
@@ -44,7 +44,9 @@ class worker
         @send-cmd {cmd:\open-session, data:{url}}
 
     open-base64: (data) ->
+        @is-ready = true
         @send-cmd {cmd:\open-base64, data:data}
+        @send-buffer!
 
 
     on-paint: (data) ~>
