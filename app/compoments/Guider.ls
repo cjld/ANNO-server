@@ -4,7 +4,7 @@ require! \./common
 
 
 require! {
-    \./../models/Object : my-object
+    \./../models/raw : my-object
     \./Breadcrumb
 }
 
@@ -165,8 +165,8 @@ module.exports = class Guider extends React.Component
             ><i className={it+" layout icon"}></i></a>
             ``
         availItems = []
-        for key of my-object.tree
-            if my-object.tree[key] == String
+        for key of my-object
+            if my-object[key] == \String
                 if key == 'marks' then continue
                 if key == 'state'
                     # TODO
