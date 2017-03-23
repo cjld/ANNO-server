@@ -29,21 +29,30 @@ class worker
         @proc = child_process.spawn config.paint-bin, config.paint-bin-args
         if process.stdout
             @proc.stderr.pipe process.stdout
-        @proc.on \exit, (code, signal) ->
+        else
+            @proc.stderr.on \data, -> console.log it.to-string!
+        @proc.on \exit, (code, signal) ~>
             console.log "proc exit with ", {code, signal}
+            if signal != \SIGKILL
+                @on-data? \s-error, error:"Program exit with #{signal}, please reload."
+            @proc = undefined
         @proc.my-rl = readline.create-interface input:@proc.stdout
             ..on \line, @get-result
 
 
     open-url: (url) ~>
-        @cmd-buffer = []
         # TODO not spawn here
-        @spawn!
+        if not @proc
+            console.log "respawn."
+            @spawn!
         @is-ready = true
-        @send-buffer!
         @send-cmd {cmd:\open-session, data:{url}}
+        @send-buffer!
 
     open-base64: (data) ->
+        if not @proc
+            console.log "respawn."
+            @spawn!
         @is-ready = true
         @send-cmd {cmd:\open-base64, data:data}
         @send-buffer!
@@ -58,6 +67,10 @@ class worker
     on-load-region: (data) ~>
         console.log \load-region
         @send-cmd {cmd:'load-region', data:data}
+
+    on-config: (data) ~>
+        console.log \config-worker
+        @send-cmd {cmd:'config', data:data}
 
 
     kill-proc: ~>
@@ -93,5 +106,7 @@ class worker
             @on-load-region data
         else if cmd==\paint
             @on-paint data
+        else if cmd==\config
+            @on-config data
 
 module.exports = worker

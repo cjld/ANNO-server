@@ -10,6 +10,7 @@ module.exports = (io) ->
 
     io.on \connection, (socket) ->
         wk = new worker
+        wk.spawn!
         user-count++
         console.log user-count
         io.sockets.emit \user-count, user-count
@@ -25,7 +26,7 @@ module.exports = (io) ->
 
         socket.on \open-session, ->
             console.log \open-session, it
-            wk.kill-proc!
+            #wk.kill-proc!
             my-object.find-one {_id:it.id}, (err, obj) ->
                 if err then socket.emit \s-error, err
                 url = obj?url
@@ -35,8 +36,8 @@ module.exports = (io) ->
                     socket.emit \s-error, 'url-not-found'
 
         socket.on \paint, wk.on-paint
-
         socket.on \load-region, wk.on-load-region
+        socket.on \config, wk.on-config
 
 process.on 'uncaughtException', (err) ->
     console.error err.stack

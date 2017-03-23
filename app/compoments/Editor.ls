@@ -61,14 +61,17 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @set-timeout @contour-anime, 100
 
     shouldComponentUpdate: (next-props, next-state) ->
-        if next-state.typeMap !== @state.typeMap
-            @create-typeimage-symbol next-state.typeMap
+        if next-state.config !== @state.config
+            @reload-config next-state.config
+            @send-cmd "config", {}<<<next-state.config
             if next-state.config.autoType
                 if @state.marks[0].type==""
                     @state.marks[0].type = next-state.config.types[0].types[0].title
             for k,v of next-state.config
                 if (@state.has-own-property k) and @state[k] != v
                     @set-state {"#{k}":v}
+        if next-state.typeMap !== @state.typeMap
+            @create-typeimage-symbol next-state.typeMap
         if next-state.editMode != @state.editMode
             @switchTool next-state.editMode
         return true
@@ -490,11 +493,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paint-brush-size = @state.default-brush-size
 
         @drop-cmd!
-        if @worker
-            #@worker.open-url @state.currentItem.url
-            # wait image load
-            @worker.spawn!
-        else
+        if not @worker
             @send-cmd \open-session, id:@state.currentItem._id
         @on-current-mark-change!
 
@@ -531,6 +530,19 @@ module.exports = class Editor extends React.Component implements TimerMixin
         for ins in @boxtype-group.children
             ins.scale 1.0/factor
 
+    reload-config: ->
+        config = @state.config
+        if it then config = it
+        if config
+            @send-cmd "config", {}<<<that
+        if config.autoType
+            if @state.marks[0].type==""
+                @state.marks[0].type = config.types[0].types[0].title
+        for k,v of config
+            if (@state.has-own-property k) and @state[k] != v
+                @set-state {"#{k}":v}
+
+
     componentDidMount: ->
 
         actions.connect-socket!
@@ -538,6 +550,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         if inElectron
             @worker = new worker
+            @worker.spawn!
             @worker.on-data = (msg, data) ~>
                 if msg == \ok
                     @receive-cmd data
@@ -546,6 +559,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else
             @socket.on \ok, @receive-cmd
             @socket.on \s-error, -> toastr.error "Worker error: "+it
+
+        @reload-config!
+
 
         $ \body .css \overflow, \hidden
 
