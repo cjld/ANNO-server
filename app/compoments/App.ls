@@ -9,7 +9,6 @@ require! {
     \./Displayer
 }
 
-
 class MainPage extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
