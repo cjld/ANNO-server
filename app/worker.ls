@@ -13,8 +13,17 @@ class worker
 
     ->
         @proc = null
+        @is-ready = false
+        @cmd-buffer = []
 
-    open-url: (url) ~>
+    send-buffer: ->
+        buffer = @cmd-buffer
+        @cmd-buffer = []
+        for data in buffer
+            send-cmd data
+
+    spawn: ->
+        @kill-proc!
         child_process = localRequire \child_process
         readline = localRequire \readline
         @proc = child_process.spawn config.paint-bin, config.paint-bin-args
@@ -24,7 +33,19 @@ class worker
             console.log "proc exit with ", {code, signal}
         @proc.my-rl = readline.create-interface input:@proc.stdout
             ..on \line, @get-result
+
+
+    open-url: (url) ~>
+        @cmd-buffer = []
+        # TODO not spawn here
+        @spawn!
+        @is-ready = true
+        @send-buffer!
         @send-cmd {cmd:\open-session, data:{url}}
+
+    open-base64: (data) ->
+        @send-cmd {cmd:\open-base64, data:data}
+
 
     on-paint: (data) ~>
         if config.time-evaluate
@@ -38,6 +59,7 @@ class worker
 
 
     kill-proc: ~>
+        @is-ready = false
         if @proc
             @proc.my-rl.close!
             @proc.stdin.pause!
@@ -45,6 +67,9 @@ class worker
             @proc := null
 
     send-cmd: (cmd-json) ~>
+        if not @is-ready
+            @cmd-buffer.push cmd-json
+            return
         if not @proc
             @on-data? \s-error, 'null-proc'
             return

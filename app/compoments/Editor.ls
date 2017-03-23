@@ -468,12 +468,32 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if v then
                 @set-state editMode:v
 
+    getBase64Image: (img) ->
+        # Create an empty canvas element
+        canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+
+        # Copy the image contents to the canvas
+        ctx = canvas.getContext("2d")
+        ctx.drawImage(img, 0, 0)
+
+        # Get the data-URL formatted image
+        # Firefox supports PNG and JPEG. You could check img.src to
+        # guess the original format, but be aware the using "image/jpg"
+        # will re-encode the image.
+        dataURL = canvas.toDataURL("image/png")
+
+        return dataURL.replace(/^data:image\/(png|jpg);base64,/, "")
+
     load-session: ~>
         @state.paint-brush-size = @state.default-brush-size
 
         @drop-cmd!
         if @worker
-            @worker.open-url @state.currentItem.url
+            #@worker.open-url @state.currentItem.url
+            # wait image load
+            @worker.spawn!
         else
             @send-cmd \open-session, id:@state.currentItem._id
         @on-current-mark-change!
@@ -486,6 +506,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @background.src = imgUrl
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
+            if @worker
+                data = @getBase64Image @background
+                console.log "base64Length #{data.length}"
+                @worker.open-base64 data
             @origin-width = @background.width
             @origin-height = @background.height
             #@background.position = paper.view.center
@@ -1250,7 +1274,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             <div className="ui grid">
                 <div className="myCanvas ten wide column">
                     <div className="canvas-border">
-                        <img id='canvas-bg'/>
+                        <img id='canvas-bg' crossOrigin="anonymous"/>
                         <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>
