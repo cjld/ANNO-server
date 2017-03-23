@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "lsc server.ls",
     "watch": "nodemon -e ls,html --exec 'gulp browserify && lsc server.ls'",
-    "electron": "electron ./electron/main.js"
+    "electron": "electron ./electron_app/main.js"
   },
   "author": "",
   "license": "ISC",
