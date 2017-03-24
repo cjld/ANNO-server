@@ -578,6 +578,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @spotting-tool = new paper.Tool
 
         @spotting-tool.on-mouse-down = (e) ~>
+            if @check-bbox-click e then return
             tmatrix = @spots-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
             hitOptions =
@@ -631,6 +632,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @segment-tool = new paper.Tool
 
         @segment-tool.on-mouse-down = (e) ~>
+            if @check-bbox-click e then return
             @drag-func = undefined
             c = @state.cMark
             if c? then mark = @state.marks[c]
@@ -755,8 +757,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         @box-tool = new paper.Tool
 
-
-
         @box-tool.on-mouse-down = (e) ~>
             @drag-func = undefined
             mark = @get-current-mark!
@@ -870,6 +870,56 @@ module.exports = class Editor extends React.Component implements TimerMixin
             else
                 @canvas.style.cursor = "crosshair"
 
+        @check-bbox-click = (e) ~>
+            if e.event.button != 2 then return false
+            e.event.prevent-default!
+
+            mark = @get-current-mark!
+            unless mark then return
+            tmatrix = @rebuild-group.globalMatrix.inverted!
+            point = e.point.transform tmatrix
+
+            hitOptions =
+                stroke: true
+                fill: true
+                segments: true
+                tolerance: 5
+            hit-result = @box-group.hit-test point, hitOptions
+            if hit-result?item
+                if e.modifiers.shift
+                    @canvas.style.cursor = 'no-drop'
+                    return
+                i = hit-result.item.mydata.i
+                if not inte i, @state.cMark
+                    @set-state cMark:i
+                    mark = @get-current-mark!
+                if hit-result.segment?
+                    p = hit-result.segment.point
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else if hit-result.location?
+                    pa = hit-result.location._segment1.point
+                    pb = hit-result.location._segment2.point
+                    p = (pa.add pb).multiply 0.5
+                    q1 = p.x == mark.bbox.p1.x
+                    q2 = p.x == mark.bbox.p2.x
+                    q3 = p.y == mark.bbox.p1.y
+                    q4 = p.y == mark.bbox.p2.y
+                else
+                    q1 = q2 = q3 = q4 = true
+                count = 0
+                if mark.bbox.p1.x > mark.bbox.p2.x
+                    [q1,q2] = [q2,q1]
+                if mark.bbox.p1.y > mark.bbox.p2.y
+                    [q3,q4] = [q4,q3]
+                for q in [q1,q2,q3,q4]
+                    if q then count++
+                return true
+            else
+                return false
+
         @zoom = (factor, center) ~>
             @state.paint-brush-size /= factor
             @scale factor, center
@@ -916,6 +966,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             paper.view.draw!
 
         @paint-tool.on-mouse-down = (e) ~>
+            if @check-bbox-click e then return
             @paint-tool.minDistance = 10
             @drag-func = undefined
             # get current mark
@@ -998,6 +1049,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         @ps-tool.on-mouse-drag = ~> @drag-func? it
         @ps-tool.on-mouse-down = (e) ~>
+            if @check-bbox-click e then return
             @drag-func = undefined
             # get current mark
             mark = @get-current-mark!
