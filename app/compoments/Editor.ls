@@ -179,19 +179,20 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 mark.bbox = newbox
                 if @current-box
                     @current-box.remove!
-                paper.project.current-style = @box-style
+                #paper.project.current-style = @box-style
                 p1 = new paper.Point newbox.p1
                 p2 = new paper.Point newbox.p2
                 @current-box = new paper.Path.Rectangle p1, p2
                 @current-box.selected = true
                 @current-box.closed = true
                 @current-box.mydata = {i:@state.cMark}
+                @current-box <<< @box-style
                 @current-box.strockWidth = 4
 
                 if @current-type
                     @current-type.position = @current-box.bounds.topLeft.add [@current-box.bounds.width / 2, 0]
                 @box-group.addChild @current-box
-                paper.project.current-style = {}
+                #paper.project.current-style = {}
                 @set-changed!
 
 
@@ -249,7 +250,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 path.mydata = {i}
                 if inte(i,@state.cMark)
                     @current-box = path
-                    @current-box.strockWidth = 4
+                    path.strokeWidth = 4
                     path.selected = true
                 path.closed = true
 
