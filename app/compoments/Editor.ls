@@ -454,7 +454,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @check-changed!
             @gen-contours data.contours, color
             @calc-bbox!
-            paper.view.draw!
+            #paper.view.draw!
 
 
     check-tool-switch: (e) ~>
