@@ -13,9 +13,9 @@ module.exports = class Navbar extends React.Component
         #navList = [ \Explore \Datasets \Stats \Category \Help ]
         navList = [ \Help ]
         navs = navList.map (it) ->
-            ``<a href={"/"+it.toLowerCase()} className="item" key={it}>
+            ``<Link to={"/"+it.toLowerCase()} className="item" key={it}>
                 {it}
-            </a>
+            </Link>
             ``
         ``<div className="ui menu">
                     <a className="header item" href="/i">ANNOTATE
