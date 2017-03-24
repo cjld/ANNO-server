@@ -7,6 +7,7 @@ require! {
     \./Guider
     \./Editor
     \./Displayer
+    \./../history : myhistory
 }
 
 class MainPage extends React.Component
@@ -25,11 +26,19 @@ class MainPage extends React.Component
 
 class App extends React.Component
 
+    check-id: ->
+        if it
+            $.cookie \last-id, it
+        else if $.cookie \last-id
+            myhistory.push \/i/ + that
+
     componentDidMount: ->
         actions.set-store {fatherId:@props.params.itemId, page:@props.params.page}
+        @check-id @props.params.itemId
 
     componentWillUpdate: ->
         actions.set-store {fatherId:it.params.itemId, page:it.params.page}
+        @check-id it.params.itemId
 
     render: ->
         ``<div>

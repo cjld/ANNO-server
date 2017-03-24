@@ -63,13 +63,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
     shouldComponentUpdate: (next-props, next-state) ->
         if next-state.config !== @state.config
             @reload-config next-state.config
-            @send-cmd "config", {}<<<next-state.config
-            if next-state.config.autoType
-                if @state.marks[0].type==""
-                    @state.marks[0].type = next-state.config.types[0].types[0].title
-            for k,v of next-state.config
-                if (@state.has-own-property k) and @state[k] != v
-                    @set-state {"#{k}":v}
         if next-state.typeMap !== @state.typeMap
             @create-typeimage-symbol next-state.typeMap
         if next-state.editMode != @state.editMode
