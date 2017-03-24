@@ -450,12 +450,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         if data.pcmd == \paint and data.contours?
             color = @state.typeMap[mark.type]?.color
+            mark.contours = data.contours
+            @check-changed!
             @gen-contours data.contours, color
             @calc-bbox!
             paper.view.draw!
 
-            mark.contours = data.contours
-            @check-changed!
 
     check-tool-switch: (e) ~>
         if e.key >= '1' and e.key <= '9'
