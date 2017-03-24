@@ -296,13 +296,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     paths = contours.map ~>
                         seg = it.map ~> [it.x, it.y]
                         new paper.Path do
-                            segments: seg.reverse!
+                            segments: seg
                             closed: true
 
                     fillColor = new paper.Color color
                     fillColor.alpha = if @state.hideImage then 1 else 0.5
                     path = new paper.CompoundPath do
-                        children: paths.reverse!
+                        children: paths
                         fillColor: fillColor
                         fillRule: \evenodd
                         strokeColor: \black
@@ -402,14 +402,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
         paths = contours.map ~>
             seg = it.map ~> [it.x, it.y]
             new paper.Path do
-                segments: seg.reverse!
+                segments: seg
                 closed: true
 
         fillColor = new paper.Color color
         if not @state.hideImage
             fillColor.alpha = 0.5
         path = new paper.CompoundPath do
-            children: paths.reverse!
+            children: paths
             fillColor: fillColor
             fillRule: \evenodd
             strokeColor: \black
