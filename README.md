@@ -1,8 +1,9 @@
 # TODO
+*   [ ]  contour right mouse selection
 *   [x]  dataset config
-*   [ ]  speed up big image
+*   [x]  speed up big image
 *   [ ]  well git maintain
-*   [ ]  file uploader
+*   [x]  file uploader
 *   [ ]  crash restart
 *   [ ]  admin
 *   [ ]  help update
@@ -12,7 +13,7 @@
 *   [ ]  less request
 *   [ ]  crash handle
 *   [ ]  electron
-*   [ ]  session reuse
+*   [x]  session reuse
 
 
 // fix init session change bug

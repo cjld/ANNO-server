@@ -6,12 +6,13 @@ require! {
     \../models/types
 }
 
-module.exports = class TypeDropdown extends MyComponent
+class TypePopup extends React.Component
     ->
         super ...
         store.connect-to-component this, [
             \config, \typeMap
         ]
+
 
     componentDidMount: ->
         jq = $ ReactDOM.findDOMNode this
@@ -23,18 +24,7 @@ module.exports = class TypeDropdown extends MyComponent
             setFluidWidth: false
             # target: 'body'
 
-    shouldComponentUpdate: (next-props, next-state) ->
-        res = next-props.data != @state.data or next-state.typeMap !== @state.typeMap
-        @state.data = next-props.data
-        res
-
-    render: ->
-        text = if @state.data == "" then "Please select" else @state.data
-
-        img-url = @state.typeMap[@state.data]?.src
-        ccolor = @state.typeMap[@state.data]?.color
-        if img-url? then imgui = ``<img src={imgUrl} />``
-
+    componentDidMount: ->
         types-ui = []
         type-data = []
         if @state.config?types
@@ -64,6 +54,39 @@ module.exports = class TypeDropdown extends MyComponent
                     {subList}
                 </div>
             </div>``
+
+    render: ->
+        ``<div className="ui flowing basic admission fluid popup"
+        style={{maxWidth:'60%', maxHeight:'50%', overflowY:'scroll'}}>
+          <div className="ui one column relaxed divided grid">
+                {typesUi}
+          </div>
+        </div>
+        ``
+
+
+
+module.exports = class TypeDropdown extends MyComponent
+    ->
+        super ...
+        store.connect-to-component this, [
+            \config, \typeMap
+        ]
+
+    componentDidMount: ->
+
+    shouldComponentUpdate: (next-props, next-state) ->
+        res = next-props.data != @state.data or next-state.typeMap !== @state.typeMap
+        @state.data = next-props.data
+        res
+
+    render: ->
+        text = if @state.data == "" then "Please select" else @state.data
+
+        img-url = @state.typeMap[@state.data]?.src
+        ccolor = @state.typeMap[@state.data]?.color
+        if img-url? then imgui = ``<img src={imgUrl} />``
+
         ``<div>
         <div className="ui text menu">
           <a className="item" style={{backgroundColor:ccolor}}>
@@ -74,10 +97,5 @@ module.exports = class TypeDropdown extends MyComponent
             <i className="dropdown icon"></i>
           </a>
         </div>
-        <div className="ui flowing basic admission fluid popup"
-        style={{maxWidth:'60%', maxHeight:'50%', overflowY:'scroll'}}>
-          <div className="ui one column relaxed divided grid">
-                {typesUi}
-          </div>
-        </div></div>
+        </div>
         ``

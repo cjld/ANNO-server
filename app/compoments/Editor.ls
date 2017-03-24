@@ -284,33 +284,32 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @gen-contours contours, color
 
         #draw other contours
-        if @state.showMark
-            for mark in @state.marks
-                if mark == @state.marks[@state.cMark]
-                    continue
-                contours = mark?contours
-                if contours
-                    color = @state.typeMap[mark.type]?.color
-                    @other-contours = new paper.Group
-                    @rebuild-group.addChild @other-contours
+        for mark in @state.marks
+            if mark == @state.marks[@state.cMark]
+                continue
+            contours = mark?contours
+            if contours
+                color = @state.typeMap[mark.type]?.color
+                @other-contours = new paper.Group
+                @rebuild-group.addChild @other-contours
 
-                    paths = contours.map ~>
-                        seg = it.map ~> [it.x, it.y]
-                        new paper.Path do
-                            segments: seg
-                            closed: true
+                paths = contours.map ~>
+                    seg = it.map ~> [it.x, it.y]
+                    new paper.Path do
+                        segments: seg
+                        closed: true
 
-                    fillColor = new paper.Color color
-                    fillColor.alpha = if @state.hideImage then 1 else 0.5
-                    path = new paper.CompoundPath do
-                        children: paths
-                        fillColor: fillColor
-                        fillRule: \evenodd
-                        strokeColor: \black
-                        strockWidth: 2
-                        dashArray: [10, 4]
-                        strokeScaling: false
-                    @other-contours.addChild path
+                fillColor = new paper.Color color
+                fillColor.alpha = if @state.hideImage then 1 else 0.5
+                path = new paper.CompoundPath do
+                    children: paths
+                    fillColor: fillColor
+                    fillRule: \evenodd
+                    strokeColor: \black
+                    strockWidth: 2
+                    dashArray: [10, 4]
+                    strokeScaling: false
+                @other-contours.addChild path
 
         paper.project.current-style =
             strokeWidth : 2
