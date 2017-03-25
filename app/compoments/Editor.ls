@@ -553,6 +553,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 else
                     toastr.error "Worker error: "+data
         else
+            @socket.emit \spawn
             @socket.on \ok, @receive-cmd
             @socket.on \s-error, -> toastr.error "Worker error: "+it
 

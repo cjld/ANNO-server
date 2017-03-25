@@ -9,6 +9,8 @@ rand-float-from-sth = (s) ->
     return parseInt(md5s, 16) / Math.pow(16, md5s.length)
 
 def-vals =
+    userCount: 0
+
     loadingCounter: true
     counter: {}
 
@@ -74,6 +76,7 @@ class MainActions extends Actions
     connect-socket: ->
         if not window.socket then
             window.socket = io!
+            socket.on \user-count, ~> @set-store userCount:it
 
     fetchContent: ->
         @resetSelects!

@@ -2,14 +2,15 @@ require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
 
 module.exports = class Navbar extends React.Component
+    ->
+        super ...
+        store.connect-to-component this, [\userCount]
 
     componentDidMount: ->
         actions.connect-socket!
-        @state = onlineUserCount:0
-        socket.on \user-count, ~> @set-state onlineUserCount:it
 
     render: ->
-        onlineUserCount = this.state?onlineUserCount
+        onlineUserCount = this.state.userCount
         #navList = [ \Explore \Datasets \Stats \Category \Help ]
         navList = [ \Help ]
         navs = navList.map (it) ->

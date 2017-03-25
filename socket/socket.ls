@@ -10,13 +10,15 @@ module.exports = (io) ->
 
     io.on \connection, (socket) ->
         wk = new worker
-        wk.spawn!
+        #wk.spawn!
         user-count++
         console.log user-count
         io.sockets.emit \user-count, user-count
 
         wk.on-data = (msg, data) ~>
             socket.emit msg, data
+
+        socket.on \spawn, -> wk.spawn!
 
         socket.on \disconnect, ->
             user-count--
