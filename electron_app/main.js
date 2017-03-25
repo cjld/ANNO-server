@@ -20,7 +20,7 @@ function createWindow () {
   mainWindow.maximize();
 
   // and load the index.html of the app.
-  mainWindow.loadURL("http://localhost:9200/i/")
+  mainWindow.loadURL("http://114.215.47.86:9200/i/")
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
