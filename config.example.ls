@@ -6,6 +6,7 @@ config =
     paint-bin: "./../build-worker/anno_worker"
     paint-bin-args: ['server', '-platform', 'offscreen']
     page-size: 20
+    prefetch-size: 20
     listen-all: true
     upload-limit: 100000
     server-ip: "114.215.47.86"

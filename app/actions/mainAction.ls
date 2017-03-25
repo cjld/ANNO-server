@@ -64,9 +64,12 @@ class MainActions extends Actions
                         c = new paper.Color \red
                         c.hue = 255 * rand-float-from-sth i.title
                         typeMap[i.title].color = c.toCSS!
-
-
             return {typeMap}
+
+        @gen-dep [\currentItem], (data) ->
+            {currentItem} = data
+            if currentItem and currentItem.type == \item
+                actions.prefetchImage currentItem
 
     connect-socket: ->
         if not window.socket then
@@ -137,6 +140,23 @@ class MainActions extends Actions
                 @set-store {items}
             complete: ~>
                 @set-store loadingItems:false
+
+    prefetchImage: (currentItem) ->
+        $ .ajax do
+            method: \GET
+            url: \/api/prefetch-objects
+            data: currentItem{parent,_id}
+            error: ->
+                #toastr.error it.response-text
+                console.error it.response-text
+            success: ~>
+                #items = {[i._id, i] for i in it}
+                for i in it
+                    if i.url
+                        img = new Image
+                        img.src = i.url
+                #@set-store {items}
+
 
     deleteItems: (items) ->
         if not Array.isArray items

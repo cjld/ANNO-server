@@ -80,31 +80,39 @@ app.use \/find-one, (req, res, next) ->
         if err then return next err
         res.send obj
 
-find-neighbour = (is-next, req, res, next) ->
+find-neighbour = (size, is-next, req, res, next) ->
+    data = {}
+    data <<< req.body
+    data <<< req.query
     func = (err, docs) ->
         if err then return next err
-        if docs[0]?
+        if size!=1
+            res.send docs
+        else if docs[0]?
             res.send docs[0]{_id}
         else
             res.send {}
     if is-next == \1
-        qobj = {'_id':{'$lt':req.body._id}}
+        qobj = {'_id':{'$lt':data._id}}
     else
-        qobj = {'_id':{'$gt':req.body._id}}
-    if req.body.parent?
-        qobj.parent = req.body.parent
-    if req.body.state?
+        qobj = {'_id':{'$gt':data._id}}
+    if data.parent?
+        qobj.parent = data.parent
+    if data.state?
         if req.body.state in ['un-annotated', '', null]
             qobj.state = {'$in': ['un-annotated', '', null]}
         else
             qobj.state = req.body.state
-    console.log qobj, req.body
+    #console.log qobj, req.body, size, is-next
     my-object.find qobj, func
         .sort [['_id', if is-next==\1 then -1 else 1]]
-        .limit 1
+        .limit size
 
 app.use \/find-neighbour, (req, res, next) ->
-    find-neighbour req.body.is-next, req, res, next
+    find-neighbour 1, req.body.is-next, req, res, next
+
+app.use \/prefetch-objects, (req, res, next) ->
+    find-neighbour config.prefetch-size, \1, req, res, next
 
 app.post \/new-object, (req, res, next) ->
     # just test
