@@ -21,5 +21,7 @@ $ document .ready ->
         window.currentMousePos.x = event.pageX;
         window.currentMousePos.y = event.pageY;
         #console.log window.currentMousePos
+    toastr.options.timeOut = 3
+    toastr.options.extendedTimeOut = 10
     root = $ \#app
     ReactDOM.render ``<Router history={history}>{routes}</Router>``, root.get![0]
