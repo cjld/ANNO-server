@@ -21,7 +21,8 @@ class Pagebar extends React.Component
         page-size = my-parse-int @state.counter.page-size
         totalPage = Math.ceil (my-parse-int @state.counter[@state.tabType]) / page-size
         page = my-parse-int @state.page
-        showpage = [1,2,3,page-1,page,page+1,totalPage-2, totalPage-1, totalPage].sort!
+        if page=NaN then page=0
+        showpage = [1,2,3,page-1,page,page+1,totalPage-2, totalPage-1, totalPage].sort((a,b) -> a - b)
             |> _.array.unique |> _.array.filter -> it>0 and it<=totalPage
         pageUI = []
         fatherId = this.state.fatherId

@@ -54,7 +54,7 @@ module.exports = class TypePopup extends React.Component
             @state.recent-used.push p
         else
             findit.count++
-            @state.recent-used.sort (a,b) -> a.count<b.count
+            @state.recent-used.sort (a,b) -> b.count - a.count
         @forceUpdate!
         $.cookie \recent-used, JSON.stringify @state.recent-used
 
