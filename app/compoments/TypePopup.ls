@@ -58,11 +58,13 @@ module.exports = class TypePopup extends React.Component
         @forceUpdate!
         $.cookie \recent-used, JSON.stringify @state.recent-used
 
-
+    cleanRecent: ~>
+        @set-state recent-used: []
+        $.cookie \recent-used, ""
 
     render: ->
         types-ui = []
-        type-data = [ {description: "Recent used", types:@state.recent-used} ]
+        type-data = [ {description: ``<div>Recent used <a onClick={this.cleanRecent}>[clean]</a></div>``, types:@state.recent-used} ]
         if @state.config?types
             type-data = type-data.concat that
 
