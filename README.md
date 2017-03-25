@@ -14,6 +14,7 @@
 *   [ ]  crash handle
 *   [ ]  electron
 *   [x]  session reuse
+*   [ ]  image load icon
 
 
 // fix init session change bug

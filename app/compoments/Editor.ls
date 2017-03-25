@@ -4,6 +4,7 @@ require! \./common
 
 require! {
     \./TypeDropdown
+    \./TypePopup
     \./Help
     \../models/types
     \../history : myhistory
@@ -1154,6 +1155,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     toastr.success savestr
 
     switchCurrentMark: ~>
+        if inte it, @state.cMark then return
         @set-state cMark:it
         @on-current-mark-change it
 
@@ -1289,6 +1291,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
     markAs: (str) ~>
         @state.currentItem.state = str
         @save "Marked!"
+
+    switchType: (data) ~>
+        if @state.marks[@state.cMark]
+            that.type = data
+            @forceUpdate!
+        else
+            toastr.error "No mark found."
+
     render: ->
         list-option =
             *   value: 'all'
@@ -1301,14 +1311,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
         imgSizeStr = \width: + @origin-width + ', ' + \height: + @origin-height
         marksUI = for i of marks
             switchCMark = @switchCurrentMark.bind @, i
-            switchType = (i, data) ->
-                @state.marks[i].type = data
-                @forceUpdate!
-            switchType .= bind @, i
+            openTypePopup = ~> @typePopup.toggle!
             hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
             ``<tr key={i} className={i==cMark?"positive":""} onClick={switchCMark}>
                 <td className='selectable'><a><div className={i==cMark?"ui green ribbon label":""}>{i}</div></a></td>
-                <td>{}<TypeDropdown data={marks[i].type} onChange={switchType}/></td>
+                <td onClick={openTypePopup}><TypeDropdown data={marks[i].type} /></td>
                 <td>{hitStr}</td>
             </tr>
             ``
@@ -1416,8 +1423,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         onClick={this.onNextClick}>next</div>
                 </div>
             </div>
-            <style>
-            </style>
+            <TypePopup ref={(it) => {this.typePopup = it}} onChange={this.switchType}/>
         </div>``
 
 movePolygon = (poly, delta) ->

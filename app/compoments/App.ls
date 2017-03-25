@@ -33,8 +33,6 @@ class App extends React.Component
             myhistory.push \/i/ + that
 
     componentDidMount: ->
-        $ 'body' .on 'contextmenu', 'img', -> false
-        $ 'body' .on 'contextmenu', 'canvas', -> false
         actions.set-store {fatherId:@props.params.itemId, page:@props.params.page}
         @check-id @props.params.itemId
 
