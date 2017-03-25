@@ -40,6 +40,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paintState = "foreground" # background foreground hair
         @state.default-brush-size = 15.0
         @state.paint-brush-size = @state.default-brush-size
+        @state.imageLoaded = false
         @autosave!
         @contour-anime!
 
@@ -515,7 +516,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @scale ss, [0,0]
             #@layer.translate @layer.matrix.translation
             @update-backgroud!
-            @forceUpdate!
+            @set-state imageLoaded: true
+            #@forceUpdate!
 
     scale: (factor, center)->
         @layer.scale factor, center
@@ -1272,6 +1274,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         data = {is-next} <<< @state.currentItem{_id,parent}
         if @state.listState != 'all'
             data.state = @state.listState
+        @background.src = ""
+        @set-state imageLoaded: false
         $.ajax do
             method: \POST
             data: data
@@ -1329,7 +1333,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {value:"foreground", text:"Foreground"},
                     {value:"hair", text:"hair"}
                 ]} />``
-        ``<div className="ui segment">
+        ``<div className={this.state.imageLoaded?"ui segment":"ui loading segment"}>
             <div className="ui modal" id="helpModal">
                 <i className="close icon"></i>
                 <div className="header">
