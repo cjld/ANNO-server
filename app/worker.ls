@@ -27,7 +27,7 @@ class worker
         child_process = localRequire \child_process
         readline = localRequire \readline
         if inElectron
-            config.paint-bin = "./resources/app.asar/libs/anno_worker"
+            config.paint-bin = "./resources/app/libs/anno_worker"
         @proc = child_process.exec-file config.paint-bin, config.paint-bin-args
         if process.stdout
             @proc.stderr.pipe process.stdout
