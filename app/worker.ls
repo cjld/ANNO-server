@@ -26,6 +26,8 @@ class worker
         @kill-proc!
         child_process = localRequire \child_process
         readline = localRequire \readline
+        if inElectron
+            config.paint-bin = "./resources/app.asar/anno_worker"
         @proc = child_process.spawn config.paint-bin, config.paint-bin-args
         if process.stdout
             @proc.stderr.pipe process.stdout
