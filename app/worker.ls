@@ -28,7 +28,7 @@ class worker
         readline = localRequire \readline
         if inElectron
             config.paint-bin = "./resources/app/libs/anno_worker"
-        @proc = child_process.exec-file config.paint-bin, config.paint-bin-args
+        @proc = child_process.exec-file config.paint-bin, config.paint-bin-args, maxBuffer: 30*1024*1024
         if process.stdout
             @proc.stderr.pipe process.stdout
         else
