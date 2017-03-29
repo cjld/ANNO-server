@@ -12,7 +12,7 @@ module.exports = class Navbar extends React.Component
     render: ->
         onlineUserCount = this.state.userCount
         #navList = [ \Explore \Datasets \Stats \Category \Help ]
-        navList = [ \Help ]
+        navList = [ \Help, \Download, \Update ]
         navs = navList.map (it) ->
             ``<Link to={"/"+it.toLowerCase()} className="item" key={it}>
                 {it}
