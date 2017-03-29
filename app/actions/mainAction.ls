@@ -99,7 +99,7 @@ class MainActions extends Actions
                 method: \GET
                 url: "/release/#{binpath}/resources/app/libs/md5.txt"
                 error: -> reject it
-                success: -> resolve it
+                success: -> resolve it.to-string!.split(' ')[0]
         promise.all [p1, p2] .done (md5s) ~>
             if md5s[0] != md5s[1]
                 @set-store hasUpdate: true
