@@ -1,5 +1,6 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+require! \../history : myhistory
 
 module.exports = class Navbar extends React.Component
     ->
@@ -10,6 +11,14 @@ module.exports = class Navbar extends React.Component
     componentDidMount: ->
         actions.connect-socket!
         actions.checkUpdate!
+        @search-input = $ \#search-input
+        @search-input.keyup (e) ~>
+            if event.keyCode == 13
+                @searchClick!
+
+    searchClick: ~>
+        id = @search-input.val!
+        myhistory.push "/i/#{id}"
 
     render: ->
         onlineUserCount = this.state.userCount
@@ -37,8 +46,8 @@ module.exports = class Navbar extends React.Component
                     <div className="item">
                         <div className="ui small left labeled right icon input">
                             <div className="ui label">Whole datasets</div>
-                            <input type="text" placeholder="Search"/>
-                            <i className="search icon"></i>
+                            <input id="search-input" type="text" placeholder="Search"/>
+                            <i onClick={this.searchClick} className="inverted circular search link icon"></i>
                         </div>
                     </div>
                     {navs}
