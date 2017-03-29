@@ -1,5 +1,6 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+require! promise
 
 module.exports = class Update extends React.Component
     ->
@@ -40,5 +41,5 @@ module.exports = class Update extends React.Component
 
     render: ->
         ``<div className="ui container">
-            <h3 className="ui header">this.state.text</h3>
+            <h3 className="ui header">{this.state.text}</h3>
         </div>``
