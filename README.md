@@ -14,7 +14,9 @@
 *   [ ]  crash handle
 *   [ ]  electron
 *   [x]  session reuse
-*   [ ]  image load icon
+*   [x]  image load icon
+*   [ ]  goto id in search-bar
+*   [ ]  record-stroke
 
 
 // fix init session change bug

@@ -5,7 +5,7 @@ module.exports = class Download extends React.Component
     ->
         super ...
         @state =
-            release: [ \ANNOTATE-win32-x64.zip ]
+            release: [ \ANNOTATE-win32-x64.zip, \ANNOTATE-linux-x64.zip ]
     render: ->
         content = for a in @state.release
             ``<li key={a}><a href={"/release/"+a} target="_blank">{a}</a></li>``
