@@ -37,7 +37,8 @@ module.exports = class Update extends React.Component
         p1 = @download "/release/#{binpath}/resources/app/libs/#{binname}"
         p2 = @download "/release/#{binpath}/resources/app/libs/md5.txt"
         promise.all [p1,p2] .done ~>
-            @set-state "Already up-to-date."
+            @set-state text:"Already up-to-date."
+            actions.checkUpdate!
 
     render: ->
         ``<div className="ui container">
