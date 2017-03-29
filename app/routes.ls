@@ -17,5 +17,6 @@ module.exports = ``<Route path='/' component={App}>
     <Route path='i/:itemId' component={MainPage} />
     <Route path='help(/:helpUrl)' component={Help} />
     <Route path='download' component={Download} />
+    <Route path='update' component={Update} />
     <Route path='backdoor' component={BackDoor} />
 </Route>``

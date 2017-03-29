@@ -4,18 +4,28 @@ require! \./common
 module.exports = class Navbar extends React.Component
     ->
         super ...
-        store.connect-to-component this, [\userCount]
+        @state = {}
+        store.connect-to-component this, [\userCount, \hasUpdate]
 
     componentDidMount: ->
         actions.connect-socket!
+        actions.checkUpdate!
 
     render: ->
         onlineUserCount = this.state.userCount
         #navList = [ \Explore \Datasets \Stats \Category \Help ]
         navList = [ \Help, \Download, \Update ]
-        navs = navList.map (it) ->
+        navs = navList.map (it) ~>
+            dom = it
+            if it==\Update and @state.hasUpdate
+                dom=``<div>
+                    <span>Update</span>
+                    <div className="floating ui red circular mini label" style={{top:'20%'}}>
+                        New
+                    </div>
+                </div>``
             ``<Link to={"/"+it.toLowerCase()} className="item" key={it}>
-                {it}
+                {dom}
             </Link>
             ``
         ``<div className="ui menu">

@@ -1061,12 +1061,18 @@ module.exports = class Editor extends React.Component implements TimerMixin
             point = e.point.transform tmatrix
 
             is_erase = e.modifiers.shift
-            @send-cmd \paint, {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+            paint-cmd = {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+            if not mark.stroke then mark.stroke = []
+            mark.stroke.push paint-cmd
+            @send-cmd \paint, paint-cmd
+
 
             @drag-func = (e) ~>
                 point = e.point.transform tmatrix
                 lpoint = e.lastPoint.transform tmatrix
-                @send-cmd \paint, {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+                paint-cmd = {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
+                mark.stroke.push paint-cmd
+                @send-cmd \paint, paint-cmd
                 @cursor.position = point
         @ps-tool.on-mouse-move = (e) ~>
             tmatrix = @segments-group.globalMatrix.inverted!

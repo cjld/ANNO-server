@@ -1,6 +1,7 @@
 require! {
     \../alt
     \./libs/mainAction : {Actions, create-main-actions}
+    \promise
 }
 
 
@@ -10,6 +11,7 @@ rand-float-from-sth = (s) ->
 
 def-vals =
     userCount: 0
+    hasUpdate: false
 
     loadingCounter: true
     counter: {}
@@ -77,6 +79,30 @@ class MainActions extends Actions
         if not window.socket then
             window.socket = io!
             socket.on \user-count, ~> @set-store userCount:it
+
+    checkUpdate: ->
+        if not inElectron then return
+        fs = localRequire \fs
+        os = localRequire \os
+        binname = "anno_worker.exe"
+        binpath = "ANNOTATE-win32-x64"
+        if os.platform! == \linux
+            binname = "anno_worker"
+            binpath = "ANNOTATE-linux-x64"
+
+        p1 = new promise (resolve, reject) ->
+            fs.readFile "./resources/app/libs/md5.txt", (err, data) ->
+                if err then reject err
+                resolve data.to-string!.split(' ')[0]
+        p2 = new promise (resolve, reject) ->
+            $.ajax do
+                method: \GET
+                url: "/release/#{binpath}/resources/app/libs/md5.txt"
+                error: -> reject it
+                success: -> resolve it
+        promise.all [p1, p2] .done (md5s) ~>
+            if md5s[0] != md5s[1]
+                @set-store hasUpdate: true
 
     fetchContent: ->
         @resetSelects!
