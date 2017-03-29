@@ -38,7 +38,7 @@ class App extends React.Component
 
     componentWillUpdate: ->
         actions.set-store {fatherId:it.params.itemId, page:it.params.page}
-        #@check-id it.params.itemId
+        @check-id it.params.itemId
 
     render: ->
         ``<div>
