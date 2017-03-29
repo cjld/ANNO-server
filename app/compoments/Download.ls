@@ -15,4 +15,5 @@ module.exports = class Download extends React.Component
             <ul>
             {content}
             </ul>
+            <p>You have to install the Qt5 and opencv3 dependencies in Linux version.</p>
         </div>``
