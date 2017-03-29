@@ -13,6 +13,7 @@ require! {
 class MainPage extends React.Component
     ->
         store.connect-to-component this, [\currentItem]
+        @jump-before = false
 
     render: ->
         type = @state.currentItem?type
@@ -29,8 +30,9 @@ class App extends React.Component
     check-id: ->
         if it
             $.cookie \last-id, it
-        else if $.cookie \last-id
-            myhistory.push \/i/ + that
+        else if $.cookie \last-id and not @jump-before
+            @jump-before = true
+            myhistory.push \/i/ + $.cookie(\last-id)
 
     componentDidMount: ->
         actions.set-store {fatherId:@props.params.itemId, page:@props.params.page}
