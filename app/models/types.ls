@@ -1,5 +1,5 @@
 traffic-sign-config = {
-    "timeEvaluate":true,
+    "timeEvaluate":false,
     "autobox":true,
     "types":[
     {
@@ -67,7 +67,7 @@ traffic-sign-config = {
                 },
                 {
                     "src": "/img/typeicons/il50.png",
-                    "title": "il50"
+                    "title": "il-x"
                 },
                 {
                     "src": "/img/typeicons/ip.png",
@@ -479,7 +479,7 @@ traffic-sign-config = {
                 },
                 {
                     "src": "/img/typeicons/pa10.png",
-                    "title": "pa10"
+                    "title": "pa-x"
                 },
                 {
                     "src": "/img/typeicons/pb.png",
@@ -503,15 +503,15 @@ traffic-sign-config = {
                 },
                 {
                     "src": "/img/typeicons/ph3.5.png",
-                    "title": "ph3"
+                    "title": "ph-x"
                 },
                 {
                     "src": "/img/typeicons/pl40.png",
-                    "title": "pl40"
+                    "title": "pl-x"
                 },
                 {
                     "src": "/img/typeicons/pm10.png",
-                    "title": "pm10"
+                    "title": "pm-x"
                 },
                 {
                     "src": "/img/typeicons/pne.png",
@@ -527,7 +527,7 @@ traffic-sign-config = {
                 },
                 {
                     "src": "/img/typeicons/pr40.png",
-                    "title": "pr40"
+                    "title": "pr-x"
                 },
                 {
                     "src": "/img/typeicons/ps.png",
@@ -535,7 +535,7 @@ traffic-sign-config = {
                 },
                 {
                     "src": "/img/typeicons/pw3.png",
-                    "title": "pw3"
+                    "title": "pw-x"
                 },
                 {
                     "color": "red",

@@ -30,7 +30,7 @@ def-vals =
     ancestors: []
 
     config: {}
-    typeMap: {}
+    typeMap: {findType: -> undefined}
 
 class MainActions extends Actions
     ->
@@ -63,11 +63,15 @@ class MainActions extends Actions
             typeMap = {}
             for k,v of it.config.types
                 for i in v.types
-                    typeMap[i.title] = i.{src, color}
+                    title = i.title.split('-')[0]
+                    typeMap[title] = i.{src, color}
                     if i.color == undefined
                         c = new paper.Color \red
                         c.hue = 255 * rand-float-from-sth i.title
-                        typeMap[i.title].color = c.toCSS!
+                        typeMap[title].color = c.toCSS!
+            typeMap.findType = (data) ->
+                data = data.split('-')[0]
+                return this[data]
             return {typeMap}
 
         @gen-dep [\currentItem], (data) ->

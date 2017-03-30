@@ -19,8 +19,8 @@ module.exports = class TypeDropdown extends MyComponent
     render: ->
         text = if @state.data == "" then "Please select" else @state.data
 
-        img-url = @state.typeMap[@state.data]?.src
-        ccolor = @state.typeMap[@state.data]?.color
+        img-url = @state.typeMap.findType(@state.data)?.src
+        ccolor = @state.typeMap.findType(@state.data)?.color
         if img-url? then imgui = ``<img src={imgUrl} />``
 
         ``<div>

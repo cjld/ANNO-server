@@ -72,18 +72,36 @@ module.exports = class Editor extends React.Component implements TimerMixin
         return true
 
     create-typeimage-symbol: (typeMap)->
-        @typeimages = {}
+        text-style =
+            fillColor: 'red'
+            strokeColor: 'white'
+            strokeWidth: 1
+            fontWeight: 'bold'
+            fontSize: '20px'
+        fixit = []
+        @typeimages = {
+            find: ->
+                if this[it] then return that
+                pp = this[it.split('-')[0]]
+                if not pp then return undefined
+                ps = pp.place [-15,10]
+                text = new paper.PointText
+                text.style = text-style
+                text.content = it.split('-')[1]
+                g = new paper.Group [text, ps]
+                g.remove!
+                fixit.push it
+                return this[it] = new paper.Symbol g
+
+            set: (a,b) -> this[a.split('-')[0]] = b
+        }
         pending = 0
         for k,v of typeMap
             text = new paper.PointText
-            text.style =
-                fillColor: 'black'
-                strokeColor: \#666666
-                strokeWidth: 1
-                fontWeight: 'bold'
+            text.style = text-style
             text.content = k
             g = new paper.Group [text, new paper.Path.Rectangle [0,23,0,0]]
-            @typeimages[k] = new paper.Symbol g
+            @typeimages.set(k, new paper.Symbol g)
             g.remove!
             if v.src
                 pending++
@@ -93,10 +111,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     raster.visible = true
                     raster.fit-bounds new paper.Rectangle(0,0,35,35)
                     g = new paper.Group [raster, new paper.Path.Rectangle [0,70,0,0]]
-                    this.typeimages[k] = new paper.Symbol g
+                    @typeimages.set(k, new paper.Symbol g)
                     g.remove!
                     pending--
                     if pending == 0
+                        for it in fixit
+                            @typeimages[it] = undefined
                         @rebuild!
                 raster.on-load = func.bind this, raster, k
 
@@ -239,9 +259,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 path <<< @box-style
                 #paper.project.current-style = @box-style
                 @box-group.addChild path
-                if @state.showMark and mark.type and @typeimages[mark.type]
+                if @state.showMark and mark.type and @typeimages.find(mark.type)
                     #paper.project.current-style = {}
-                    type-symbol = @typeimages[mark.type]
+                    type-symbol = @typeimages.find(mark.type)
                     symbol = type-symbol.place path.bounds.topLeft.add [path.bounds.width / 2, 0]
                     # strokeScaling affact symbol, dont know why, TODO
                     symbol.scale wfactor
@@ -282,7 +302,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         mark = @state.marks[@state.cMark]
         contours = mark?contours
         if contours
-            color = @state.typeMap[mark.type]?.color
+            color = @state.typeMap.findType(mark.type)?.color
             @gen-contours contours, color
 
         #draw other contours
@@ -291,7 +311,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 continue
             contours = mark?contours
             if contours
-                color = @state.typeMap[mark.type]?.color
+                color = @state.typeMap.findType(mark.type)?.color
                 @other-contours = new paper.Group
                 @rebuild-group.addChild @other-contours
 
@@ -351,8 +371,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @rebuild-group.addChild @spots-group
         for i,mark of @state.marks
             type-symbol = undefined
-            if @state.showMark and mark.type and @typeimages[mark.type]
-                type-symbol = @typeimages[mark.type]
+            if @state.showMark and mark.type and @typeimages.find(mark.type)
+                type-symbol = @typeimages.find(mark.type)
             for j,spot of mark.spots
                 instance = @cross-symbol.clone!
                 instance.position = spot
@@ -451,7 +471,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         unless mark then return
 
         if data.pcmd == \paint and data.contours?
-            color = @state.typeMap[mark.type]?.color
+            color = @state.typeMap.findType(mark.type)?.color
             mark.contours = data.contours
             @check-changed!
             @gen-contours data.contours, color
