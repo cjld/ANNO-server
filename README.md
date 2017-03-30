@@ -12,11 +12,15 @@
 *   [x]  page error
 *   [ ]  less request
 *   [ ]  crash handle
-*   [ ]  electron
+*   [x]  electron
 *   [x]  session reuse
 *   [x]  image load icon
-*   [ ]  goto id in search-bar
-*   [ ]  record-stroke
+*   [x]  goto id in search-bar
+*   [x]  record-stroke
+*   [ ]  local icon
+*   [ ]  draw all viewer
+*   [ ]  soft link
+*   [ ]  dataset maintain
 
 
 // fix init session change bug
