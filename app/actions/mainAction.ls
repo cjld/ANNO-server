@@ -15,6 +15,7 @@ def-vals =
 
     loadingCounter: true
     counter: {}
+    displayType: \grid # grid list block
 
     loadingItems: true
     items: {}

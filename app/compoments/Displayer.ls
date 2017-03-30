@@ -1,6 +1,7 @@
 require! \./common
 require! \prelude : _
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+require! \./Editor
 
 my-parse-int = ->
     a = parseInt it
@@ -48,6 +49,7 @@ module.exports = class Displayer extends React.Component
             \showedItems
             \loadingItems
             \counter
+            \displayType
         ]
 
     componentDidUpdate: ->
@@ -81,7 +83,7 @@ module.exports = class Displayer extends React.Component
         ``
         infos = [ \category \description \name ]
 
-        imgsUI = @state.showedItems.map (it, index) ->
+        imgsUI = @state.showedItems.map (it, index) ~>
             listUI = infos.map (info) ->
                 ``<div className="item" key={info}>
                     <div className="header">
@@ -107,20 +109,36 @@ module.exports = class Displayer extends React.Component
                 \un-annotated : \red
                 \issued : \yellow
             }
+            key = @state.displayType + index
+            if @state.displayType == \grid or it.type != \item
+                box = ``
+                <Link className="imgGalleryBox" to={"/i/"+obj._id}>
+                {
+                    (it.type=="item")?
+                        <img className="ui bordered image" src={it.url} alt="" />
+                    :
+                        <h3><i className="ui huge folder open icon" />{it.name}</h3>
+                }
+                </Link>``
+            else if @state.displayType == \block
+                box = ``<div>
+                    <Editor viewonly currentItem={it} />
+                </div>``
+                label2 = ``<Link to={"/i/"+obj._id} className="ui top right attached label">Open</Link>``
+            else
+                box = ``<div>
+                    <Editor viewonly markonly currentItem={it} />
+                </div>``
+                label2 = ``<Link to={"/i/"+obj._id} className="ui top right attached label">Open</Link>``
 
-            ``<div className="column" key={index}>
+
+            ``<div className="column" key={key}>
                 <div className={"ui "+colorMap[it.state]+" segment imgGalleryBoxOuter"} style={{overflow:'hidden'}}>
                     <a className="ui left corner label" onClick={onClick}>
                         <i className={iconname}></i>
                     </a>
-                    <Link className="imgGalleryBox" to={"/i/"+obj._id}>
-                    {
-                        (it.type=="item")?
-                            <img className="ui bordered image" src={it.url} alt="" />
-                        :
-                            <h3><i className="ui huge folder open icon" />{it.name}</h3>
-                    }
-                    </Link>
+                    {box}
+                    {label2}
                 </div>
                 <div className="ui special popup">
                     <div className="ui bulleted list">
@@ -133,7 +151,7 @@ module.exports = class Displayer extends React.Component
         return ``<div>
         {tabsUI}
         <div className={"ui bottom attached "+((self.state.ajaxing || self.state.loadingItems)?"loading":"")+" segment"}>
-            <div className="ui three column grid">
+            <div className={this.state.displayType=="grid" ? "ui three column grid" : this.state.displayType=="block" ? "ui two column grid" : "ui one column grid"}>
                 {imgsUI}
             </div>
             <Pagebar />

@@ -22,7 +22,10 @@ module.exports = class TypeDropdown extends MyComponent
         img-url = @state.typeMap.findType(@state.data)?.src
         ccolor = @state.typeMap.findType(@state.data)?.color
         if img-url? then imgui = ``<img src={imgUrl} />``
-
+        if @props.viewonly
+            icon = undefined
+        else
+            icon = ``<i className="dropdown icon"></i>``
         ``<div>
         <div className="ui text menu">
           <a className="item" style={{backgroundColor:ccolor}}>
@@ -30,7 +33,7 @@ module.exports = class TypeDropdown extends MyComponent
           </a>
           <a className="browse item">
             {text}
-            <i className="dropdown icon"></i>
+            {icon}
           </a>
         </div>
         </div>

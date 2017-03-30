@@ -12,8 +12,7 @@ module.exports = class Guider extends React.Component
     ->
         super ...
         @state =
-            *   displayType: \grid # grid list block
-                ajaxing: false
+            *   ajaxing: false
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
@@ -23,6 +22,7 @@ module.exports = class Guider extends React.Component
 
         store.connect-to-component this, [
             \currentItem
+            \displayType
         ]
 
     componentDidMount: ->
@@ -160,7 +160,7 @@ module.exports = class Guider extends React.Component
         displayBar = [ \grid \list \block ].map (it) ->
             ``<a
             className={"ui "+ (it==self.state.displayType?"active":"") +" item"}
-            onClick={function(){self.setState({displayType:it})}}
+            onClick={function(){actions.setStore({displayType:it})}}
             key={it}
             ><i className={it+" layout icon"}></i></a>
             ``

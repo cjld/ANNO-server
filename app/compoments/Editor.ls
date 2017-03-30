@@ -41,9 +41,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.default-brush-size = 15.0
         @state.paint-brush-size = @state.default-brush-size
         @state.imageLoaded = false
-        @autosave!
-        @contour-anime!
-
         @state.time-evaluate = false
         store.connect-to-component this, [\typeMap, \config]
 
@@ -219,6 +216,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
 
     rebuild: ->
+        @activate-canvas!
+        if @props.viewonly and not @props.markonly
+            @state.cMark = -1
         if @state.hideImage
             @background?style.opacity = 0
         else
@@ -442,6 +442,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @contour-path = path
 
     send-cmd: (cmd, data) ->
+        if @props.viewonly then return
         @ts ?= 0
         @cts ?= -1
         @ts += 1
@@ -507,10 +508,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
     load-session: ~>
         @state.paint-brush-size = @state.default-brush-size
 
-        @drop-cmd!
-        if not @worker
-            @send-cmd \open-session, id:@state.currentItem._id
-        @on-current-mark-change!
+        if not @props.viewonly
+            @drop-cmd!
+            if not @worker
+                @send-cmd \open-session, id:@state.currentItem._id
+            @on-current-mark-change!
 
         @layer.matrix.reset!
         @offset-group.matrix.reset!
@@ -560,34 +562,39 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
 
     componentDidMount: ->
+        if not @props.viewonly
+            @autosave!
+            @contour-anime!
 
-        actions.connect-socket!
-        @socket = socket
+            actions.connect-socket!
+            @socket = socket
 
-        if inElectron
-            @worker = new worker
-            @worker.spawn!
-            @worker.on-data = (msg, data) ~>
-                if msg == \ok
-                    @receive-cmd data
-                else
-                    toastr.error "Worker error: "+data
-        else
-            @socket.emit \spawn
-            @socket.on \ok, @receive-cmd
-            @socket.on \s-error, -> toastr.error "Worker error: "+it
+            if inElectron
+                @worker = new worker
+                @worker.spawn!
+                @worker.on-data = (msg, data) ~>
+                    if msg == \ok
+                        @receive-cmd data
+                    else
+                        toastr.error "Worker error: "+data
+            else
+                @socket.emit \spawn
+                @socket.on \ok, @receive-cmd
+                @socket.on \s-error, -> toastr.error "Worker error: "+it
+
+
+
+            $ \body .css \overflow, \hidden
+
+            @helpModal = $ \#helpModal
+                ..modal detachable:false
 
         @reload-config!
-
-
-        $ \body .css \overflow, \hidden
-
-        @helpModal = $ \#helpModal
-            ..modal detachable:false
-
-        paper.setup 'canvas'
-        @canvas = $ \canvas .0
-        @background = $ '.myCanvas img' .0
+        jq = $ ReactDOM.findDOMNode this
+        paper.setup(jq.find \canvas .0)
+        @canvas = jq.find \canvas .0
+        @background = jq.find '.myCanvas img' .0
+        @project = paper.project
         @layer = paper.project.activeLayer
             ..apply-matrix = false
         @offset-group = new paper.Group
@@ -1102,9 +1109,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             #paper.view.draw!
 
         @empty-tool = new paper.Tool
-        $ document .on \keydown, @on-key-down
-        $ document .on \keyup, @on-key-up
-        $ \canvas .on \wheel, (e) ~>
+        if not @props.viewonly
+            $ document .on \keydown, @on-key-down
+            $ document .on \keyup, @on-key-up
+        $ @canvas .on \wheel, (e) ~>
+            @activate-canvas!
             ee = e.originalEvent
             if ee.deltaY > 0
                 @zoom 1.1, {x:ee.offsetX, y:ee.offsetY}
@@ -1112,24 +1121,48 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @zoom 1/1.1, {x:ee.offsetX, y:ee.offsetY}
             e.prevent-default!
 
+        $ @canvas .on \wheel, (e) ~>
+            @activate-canvas!
+            ee = e.originalEvent
+            if ee.deltaY > 0
+                @zoom 1.1, {x:ee.offsetX, y:ee.offsetY}
+            else
+                @zoom 1/1.1, {x:ee.offsetX, y:ee.offsetY}
+            e.prevent-default!
+
+        $ @canvas .on \mouseover, ~> @activate-canvas!
+
         @switchTool!
         @componentDidUpdate!
 
+    activate-canvas: ->
+        if @props.viewonly
+            @project.activate!
+            @pan-tool.activate!
+
     componentWillUnmount: ->
-        if @worker
-            @worker.kill-proc!
-            @worker = undefined
-        else
-            @socket.off \ok, @receive-cmd
-            @socket.off \s-error
-        $ \body .css \overflow, \auto
-        $ document .off \keydown, @on-key-down
-        $ document .off \keyup, @on-key-up
-        $ \canvas .off \wheel
+        if not @props.viewonly
+            if @worker
+                @worker.kill-proc!
+                @worker = undefined
+            else
+                @socket.off \ok, @receive-cmd
+                @socket.off \s-error
+            $ \body .css \overflow, \auto
+            $ document .off \keydown, @on-key-down
+            $ document .off \keyup, @on-key-up
+        $ @canvas .off \wheel
+        $ @canvas .off \mouseover
         (TimerMixin.componentWillUnmount.bind @)!
         #@socket.disconnect!
 
     switchTool: (editMode) ->
+        if @props.viewonly
+            @pan-tool.activate!
+            @cursor.visible = false
+            @canvas.style.cursor = "move"
+            return
+
         @cursor.visible = false
         ucursor = ""
         if not editMode
@@ -1343,13 +1376,108 @@ module.exports = class Editor extends React.Component implements TimerMixin
         marksUI = for i of marks
             switchCMark = @switchCurrentMark.bind @, i
             openTypePopup = ~> @typePopup.toggle!
+            if @props.viewonly
+                openTypePopup = -> 0
             hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
             ``<tr key={i} className={i==cMark?"positive":""} onClick={switchCMark}>
                 <td className='selectable'><a><div className={i==cMark?"ui green ribbon label":""}>{i}</div></a></td>
-                <td onClick={openTypePopup}><TypeDropdown data={marks[i].type} /></td>
+                <td onClick={openTypePopup}><TypeDropdown data={marks[i].type} viewonly={this.props.viewonly} /></td>
                 <td>{hitStr}</td>
             </tr>
             ``
+
+        markTable = ``<table className="ui selectable celled small compact table">
+                <thead>
+                    <tr><th>Mark ID</th>
+                    <th>type</th>
+                    <th>state</th></tr>
+                </thead>
+                <tbody>
+                {marksUI}
+                </tbody>
+            </table>``
+
+        if @props.markonly
+            utils = ``<div className="six wide column editor-utils">
+                    {markTable}
+                </div>``
+        else
+            utils = ``<div className="six wide column editor-utils">
+                <div className="ui horizontal divider" >Mark as</div>
+                <div className="ui mini green button"
+                    onClick={this.markAs.bind(this,'annotated')}>annotated</div>
+                <div className="ui mini red button"
+                    onClick={this.markAs.bind(this,'un-annotated')}>un-annotated</div>
+                <div className="ui mini yellow button"
+                    onClick={this.markAs.bind(this,'issued')}>issued</div>
+
+
+                <div className="ui horizontal divider" >Tool</div>
+                <MyDropdown
+                    data={this.state.editMode}
+                    dataOwner={[this, "editMode"]}
+                    defaultText="Edit mode"
+                    options={this.modeOption} />
+                {paintDropdown}
+
+                <div className="ui horizontal divider" >Config</div>
+                <MyCheckbox
+                    text="Hide image"
+                    dataOwner={[this,"hideImage"]} data={this.state.hideImage}/>
+                <MyCheckbox
+                    text="Hide annotation"
+                    dataOwner={[this,"hideAnnotation"]} data={this.state.hideAnnotation}/>
+                <MyCheckbox
+                    text="Auto bounding box"
+                    dataOwner={[this,"autobox"]} data={this.state.autobox}/>
+                <MyCheckbox
+                    text="Show bounding box"
+                    dataOwner={[this,"showMark"]} data={this.state.showMark}/>
+                <MyCheckbox
+                    text="Smooth"
+                    dataOwner={[this, "smooth"]} data={this.state.smooth}/>
+                <MyCheckbox
+                    text="Autosave"
+                    dataOwner={[this, "autosave"]} data={this.state.autosave}/>
+
+                <div className="ui horizontal divider" >Marks</div>
+                <div className="ui mini positive button"
+                    onClick={this.addMark}>add</div>
+                <div className="ui mini negtive button"
+                    onClick={this.delMark}>delete</div>
+                {markTable}
+
+                <div className="ui horizontal divider">Status</div>
+                <div><b>Save status:</b> {this.state.saveStatus}</div>
+                <div><b>Image size:</b>{imgSizeStr}</div>
+
+                <div className="ui horizontal divider">File</div>
+                <div className="ui mini button"
+                    onClick={this.save}>Save</div>
+                <div className="ui mini button"
+                    onClick={this.loadSession}>Reload</div>
+                <div className="ui mini button"
+                    onClick={this.showHelp}>Help</div>
+
+                <div className="ui horizontal divider" >Navigation</div>
+                <MyDropdown
+                    dataOwner={[this, "listState"]}
+                    defaultText="List state"
+                    options={listOption} />
+                <div className="ui mini button"
+                    onClick={this.onPrevClick}>prev</div>
+                <div className="ui mini button"
+                    onClick={this.onNextClick}>next</div>
+            </div>``
+
+        popup = ``<TypePopup ref={(it) => {this.typePopup = it}} onChange={this.switchType}/>``
+
+        if @props.viewonly
+            popup = undefined
+        if @props.viewonly and not @props.markonly
+            utils = undefined
+
+        twoColumn = utils?
 
         if @state.editMode == \paint
             paintDropdown = ``<MyDropdown
@@ -1371,90 +1499,15 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 </div>
             </div>
             <div className="ui grid">
-                <div className="myCanvas ten wide column">
+                <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh45" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
                     <div className="canvas-border">
                         <img id='canvas-bg' crossOrigin="anonymous"/>
                         <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>
-                <div className="six wide column editor-utils">
-                    <div className="ui horizontal divider" >Mark as</div>
-                    <div className="ui mini green button"
-                        onClick={this.markAs.bind(this,'annotated')}>annotated</div>
-                    <div className="ui mini red button"
-                        onClick={this.markAs.bind(this,'un-annotated')}>un-annotated</div>
-                    <div className="ui mini yellow button"
-                        onClick={this.markAs.bind(this,'issued')}>issued</div>
-
-
-                    <div className="ui horizontal divider" >Tool</div>
-                    <MyDropdown
-                        data={this.state.editMode}
-                        dataOwner={[this, "editMode"]}
-                        defaultText="Edit mode"
-                        options={this.modeOption} />
-                    {paintDropdown}
-
-                    <div className="ui horizontal divider" >Config</div>
-                    <MyCheckbox
-                        text="Hide image"
-                        dataOwner={[this,"hideImage"]} data={this.state.hideImage}/>
-                    <MyCheckbox
-                        text="Hide annotation"
-                        dataOwner={[this,"hideAnnotation"]} data={this.state.hideAnnotation}/>
-                    <MyCheckbox
-                        text="Auto bounding box"
-                        dataOwner={[this,"autobox"]} data={this.state.autobox}/>
-                    <MyCheckbox
-                        text="Show bounding box"
-                        dataOwner={[this,"showMark"]} data={this.state.showMark}/>
-                    <MyCheckbox
-                        text="Smooth"
-                        dataOwner={[this, "smooth"]} data={this.state.smooth}/>
-                    <MyCheckbox
-                        text="Autosave"
-                        dataOwner={[this, "autosave"]} data={this.state.autosave}/>
-
-                    <div className="ui horizontal divider" >Marks</div>
-                    <div className="ui mini positive button"
-                        onClick={this.addMark}>add</div>
-                    <div className="ui mini negtive button"
-                        onClick={this.delMark}>delete</div>
-                    <table className="ui selectable celled small compact table">
-                        <thead>
-                            <tr><th>Mark ID</th>
-                            <th>type</th>
-                            <th>state</th></tr>
-                        </thead>
-                        <tbody>
-                        {marksUI}
-                        </tbody>
-                    </table>
-
-                    <div className="ui horizontal divider">Status</div>
-                    <div><b>Save status:</b> {this.state.saveStatus}</div>
-                    <div><b>Image size:</b>{imgSizeStr}</div>
-
-                    <div className="ui horizontal divider">File</div>
-                    <div className="ui mini button"
-                        onClick={this.save}>Save</div>
-                    <div className="ui mini button"
-                        onClick={this.loadSession}>Reload</div>
-                    <div className="ui mini button"
-                        onClick={this.showHelp}>Help</div>
-
-                    <div className="ui horizontal divider" >Navigation</div>
-                    <MyDropdown
-                        dataOwner={[this, "listState"]}
-                        defaultText="List state"
-                        options={listOption} />
-                    <div className="ui mini button"
-                        onClick={this.onPrevClick}>prev</div>
-                    <div className="ui mini button"
-                        onClick={this.onNextClick}>next</div>
-                </div>
+                {utils}
+                {popup}
             </div>
-            <TypePopup ref={(it) => {this.typePopup = it}} onChange={this.switchType}/>
         </div>``
 
 movePolygon = (poly, delta) ->

@@ -15,9 +15,13 @@
     position: relative;
 }
 
-.myCanvas {
+.canvas-vh75 {
     /* http://stackoverflow.com/questions/1575141/make-div-100-height-of-browser-window */
     height: 75vh;
+}
+.canvas-vh45 {
+    /* http://stackoverflow.com/questions/1575141/make-div-100-height-of-browser-window */
+    height: 30vh;
 }
 
 .myCanvas .canvas-border {
@@ -63,7 +67,7 @@
 }
 
 .editor-utils {
-    height: 75vh;
+    max-height: 75vh;
     overflow-y: scroll;
     overflow-x: hidden;
 }
