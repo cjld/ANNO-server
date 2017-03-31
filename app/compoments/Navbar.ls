@@ -24,6 +24,12 @@ module.exports = class Navbar extends React.Component
         onlineUserCount = this.state.userCount
         #navList = [ \Explore \Datasets \Stats \Category \Help ]
         navList = [ \Help, \Download, \Update ]
+        forback = ``<div className="item" key="fbbtn" style={{padding:'0'}}>
+            <div className="ui icon buttons">
+                <button className="ui icon button" onClick={() => myhistory.goBack() }> <i className="left arrow icon"></i> </button>
+                <button className="ui icon button" onClick={() => myhistory.goForward() }> <i className="right arrow icon"></i> </button>
+            </div>
+        </div>``
         navs = navList.map (it) ~>
             dom = it
             if it==\Update and @state.hasUpdate
@@ -37,6 +43,8 @@ module.exports = class Navbar extends React.Component
                 {dom}
             </Link>
             ``
+        navs = [forback].concat navs
+
         ``<div className="ui menu">
                     <a className="header item" href="/i">ANNOTATE
                         <div className="floating ui red circular mini label" style={{top:'20%'}}>

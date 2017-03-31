@@ -21,6 +21,7 @@
 *   [x]  draw all viewer
 *   [ ]  soft link
 *   [ ]  dataset maintain
+*   [x]  fj
 
 
 // fix init session change bug
