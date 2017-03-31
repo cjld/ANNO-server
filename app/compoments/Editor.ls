@@ -520,6 +520,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         imgUrl = @state.currentItem.url
         @background.style.cssText = ""
         @background.src = imgUrl
+        @set-state imageLoaded: false
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
             if @worker
