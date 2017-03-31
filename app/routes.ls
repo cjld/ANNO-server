@@ -6,6 +6,8 @@ require! {
     \./compoments/Download
     \./compoments/Update
     \./compoments/BackDoor
+    \./compoments/Signin
+    \./compoments/Signup
 }
 
 console.log \hello-from-routes
@@ -19,4 +21,6 @@ module.exports = ``<Route path='/' component={App}>
     <Route path='download' component={Download} />
     <Route path='update' component={Update} />
     <Route path='backdoor' component={BackDoor} />
+    <Route path='signin' component={Signin} />
+    <Route path='signup' component={Signup} />
 </Route>``

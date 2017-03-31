@@ -22,6 +22,7 @@
 *   [ ]  soft link
 *   [ ]  dataset maintain
 *   [x]  fj
+*   [ ]  code converge test
 
 
 // fix init session change bug

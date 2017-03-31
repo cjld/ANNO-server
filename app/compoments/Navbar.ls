@@ -62,14 +62,17 @@ module.exports = class Navbar extends React.Component
                     <div className="ui right floated text menu">
                         <div className="item">
                             <div className="ui buttons">
-                                <div className="ui green button">
-                                    Sign up
-                                </div>
+                                <Link to="/signup">
+                                    <div className="ui green button">
+                                        Sign up
+                                    </div>
+                                </Link>
                                 <div className="or"></div>
-                                <div className="ui button">
-                                    Sign in
-                                </div>
-
+                                <Link to="/signin">
+                                    <div className="ui button">
+                                        Sign in
+                                    </div>
+                                </Link>
                             </div>
                         </div>
                     </div>

@@ -31,8 +31,9 @@ class App extends React.Component
         if it
             $.cookie \last-id, it
         else if $.cookie \last-id and not @jump-before
-            @jump-before = true
-            myhistory.push \/i/ + $.cookie(\last-id)
+            if @props.routes.length == 1 or @props.routes.length == 2 and @props.routes[1].path == \i
+                @jump-before = true
+                myhistory.push \/i/ + $.cookie(\last-id)
 
     componentDidMount: ->
         actions.set-store {fatherId:@props.params.itemId, page:@props.params.page}

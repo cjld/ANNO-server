@@ -16,10 +16,12 @@
     "async": "^1.5.2",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-react": "^6.3.13",
+    "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.14.2",
     "compression": "^1.6.2",
     "electron": "^1.6.2",
     "express": "^4.13.3",
+    "express-session": "^1.15.2",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.1",
     "gulp-browserify": "^0.5.1",
@@ -36,6 +38,9 @@
     "mongoose": "^4.3.5",
     "morgan": "^1.6.1",
     "multer": "^1.3.0",
+    "owasp-password-strength-test": "^1.3.0",
+    "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
     "prelude": "^0.8.2",
     "prelude-ls": "^1.1.2",
     "promise": "^7.1.1",
@@ -45,7 +50,8 @@
     "react-timer-mixin": "^0.13.3",
     "socket.io": "^1.4.6",
     "socket.io-client": "^1.7.3",
-    "swig": "^1.4.2"
+    "swig": "^1.4.2",
+    "validator": "^7.0.0"
   },
   "devDependencies": {
     "request": "^2.81.0"

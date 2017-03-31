@@ -8,6 +8,8 @@ require! {
     \../app/models
 
     \multer
+    \validator
+    \passport
 }
 
 app = express!
@@ -29,12 +31,12 @@ storage = multer.disk-storage do
 
 upload = multer {storage} .array \userPhoto, config.upload-limit
 app.post \/upload, (req, res) ->
-    console.log req.body
+    #console.log req.body
     upload req, res, (err) ->
-        console.log req.body
-        console.log req.files
+        #console.log req.body
+        #console.log req.files
         if err
-            console.log err
+            #console.log err
             res.status 500 .end "Error uploading files."
         else
             files = for file in req.files then do
@@ -44,12 +46,32 @@ app.post \/upload, (req, res) ->
                 url: config.image-server-url + config.upload-path + file.filename
                 parent: req.body.parent
 
-            console.log files
+            #console.log files
             my-object.create files, (err) ->
                 if err
                     res.status 500 .end "Items creation failure."
                 else
                     res.end "Files is uploaded."
+
+app.use \/signup (req, res, next) ->
+    if not validator.is-email req.body.email
+        res.status 400 .end "Email not valid."
+        return
+    next!
+
+my-passport = (strategy) ->
+    return (req, res, next) ->
+        _ = passport.authenticate strategy, (err, user, info) ->
+            if err then return next err
+            if not user then res.status 401 .end info.message
+            data = {} <<< user.profile
+            data.email = user.local.email
+            res.send data
+        _(req, res, next)
+
+app.use \/signup, my-passport \local-signup
+
+app.use \/signin, my-passport \local-login
 
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page
@@ -138,7 +160,7 @@ app.post \/new-object, (req, res, next) ->
             res.send "#{req.body.name} saved successfully."
 
 app.post \/delete-items, (req, res, next) ->
-    console.log req.body['items[]']
+    #console.log req.body['items[]']
     items = req.body['items[]']
     if items
         items = [items] if not Array.isArray items
@@ -150,7 +172,7 @@ app.post \/delete-items, (req, res, next) ->
         res.send "Delete #{items.length} items successfully!"
 
 app.post \/save-mark, (req, res, next) ->
-    console.log req.body
+    #console.log req.body
     res.send \ok.
 
 app.post \/counter, (req, res, next) ->
