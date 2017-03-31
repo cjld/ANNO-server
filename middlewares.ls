@@ -2,10 +2,12 @@ require! {
     \express
     \morgan
     \body-parser
+    \compression
 }
 
 app = express!
     ..use morgan \dev
+    ..use compression!
     # parse json in body
     ..use body-parser.json limit:\5mb
     # parse urlencoded in body
