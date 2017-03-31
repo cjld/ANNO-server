@@ -20,7 +20,9 @@
     height: 75vh;
 }
 .canvas-vh45 {
-    /* http://stackoverflow.com/questions/1575141/make-div-100-height-of-browser-window */
+    height: 50vh;
+}
+.canvas-vh30 {
     height: 30vh;
 }
 

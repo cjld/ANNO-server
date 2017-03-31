@@ -17,8 +17,8 @@
 *   [x]  image load icon
 *   [x]  goto id in search-bar
 *   [x]  record-stroke
-*   [ ]  local icon
-*   [ ]  draw all viewer
+*   [x]  local icon
+*   [x]  draw all viewer
 *   [ ]  soft link
 *   [ ]  dataset maintain
 

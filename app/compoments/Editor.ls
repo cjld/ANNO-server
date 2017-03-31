@@ -1398,7 +1398,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             </table>``
 
         if @props.markonly
-            utils = ``<div className="six wide column editor-utils">
+            utils = ``<div className="six wide column editor-utils canvas-vh45">
                     {markTable}
                 </div>``
         else
@@ -1488,18 +1488,22 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {value:"foreground", text:"Foreground"},
                     {value:"hair", text:"hair"}
                 ]} />``
+        if @props.viewonly
+            helpModal = undefined
+        else
+            helpModal = ``<div className="ui modal" id="helpModal">
+                    <i className="close icon"></i>
+                    <div className="header">
+                        Help
+                    </div>
+                    <div className="content">
+                        <Help />
+                    </div>
+                </div>``
         ``<div className={this.state.imageLoaded?"ui segment":"ui loading segment"}>
-            <div className="ui modal" id="helpModal">
-                <i className="close icon"></i>
-                <div className="header">
-                    Help
-                </div>
-                <div className="content">
-                    <Help />
-                </div>
-            </div>
+            {helpModal}
             <div className="ui grid">
-                <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh45" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
+                <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh30" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
                     <div className="canvas-border">
                         <img id='canvas-bg' crossOrigin="anonymous"/>
                         <canvas id='canvas' data-paper-resize></canvas>
