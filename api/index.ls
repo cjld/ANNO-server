@@ -54,24 +54,39 @@ app.post \/upload, (req, res) ->
                     res.end "Files is uploaded."
 
 app.use \/signup (req, res, next) ->
-    if not validator.is-email req.body.email
+    if typeof req.body.email != \string or not validator.is-email req.body.email
         res.status 400 .end "Email not valid."
         return
     next!
+
+is-logged-in = (req, res, next) ->
+    if req.is-authenticated! then return next!
+    res.status 401 .end "Please login first."
 
 my-passport = (strategy) ->
     return (req, res, next) ->
         _ = passport.authenticate strategy, (err, user, info) ->
             if err then return next err
-            if not user then res.status 401 .end info.message
+            if not user then return res.status 401 .end info.message
             data = {} <<< user.profile
             data.email = user.local.email
-            res.send data
+            req.login user, ->
+                if it then return next it
+                res.send data
         _(req, res, next)
 
 app.use \/signup, my-passport \local-signup
 
 app.use \/signin, my-passport \local-login
+
+app.use \/logout, (req, res) ->
+    req.logout!
+    res.send \ok
+
+app.use \/profile, is-logged-in, (req, res) ->
+    data = {} <<< req.user.profile
+    data.email = req.user.local.email
+    res.send data
 
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page

@@ -2,6 +2,7 @@ require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
 require! {
     \owasp-password-strength-test : owasp
+    \../history : myhistory
 }
 
 
@@ -36,6 +37,8 @@ module.exports = class Signup extends React.Component
                 data: data2
                 success: ->
                     toastr.success "Sign up successful."
+                    actions.set-store userProfile: it
+                    myhistory.push \/profile
                 error: (e)->
                     toastr.error "Sign up error: "+e.response-text
             return false

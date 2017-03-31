@@ -1,5 +1,8 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
+require! {
+    \../history : myhistory
+}
 
 module.exports = class Signin extends React.Component
     componentDidMount: ->
@@ -17,6 +20,8 @@ module.exports = class Signin extends React.Component
                 data: data2
                 success: ->
                     toastr.success "Sign in successful."
+                    actions.set-store userProfile: it
+                    myhistory.push \/profile
                 error: (e)->
                     toastr.error "Sign in error: "+e.response-text
             return false

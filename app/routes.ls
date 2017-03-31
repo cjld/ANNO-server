@@ -8,6 +8,7 @@ require! {
     \./compoments/BackDoor
     \./compoments/Signin
     \./compoments/Signup
+    \./compoments/Profile
 }
 
 console.log \hello-from-routes
@@ -23,4 +24,5 @@ module.exports = ``<Route path='/' component={App}>
     <Route path='backdoor' component={BackDoor} />
     <Route path='signin' component={Signin} />
     <Route path='signup' component={Signup} />
+    <Route path='profile' component={Profile} />
 </Route>``

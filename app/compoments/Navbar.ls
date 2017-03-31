@@ -6,7 +6,7 @@ module.exports = class Navbar extends React.Component
     ->
         super ...
         @state = {}
-        store.connect-to-component this, [\userCount, \hasUpdate]
+        store.connect-to-component this, [\userCount, \hasUpdate, \userProfile]
 
     componentDidMount: ->
         actions.connect-socket!
@@ -44,13 +44,37 @@ module.exports = class Navbar extends React.Component
             </Link>
             ``
         navs = [forback].concat navs
+        if @state.userProfile
+            rightMenu = ``<div className="ui right floated text menu">
+                <div className="active blue item"> Welcome, {this.state.userProfile.name} </div>
+                <Link className="item" to="/profile">Profile</Link>
+                <a className="item" onClick={()=>actions.logout()}>Logout</a>
+            </div>``
+        else
+            rightMenu = ``<div className="ui right floated text menu">
+                <div className="item">
+                    <div className="ui buttons">
+                        <Link to="/signup">
+                            <div className="ui green button">
+                                Sign up
+                            </div>
+                        </Link>
+                        <div className="or"></div>
+                        <Link to="/signin">
+                            <div className="ui button">
+                                Sign in
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+            </div>``
 
         ``<div className="ui menu">
-                    <a className="header item" href="/i">ANNOTATE
+                    <Link className="header item" to="/i">ANNOTATE
                         <div className="floating ui red circular mini label" style={{top:'20%'}}>
                             {onlineUserCount}
                         </div>
-                    </a>
+                    </Link>
                     <div className="item">
                         <div className="ui small left labeled right icon input">
                             <div className="ui label">Whole datasets</div>
@@ -59,22 +83,6 @@ module.exports = class Navbar extends React.Component
                         </div>
                     </div>
                     {navs}
-                    <div className="ui right floated text menu">
-                        <div className="item">
-                            <div className="ui buttons">
-                                <Link to="/signup">
-                                    <div className="ui green button">
-                                        Sign up
-                                    </div>
-                                </Link>
-                                <div className="or"></div>
-                                <Link to="/signin">
-                                    <div className="ui button">
-                                        Sign in
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
+                    {rightMenu}
                 </div>
         ``

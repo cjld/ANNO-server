@@ -26,9 +26,10 @@ app = express!
     ..use passport.session!
 
 passport.serialize-user (user, done) ->
-    done null, user.id
+    done null, user._id
 passport.deserialize-user (id, done) ->
-    User.find-by-id id, (err,user) -> done err,user
+    User.find-by-id id, (err,user) ->
+        done err,user
 
 passport.use \local-signup, new passport-local.Strategy do
     *   username-field: \email
@@ -53,7 +54,7 @@ passport.use \local-signup, new passport-local.Strategy do
             user.save ->
                 if err then throw err
                 else
-                    done null, user
+                    done null, user.to-object!
 
 passport.use \local-login, new passport-local.Strategy do
     *   username-field: \email
@@ -66,6 +67,6 @@ passport.use \local-login, new passport-local.Strategy do
             return done null, false, message:'User not found.'
         if !user.valid-password password then
             return done null, false, message:'Invalid user or password.'
-        return done null, user
+        return done null, user.to-object!
 
 module.exports = app

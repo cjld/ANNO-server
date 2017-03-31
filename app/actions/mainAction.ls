@@ -10,6 +10,7 @@ rand-float-from-sth = (s) ->
     return parseInt(md5s, 16) / Math.pow(16, md5s.length)
 
 def-vals =
+    userProfile: false
     userCount: 0
     hasUpdate: false
 
@@ -110,6 +111,18 @@ class MainActions extends Actions
                 @set-store hasUpdate: true
             else
                 @set-store hasUpdate: false
+
+    fetchProfile: ->
+        $.ajax do
+            method: \POST
+            url: \/api/profile
+            success: ~> @set-store userProfile: it
+
+    logout: ->
+        $.ajax do
+            method: \POST
+            url: \/api/logout
+            success: ~> @set-store userProfile: false
 
     fetchContent: ->
         @resetSelects!
