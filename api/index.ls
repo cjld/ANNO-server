@@ -10,7 +10,17 @@ require! {
     \multer
     \validator
     \passport
+    \emailjs : email
+    \crypto
 }
+
+server = email.server.connect config.email.config
+
+send-forget-code = (addr, code, cb) ->
+    data = {} <<< config.email.template
+    data.text = "Your password reset code: #{code}"
+    data.to = "<#{addr}>"
+    server.send data, cb
 
 app = express!
 
@@ -68,8 +78,7 @@ my-passport = (strategy) ->
         _ = passport.authenticate strategy, (err, user, info) ->
             if err then return next err
             if not user then return res.status 401 .end info.message
-            data = {} <<< user.profile
-            data.email = user.local.email
+            data = {} <<< user.to-object!.profile
             req.login user, ->
                 if it then return next it
                 res.send data
@@ -79,14 +88,69 @@ app.use \/signup, my-passport \local-signup
 
 app.use \/signin, my-passport \local-login
 
+app.get \/auth/google, passport.authenticate 'google', scope : ['profile', 'email']
+app.get \/auth/google/callback, passport.authenticate 'google',
+    *   successRedirect : '/profile'
+        failureRedirect : '/signin'
+
 app.use \/logout, (req, res) ->
     req.logout!
     res.send \ok
 
 app.use \/profile, is-logged-in, (req, res) ->
-    data = {} <<< req.user.profile
+    data = {} <<< req.user.to-object!.profile
     data.email = req.user.local.email
     res.send data
+
+app.use \/edit-profile, is-logged-in, (req, res, next) ->
+    if req.body.email
+        delete req.body.email
+    req.user.profile <<< req.body
+    if req.body.password
+        if req.user.local.password
+            if not req.user.valid-password req.body.oldpassword
+                return res.status 401 .end "Wrong password."
+        if not req.user.local.email
+            req.user.local.email = req.user.profile.email
+        req.user.local.password = req.user.generate-hash req.body.password
+    req.user.save (err) ->
+        if err then return next err
+        req.login req.user, ->
+            if it then return next it
+            res.send req.user.profile
+
+app.use \/sendcode, (req, res, next) ->
+    if typeof req.body.email == \string and validator.is-email req.body.email
+        (err, user) <- models.User.find-one {"local.email":req.body.email}
+        if err then return next err
+        if not user then return res.status 400 .end "Invalid Email."
+        (err,buffer) <- crypto.randomBytes 4
+        if err then return next err
+        code = buffer.toString('hex')
+        user.local.code = code
+        (err) <- user.save
+        if err then return next err
+        (err) <- send-forget-code req.body.email, code
+        if err then return next err
+        res.send "ok"
+    else
+        res.status 400 .end "Invalid Email."
+
+app.use \/reset-password, (req, res, next) ->
+    if typeof req.body.email == \string and validator.is-email req.body.email
+        (err, user) <- models.User.find-one {"local.email":req.body.email}
+        if err then return next err
+        if user.local.code and user.local.code == req.body.resetcode
+            user.local.code = undefined
+            user.local.password = user.generate-hash req.body.password
+            (err) <- user.save
+            if err then return next err
+            res.send "ok"
+        else
+            return res.send 401 .end "Wrong reset code."
+    else
+        res.status 400 .end "Invalid Email."
+
 
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page

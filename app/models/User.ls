@@ -5,14 +5,18 @@ require! {
 schema = new mongoose.Schema do
     profile:
         name: String
+        email: String
+        googleId: String
     local:
         email: String
         password: String
+        code: String
     google:
         id: String
         token: String
         email: String
         name: String
+        profile: mongoose.Schema.Types.Mixed
 
 
 schema.methods.generate-hash = ->

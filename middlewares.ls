@@ -10,6 +10,7 @@ require! {
     \express-session : \session
     \passport
     \passport-local
+    \passport-google-oauth : {OAuth2Strategy : GoogleStrategy}
 }
 
 app = express!
@@ -50,11 +51,12 @@ passport.use \local-signup, new passport-local.Strategy do
                     password: password
                 profile:
                     name: req.body.name
+                    email: email
             user.local.password = user.generate-hash password
             user.save ->
                 if err then throw err
                 else
-                    done null, user.to-object!
+                    done null, user
 
 passport.use \local-login, new passport-local.Strategy do
     *   username-field: \email
@@ -67,6 +69,38 @@ passport.use \local-login, new passport-local.Strategy do
             return done null, false, message:'User not found.'
         if !user.valid-password password then
             return done null, false, message:'Invalid user or password.'
-        return done null, user.to-object!
+        return done null, user
+
+passport.use new GoogleStrategy do
+    *   clientID        : config.auth.google.clientID
+        clientSecret    : config.auth.google.clientSecret
+        callbackURL     : config.auth.google.callbackURL
+        pass-req-to-callback: true
+    (req, token, refreshToken, profile, done) ->
+        <- process.next-tick
+        if req.is-authenticated!
+            qobj = _id:req.user._id
+        else
+            qobj = "google.id":profile.id
+        User.findOne qobj, (err, user) ->
+            if err then return done err
+            if user and not req.is-authenticated!
+                return done null, user
+            if not req.is-authenticated!
+                user = new User
+            user
+                ..google.id = profile.id
+                ..google.token = token
+                ..google.name  = profile.displayName
+                ..google.email = profile.emails[0].value
+                ..google.profile = profile
+            user.profile
+                ..email = user.google.email
+                ..name = user.google.name
+                ..googleId = profile.id
+            user.save (err) ->
+                if err then return done err
+                done null, user
+
 
 module.exports = app

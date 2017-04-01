@@ -9,6 +9,7 @@ require! {
     \./compoments/Signin
     \./compoments/Signup
     \./compoments/Profile
+    \./compoments/Forget
 }
 
 console.log \hello-from-routes
@@ -25,4 +26,5 @@ module.exports = ``<Route path='/' component={App}>
     <Route path='signin' component={Signin} />
     <Route path='signup' component={Signup} />
     <Route path='profile' component={Profile} />
+    <Route path='forget' component={Forget} />
 </Route>``

@@ -41,7 +41,16 @@ module.exports = class Signin extends React.Component
               <div className="field">
                 <label>Password</label>
                 <input type="password" name="password" placeholder="" />
+                <Link to="/forget"> forget password </Link>
               </div>
               <button className="ui green button" type="submit">Login</button>
+                <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>
+                  <i className="google icon"></i>
+                  Sign in via Google
+                </button>
+              <button type="button" className="ui disabled blue button">
+                <i className="wechat icon"></i>
+                Sign in via WeChat
+              </button>
             </form>
         </div>``

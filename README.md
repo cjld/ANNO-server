@@ -23,7 +23,11 @@
 *   [ ]  dataset maintain
 *   [x]  fj
 *   [ ]  code converge test
-*   [ ]  dev env
+*   [x]  dev env
+*   [ ]  forget password
+*   [ ]  google login, wechat login
+*   [ ]  task
+*   [ ]  mission
 
 
 // fix init session change bug

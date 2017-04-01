@@ -72,5 +72,13 @@ module.exports = class Signup extends React.Component
                 </div>
                 {errorMsg}
                 <button className="ui green button" type="submit">Sign up</button>
+                  <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>
+                    <i className="google icon"></i>
+                    Sign in via Google
+                  </button>
+                <button type="button" className="ui disabled blue button">
+                  <i className="wechat icon"></i>
+                  Sign in via WeChat
+                </button>
             </form>
         </div>``
