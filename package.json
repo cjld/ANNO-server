@@ -5,8 +5,9 @@
   "main": "server.ls",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "lsc server.ls",
-    "watch": "nodemon -e ls,html --exec 'gulp browserify && lsc server.ls'",
+    "start": "if [ \"$NODE_ENV\" = production ]; then lsc server.ls; else node --debug `which lsc` server.ls; fi",
+    "watch": "nodemon -e ls,html --exec 'gulp browserify && npm run start'",
+    "debug": "node-inspector & sleep 1 && xdg-open \"http://127.0.0.1:8080/?port=5858\"",
     "electron": "electron ./electron_app/main.js"
   },
   "author": "",

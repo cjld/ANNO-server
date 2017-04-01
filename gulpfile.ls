@@ -17,6 +17,7 @@ gulp.task \vendor-js, ->
         './bower_components/jquery-ui/jquery-ui.js'
         './bower_components/js-md5/build/md5.min.js'
         './node_modules/socket.io-client/dist/socket.io.js'
+        './public/js/paper-full.js'
     ]   .pipe gulp-concat \vendor.js
         .pipe gulp-if production, gulp-uglify mangle:false
         .pipe gulp.dest \public/js
