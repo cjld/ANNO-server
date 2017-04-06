@@ -6,12 +6,14 @@ require! {
     \./TypeDropdown
     \./TypePopup
     \./Help
-    \../models/types
+    \../models/Object : object
+    \mongoose
     \../history : myhistory
     \../worker
 }
 
 inte = (a,b) -> parseInt(a) == parseInt(b)
+deep-copy = (a) -> JSON.parse(JSON.stringify(a))
 
 module.exports = class Editor extends React.Component implements TimerMixin
     ->
@@ -149,8 +151,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @set-state saveStatus:\changed
 
     check-changed: ->
-        if @state.marks and
-            @state.currentItem.marks != JSON.stringify @state.marks
+        if @state.currentItem.marks !== @state.marks
             @set-changed!
 
     update-backgroud: ->
@@ -343,7 +344,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @current-segments-group = new paper.Group
         @segments-group.addChild @current-segments-group
         for i,mark of @state.marks
-            for j,segment of mark.segments.data
+            for j,segment of mark.segments
                 path = new paper.Path
                 alpha = segm-op * if inte(i,@state.cMark) then 1 else 0.5
                 path.strokeColor = new paper.Color \black
@@ -351,7 +352,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     ..alpha = alpha
                 path.mydata = {i,j}
                 if inte(i,@state.cMark) and
-                   inte(j,mark.segments.active.j)
+                   inte(j,mark.active-segment.j)
                     path.selected = true
                 path.closed = true
                 for k,p of segment
@@ -395,16 +396,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @load-session!
 
     parse-mark: ->
-        @state.marks = undefined
-        mark-str = @state.currentItem.marks
-        if mark-str == undefined or mark-str == ""
+        @state.marks = deep-copy @state.currentItem.marks
+        if @state.marks == undefined or @state.marks === []
             @state.marks = @new-mark!
             @state.cMark = 0
-        else
-            try
-                @state.marks = JSON.parse @state.currentItem.marks
-            catch error
-                toastr.error "Error when parsing marks: #{error.to-string!}"
 
     componentWillMount: ->
         @state.currentItem = @props.currentItem
@@ -677,10 +672,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 tolerance: 5
             hit-result = @segments-group.hit-test point, hitOptions
             console.log hit-result
-            if e.modifiers.control or mark.segments.data.length == 0
-                data = mark.segments.data
+            if e.modifiers.control or mark.segments.length == 0
+                data = mark.segments
                 data.push [point{x,y}]
-                mark.segments.active = {i:c,j:(data.length-1).to-string!}
+                mark.active-segment = {i:c,j:(data.length-1).to-string!}
                 @forceUpdate!
             else
                 #if hit-result?item?mydata?i != @state.cMark
@@ -689,7 +684,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {i,j} = that
                     if inte i,@state.cMark
                         mark = @state.marks[i]
-                        poly = mark.segments.data[j]
+                        poly = mark.segments[j]
                         if hit-result.segment
                             k = hit-result.item.segments.index-of that
                             point = poly[k]
@@ -698,7 +693,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         switch hit-result?type
                         case \fill
                             if e.modifiers.shift
-                                mark.segments.data.splice j,1
+                                mark.segments.splice j,1
                             else
                                 @drag-func = (poly, e) ~~>
                                     movePolygon poly, e.delta.multiply tmatrix.scaling
@@ -719,14 +714,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
                                 null
                             else
                                 poly.splice k, 0, point{x,y}
-                        mark.segments.active.j = j
+                        mark.active-segment.j = j
                         @rebuild!
                         @forceUpdate!
                         return
 
-                j = mark.segments?active?j
+                j = mark.active-segment.j
                 if j?
-                    poly = mark.segments.data[j]
+                    poly = mark.segments[j]
                     poly?.push point{x,y}
             @rebuild!
 
@@ -752,7 +747,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 segments: true
                 tolerance: 5
             hit-result = @segments-group.hit-test point, hitOptions
-            if e.modifiers.control or mark.segments.data.length == 0
+            if e.modifiers.control or mark.segments.length == 0
                 @canvas.style.cursor = \copy
             else
                 #if hit-result?item?mydata?i != @state.cMark
@@ -761,7 +756,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {i,j} = that
                     if inte i,@state.cMark
                         mark = @state.marks[i]
-                        poly = mark.segments.data[j]
+                        poly = mark.segments[j]
                         if hit-result.segment
                             k = hit-result.item.segments.index-of that
                             point = poly[k]
@@ -1201,12 +1196,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
             toastr.info "Saving request is pending, please wait."
             return
         pre-status = @state.saveStatus
-        @state.currentItem.marks = JSON.stringify @state.marks
+        @state.currentItem.marks = deep-copy @state.marks
         @set-state saveStatus:\saving
         $.ajax do
             method: \POST
             url: \/api/new-object
-            data: @state.currentItem
+            data: JSON.stringify @state.currentItem
+            contentType: "application/json"
             error: ~>
                 toastr.error it.response-text
                 if @state.saveStatus == \saving
@@ -1238,6 +1234,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @switchCurrentMark cMark
 
     new-mark: ->
+        mark = (new mongoose.Document {}, object.mark).to-object!
         if @state.config?autoType
             if @state.marks == undefined
                 tid = 0
@@ -1245,8 +1242,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 tid = @state.marks.length
             if @state.config?types?0?types
                 if tid>=that.length then tid = 0
-                return [type:that[tid].title,state:"set-type",spots:[],segments:{active:{},data:[]}]
-        [type:"",state:"set-type",spots:[],segments:{active:{},data:[]}]
+                mark.type = that[tid].title
+        return [mark]
 
     addMark: ~>
         # TODO : fix the model initial
@@ -1301,7 +1298,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else if key == 'e'
             @markAs \issued
         else if key == 's'
-            @save!
+            @save \Saved.
         else if key == 'v'
             @set-state hideImage: not @state.hideImage
         else if key == 'b'
@@ -1379,7 +1376,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             openTypePopup = ~> @typePopup.toggle!
             if @props.viewonly
                 openTypePopup = -> 0
-            hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.data.length} segments"
+            hitStr = "#{@state.marks[i].spots.length} spots, #{@state.marks[i].segments.length} segments"
             ``<tr key={i} className={i==cMark?"positive":""} onClick={switchCMark}>
                 <td className='selectable'><a><div className={i==cMark?"ui green ribbon label":""}>{i}</div></a></td>
                 <td onClick={openTypePopup}><TypeDropdown data={marks[i].type} viewonly={this.props.viewonly} /></td>
@@ -1454,7 +1451,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
                 <div className="ui horizontal divider">File</div>
                 <div className="ui mini button"
-                    onClick={this.save}>Save</div>
+                    onClick={() => this.save("Saved.")}>Save</div>
                 <div className="ui mini button"
                     onClick={this.loadSession}>Reload</div>
                 <div className="ui mini button"

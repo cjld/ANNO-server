@@ -4,7 +4,7 @@ require! \./common
 
 
 require! {
-    \./../models/raw : my-object
+    \./../models/Object : {object: my-object}
     \./Breadcrumb
 }
 
@@ -165,20 +165,14 @@ module.exports = class Guider extends React.Component
             ><i className={it+" layout icon"}></i></a>
             ``
         availItems = []
-        for key of my-object
-            if my-object[key] == \String
+        for key of my-object.tree
+            if my-object.tree[key] == String or my-object.tree[key].type == String
                 if key == 'marks' then continue
+                if my-object.tree[key].enum
+                    option = [{value: v} for v in that]
                 if key == 'state'
-                    # TODO
-                    option =
-                        *   value: 'annotated'
-                        *   value: 'un-annotated'
-                        *   value: 'issued'
                     valui = ``<MyDropdown name={key} options={option} data={this.formValue.state}/>``
                 else if key == 'type'
-                    option =
-                        *   value: 'directory'
-                        *   value: 'item'
                     valui = ``<MyDropdown name={key} options={option} data={this.formValue.type}/>``
                 else if key == 'config'
                     valui = ``<textarea type="text" name={key} placeholder={key}/>``

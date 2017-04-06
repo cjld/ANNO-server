@@ -8,22 +8,30 @@ mongoose.connection.on \error ->
     console.log 'Error: Could not connect to MongoDB. Did you forget to run `mongod`?'
 
 
-#point = new mongoose.Schema {x:Number, y:Number}
+point = new mongoose.Schema {x:Number, y:Number}, _id:false
 points = new mongoose.Schema do
-    points:{type:[{x:Number, y:Number}], default: []}
+    *   points:{type:[{x:Number, y:Number}], default: []}
+    *   _id:false
 
 mark = new mongoose.Schema do
-    type: String
-    state: String
-    spots: points
-    segments: {type: [points], default: []}
-    active-segment: {type: {i:Number, j:Number}}
-    contours: {type: [points], default: []}
+    *   type: String
+        state: String
+        spots: points
+        segments: {type: [points], default: []}
+        active-segment: {type: {i:Number, j:Number}}
+        contours: {type: [points], default: []}
+    *   _id: false
+
+commen = new mongoose.Schema do
+    owner: {type: mongoose.Schema.Types.ObjectId, ref:\user}
+    object: {type: mongoose.Schema.Types.ObjectId, ref:\object}
+    content: String
 
 object = new mongoose.Schema do
     # database, directory, item, config
-    type: {type: String, enum: [\item, \directory], default: \item}
+    type: {type: String, enum: [\item, \directory, \annotation, \task], default: \item}
     name: {type: String, default: \unname}
+    # available when item
     description: String
     category: String
     url: String
@@ -31,10 +39,27 @@ object = new mongoose.Schema do
     # annotated, un-annotated, issued
     state: {type: String, enum: [\annotated, \un-annotated, \issued], default: \un-annotated}
     marks: {type: [mark], default: []}
+    annotations: [{type: mongoose.Schema.Types.ObjectId, ref:\object}]
+    # worker has permission to change marks
+    # worker == undefined in view all
+    worker: mongoose.Schema.Types.ObjectId
+    # owner has permission to edit
+    owner: mongoose.Schema.Types.ObjectId
+
+    originImage: {type: mongoose.Schema.Types.ObjectId, ref:\object}
+    taskImages: [{type: mongoose.Schema.Types.ObjectId, ref:\object}]
+
     # config file for directory
     config: String
     parent: mongoose.Schema.Types.ObjectId
 
+seeker = do
+    item: <[name description category url tags state marks annotations owner parent worker]>
+    directory: <[name description state worker owner parent]>
+    annotation: <[name description state marks originImage worker owner]>
+    task: <[name description taskImages owner worker]>
+
+# task : [view all, user1 task, user2 task]
 
 object-model = mongoose.model \object, object
 mark-model = mongoose.model \mark, mark
