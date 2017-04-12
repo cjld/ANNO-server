@@ -435,6 +435,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeScaling: false
         @rebuild-group.addChild path
         @contour-path = path
+        if @state.smooth
+            for c in @contour-path.children
+                c.simplify!
 
     send-cmd: (cmd, data) ->
         if @props.viewonly then return
