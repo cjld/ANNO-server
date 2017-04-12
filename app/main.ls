@@ -3,7 +3,7 @@ require! \./compoments/common
 
 require! {
     \react : React
-    \react-router : {Router}
+    \react-router : {Router, browserHistory}
     \react-dom : ReactDOM
     \./history
 
@@ -24,4 +24,4 @@ $ document .ready ->
     toastr.options.timeOut = 3
     toastr.options.extendedTimeOut = 10
     root = $ \#app
-    ReactDOM.render ``<Router history={history}>{routes}</Router>``, root.get![0]
+    ReactDOM.render ``<Router history={browserHistory}>{routes}</Router>``, root.get![0]

@@ -1,4 +1,4 @@
 
 if window?
-    require! \history/lib/createBrowserHistory
-    module.exports = createBrowserHistory!
+    h = require \history
+    module.exports = h.createBrowserHistory!

@@ -34,7 +34,7 @@ app.use (req, res) ->
                 res.status 302 .redirect redir-loc.pathname+redir-loc.search
             else if render-props then
                 #console.log 'args: ', &
-                html = ReactDOM.render-to-string React.create-element react-router.Routing-context, render-props
+                html = ReactDOM.render-to-string React.create-element react-router.Router-context, render-props
                 page = swig.renderFile \views/index.html, html:html
                 res.status 200 .send page
             else

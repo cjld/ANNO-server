@@ -72,7 +72,7 @@ class MyIdInput extends MyComponent
             @set-data undefined
             return
         @set-state loading:true
-        @set-data mongoose.Types.ObjectId @input.value
+        @set-data @input.value
         $.ajax do
             method: \POST
             data: _id:@input.value
