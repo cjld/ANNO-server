@@ -37,11 +37,24 @@ require! {
     \gulp-changed
     \gulp-livescript
     \gulp-babel
-    \gulp-browserify
     \gulp-rename
+    \browserify
+    \through2
 }
 
-dependencies = []
+dependencies = [\buffer]
+
+
+browserified = ->
+    through2.obj (file, enc, next) ->
+        b = browserify do
+            entries: file.path
+            debug: !production
+        #b = browserify file.path
+        b.bundle (err, res) ->
+            if err then return next err
+            file.contents = res
+            next null, file
 
 gulp.task \compile, ->
     gulp.src \./app/**/*.ls
@@ -52,16 +65,18 @@ gulp.task \compile, ->
 
 gulp.task \browserify, [\compile], ->
     gulp.src \./app-dest/main.js
-        .pipe do
-            gulp-browserify debug:!production .on \prebundle, -> it.external dependencies
+        #.pipe do
+        #    gulp-browserify debug:!production .on \prebundle, -> it.external dependencies
+        .pipe browserified!
         .pipe gulp-if production, gulp-uglify mangle:false
         .pipe gulp-rename \bundle.js
         .pipe gulp.dest \./public/js
 
 gulp.task \browserify-vendor, ->
     gulp.src \./app/empty.js
-        .pipe do
-            gulp-browserify! .on \prebundle, -> it.require dependencies
+        #.pipe do
+        #    gulp-browserify! .on \prebundle, -> it.require dependencies
+        .pipe browserified!
         .pipe gulp-if production, gulp-uglify mangle:false
         .pipe gulp-rename \vendor.bundle.js
         .pipe gulp.dest \./public/js

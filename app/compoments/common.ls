@@ -55,18 +55,29 @@ class MyIdInput extends MyComponent
             color: \#389f46
             boxShadow: \none
 
+    componentDidMount: ->
+        if @props.data == undefined
+            @input.value = ""
+        else
+            @input.value = @props.data.to-string!
+    componentDidUpdate: ->
+        @componentDidMount!
+        #@input.value = @props.data
+
+
     btnClick: ~>
         if @state.delete
             @set-state delete: false, done: false, name:""
+            @input.value = ""
+            @set-data undefined
             return
-        console.log \click + @input.value
         @set-state loading:true
+        @set-data mongoose.Types.ObjectId @input.value
         $.ajax do
             method: \POST
             data: _id:@input.value
             url: \/api/find-one-name
             success: ~>
-                console.log it
                 @set-state error: false, done: true, name: it.name, delete: true, loading: false
             error: ~>
                 toastr.error "Object not found."
