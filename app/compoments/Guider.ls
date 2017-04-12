@@ -1,11 +1,13 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
-{MyComponent, MyCheckbox, MyDropdown} = common
+{MyComponent, MyCheckbox, MyDropdown, MyIdInput} = common
 
 
 require! {
-    \./../models/Object : {object: my-object}
+    \./../models/Object : {object: my-object, seeker}
+    \./../models/document
     \./Breadcrumb
+    \mongoose
 }
 
 module.exports = class Guider extends React.Component
@@ -16,9 +18,7 @@ module.exports = class Guider extends React.Component
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
-        @formValue =
-            *   state: \un-annotated
-                type: \item
+                doc: new document {}, my-object
 
         store.connect-to-component this, [
             \currentItem
@@ -95,12 +95,10 @@ module.exports = class Guider extends React.Component
                 else
                     item = store.get-state!.items[ids[0]]
                 for k,v of item
-                    if @formValue[k]?
-                        @formValue[k] = v
-                    else
-                        # attribute selector
-                        dom = addItemForm.find "[name='#{k}']"
-                        dom.val(v)
+                    # attribute selector
+                    @state.doc.k = v
+                    dom = addItemForm.find "[name='#{k}']"
+                    dom.val(v)
 
                 @set-state modalType:\edit
                 @edit-id = item._id
@@ -166,23 +164,28 @@ module.exports = class Guider extends React.Component
             ``
         availItems = []
         for key of my-object.tree
+            unless key in seeker[@state.doc.type]
+                continue
             if my-object.tree[key] == String or my-object.tree[key].type == String
                 if key == 'marks' then continue
                 if my-object.tree[key].enum
                     option = [{value: v} for v in that]
                 if key == 'state'
-                    valui = ``<MyDropdown name={key} options={option} data={this.formValue.state}/>``
+                    valui = ``<MyDropdown name={key} options={option} data={this.state.doc.state}  dataOwner={[this, "doc.state"]}/>``
                 else if key == 'type'
-                    valui = ``<MyDropdown name={key} options={option} data={this.formValue.type}/>``
+                    valui = ``<MyDropdown name={key} options={option} data={this.state.doc.type} dataOwner={[this, "doc.type"]}/>``
                 else if key == 'config'
                     valui = ``<textarea type="text" name={key} placeholder={key}/>``
                 else
                     valui = ``<input type="text" name={key} placeholder={key}/>``
-                availItems.push ``<div className="field" key={key}>
-                    <label>{key}</label>
-                    {valui}
-                </div>
-                ``
+            else if my-object.tree[key] == mongoose.Schema.Types.ObjectId or
+                my-object.tree[key].type == mongoose.Schema.Types.ObjectId
+                valui = ``<MyIdInput name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
+            availItems.push ``<div className="field" key={key}>
+                <label>{key}</label>
+                {valui}
+            </div>
+            ``
 
         delModal = ``<div className="ui modal" id="delModal">
             <i className="close icon"></i>
@@ -235,7 +238,7 @@ module.exports = class Guider extends React.Component
         <div className="ui modal" id="addModal">
             <i className="close icon"></i>
             <div className="header">
-                New Item
+                {this.state.modalType == "edit"?"Edit":"Add"}
             </div>
             <div className="content">
                 <form className={self.state.ajaxing?"ui loading form":"ui form"} id="addItemForm">

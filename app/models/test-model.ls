@@ -46,6 +46,8 @@ object = new mongoose.Schema do
     # owner has permission to edit
     owner: mongoose.Schema.Types.ObjectId
 
+    crossValidate: {type:Number, default: 1}
+
     originImage: {type: mongoose.Schema.Types.ObjectId, ref:\object}
     taskImages: [{type: mongoose.Schema.Types.ObjectId, ref:\object}]
 
@@ -57,7 +59,7 @@ seeker = do
     item: <[name description category url tags state marks annotations owner parent worker]>
     directory: <[name description state worker owner parent]>
     annotation: <[name description state marks originImage worker owner]>
-    task: <[name description taskImages owner worker]>
+    task: <[name description taskImages owner worker crossValidate]>
 
 # task : [view all, user1 task, user2 task]
 

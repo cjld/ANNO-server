@@ -13,9 +13,18 @@ class MyComponent extends React.Component
     componentWillMount: ->
         if @props.dataOwner?
             [@dataOwner, @dataKey] = @props.dataOwner
-            @set-state data:@dataOwner.state[@dataKey]
+            [a,b] = @dataKey.split \.
+            if b
+                value = @dataOwner.state[a][b]
+            else
+                value = @dataOwner.state[@dataKey]
+            @set-state data:value
             @onChange = (data) ~>
                 @state.data = data
+                if b
+                    @dataOwner.state?[a][b] = data
+                    @dataOwner.forceUpdate!
+                else
                 if @dataOwner.state?[@dataKey] != data
                     @dataOwner.set-state "#{@dataKey}":data
         else if @props.data?
@@ -26,6 +35,59 @@ class MyComponent extends React.Component
         @set-state data:it
         if this.onChange then this.onChange it
 
+class MyIdInput extends MyComponent
+    ->
+        super ...
+        @state =
+            loading: false
+            error: false
+            done: false
+            name: ""
+            delete: false
+        @errorStyle =
+            backgroundColor: \#fff6f6
+            borderColor: \#e0b4b4
+            color: \#9f3a38
+            boxShadow: \none
+        @successStyle =
+            backgroundColor: \#f6fff6
+            borderColor: \#b4e0b9
+            color: \#389f46
+            boxShadow: \none
+
+    btnClick: ~>
+        if @state.delete
+            @set-state delete: false, done: false, name:""
+            return
+        console.log \click + @input.value
+        @set-state loading:true
+        $.ajax do
+            method: \POST
+            data: _id:@input.value
+            url: \/api/find-one-name
+            success: ~>
+                console.log it
+                @set-state error: false, done: true, name: it.name, delete: true, loading: false
+            error: ~>
+                toastr.error "Object not found."
+                @set-state error:true, loading: false
+
+    render: ->
+        if @state.loading
+            inputStyle = {}
+        else if @state.error
+            inputStyle = @errorStyle
+        else if @state.done
+            inputStyle = @successStyle
+        else inputStyle = {}
+        ``<div className={"ui right labeled left icon input"+(this.state.loading?" loading":"")}>
+          <i className="file image outline icon"></i>
+          <input type="text" ref={(v)=>this.input = v} placeholder="Enter ObjectID" style={inputStyle} />
+          <a className="ui tag label" onClick={this.btnClick}>
+             {this.state.delete?"(name:"+this.state.name+") Delete":"Add Image"}
+          </a>
+        </div>
+        ``
 # props
 # text
 class MyCheckbox extends MyComponent
@@ -79,5 +141,5 @@ class MyDropdown extends MyComponent
 
 module.exports = {
     React, Link, ReactDOM, TimerMixin, actions, store
-    MyComponent, MyCheckbox, MyDropdown
+    MyComponent, MyCheckbox, MyDropdown, MyIdInput
 }

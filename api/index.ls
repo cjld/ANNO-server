@@ -173,6 +173,12 @@ app.use \/find-objects, (req, res, next) ->
         if err then return next err
         res.send objs
 
+app.use \/find-one-name, (req, res, next) ->
+    req.body <<< req.query
+    my-object.find-one req.body, {name:true}, (err, obj) ->
+        if err then return next err
+        res.send obj
+
 app.use \/find-one, (req, res, next) ->
     if req.body.parent == ''
         req.body.parent = undefined

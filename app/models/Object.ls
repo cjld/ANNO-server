@@ -52,6 +52,7 @@ object = new mongoose.Schema do
     worker: mongoose.Schema.Types.ObjectId
     # owner has permission to edit
     owner: mongoose.Schema.Types.ObjectId
+    crossValidate: {type:Number, default: 1}
 
     originImage: {type: mongoose.Schema.Types.ObjectId, ref:\Object}
     taskImages: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}]
@@ -61,11 +62,11 @@ object = new mongoose.Schema do
     parent: mongoose.Schema.Types.ObjectId
 
 seeker = do
-    item: <[name description category url tags state marks annotations owner parent worker]>
-    directory: <[name description state worker owner parent]>
-    annotation: <[name description state marks originImage worker owner]>
-    task: <[name description taskImages owner worker]>
+    item: <[type name description category url tags state annotations owner parent worker]>
+    directory: <[type name description state worker owner parent]>
+    annotation: <[type name description state originImage worker owner]>
+    task: <[type name description taskImages owner worker crossValidate]>
 
-module.exports = {object, mark}
+module.exports = {object, mark, seeker}
 # move schema instantiation to other module
 #mongoose.model \Object, schema
