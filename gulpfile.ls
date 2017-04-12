@@ -42,9 +42,6 @@ require! {
     \through2
 }
 
-dependencies = [\buffer]
-
-
 browserified = ->
     through2.obj (file, enc, next) ->
         b = browserify do
