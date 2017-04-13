@@ -169,7 +169,7 @@ app.use \/list-objects, (req, res, next) ->
     .limit config.page-size
 
 app.use \/find-objects, (req, res, next) ->
-    my-object.find req.body, (err, objs) ->
+    my-object.find req.body .populate \originImage .exec (err, objs) ->
         if err then return next err
         res.send objs
 

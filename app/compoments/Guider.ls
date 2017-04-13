@@ -137,7 +137,9 @@ module.exports = class Guider extends React.Component
             else
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
-            doc = new document values, my-object
+                values._id = undefined
+            doc = new document {}, my-object
+            doc <<< values
             self.set-state ajaxing: true
             {selects} = store.get-state!
             ids = Object.keys(selects)
