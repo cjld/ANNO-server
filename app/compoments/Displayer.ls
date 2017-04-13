@@ -113,14 +113,15 @@ module.exports = class Displayer extends React.Component
                 \issued : \yellow
             }
             key = @state.displayType + index
-            if @state.displayType == \grid or it.type != \item
+            imgurl = it.url
+            if it.type == \annotation
+                imgurl = it.originImage.url
+            if @state.displayType == \grid or (it.type != \item and it.type != \annotation)
                 box = ``
                 <Link className="imgGalleryBox" to={"/i/"+obj._id}>
                 {
-                    (it.type=="item")?
-                        <img className="ui bordered image" src={it.url} alt="" />
-                    :(it.type=="annotation")?
-                        <img className="ui bordered image" src={it.originImage.url} alt="" />
+                    (it.type=="item" || it.type=="annotation")?
+                        <img className="ui bordered image" src={imgurl} alt="" />
                     :
                         <h3><i className="ui huge folder open icon" />{it.name}</h3>
                 }
