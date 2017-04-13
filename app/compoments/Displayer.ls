@@ -54,7 +54,10 @@ module.exports = class Displayer extends React.Component
 
     componentDidUpdate: ->
         node = $ ReactDOM.findDOMNode this
-        node.find \.imgGalleryBoxOuter .popup inline:true
+        node.find \.imgGalleryBoxOuter .popup do
+            inline:true
+            duration: 0
+            hoverable: true
 
     render: ->
         self = this
@@ -81,7 +84,7 @@ module.exports = class Displayer extends React.Component
             {tabsUI}
         </div>
         ``
-        infos = [ \category \description \name ]
+        infos = [ \category \description \name \_id ]
 
         imgsUI = @state.showedItems.map (it, index) ~>
             listUI = infos.map (info) ->
@@ -139,6 +142,7 @@ module.exports = class Displayer extends React.Component
                     </a>
                     {box}
                     {label2}
+                    <div className="ui top right attached label">{obj.type}</div>
                 </div>
                 <div className="ui special popup">
                     <div className="ui bulleted list">

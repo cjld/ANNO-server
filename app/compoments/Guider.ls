@@ -19,6 +19,7 @@ module.exports = class Guider extends React.Component
                 # modal type, edit or add
                 modalType: \add
                 doc: new document {}, my-object
+                is-admin: false
 
         store.connect-to-component this, [
             \currentItem
@@ -26,6 +27,10 @@ module.exports = class Guider extends React.Component
         ]
 
     componentDidMount: ->
+        is-admin = false
+        if $.cookie('user') == 'admin'
+            @set-state is-admin: true
+            is-admin = true
         self = this
         #dialog = $ \#addModal .dialog do
         #    auto-open: false
@@ -75,7 +80,7 @@ module.exports = class Guider extends React.Component
         #    #        toastr.success response
         #    return false
 
-        if $.cookie('user') == 'admin'
+        if is-admin
             $ \#addItemBtn .click ~>
                 @set-state modalType:\add
                 dialog.modal \show
@@ -96,7 +101,7 @@ module.exports = class Guider extends React.Component
                     item = store.get-state!.items[ids[0]]
                 for k,v of item
                     # attribute selector
-                    @state.doc.k = v
+                    @state.doc[k] = v
                     dom = addItemForm.find "[name='#{k}']"
                     dom.val(v)
 
@@ -132,6 +137,7 @@ module.exports = class Guider extends React.Component
             else
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
+            doc = new document values, my-object
             self.set-state ajaxing: true
             {selects} = store.get-state!
             ids = Object.keys(selects)
@@ -140,7 +146,8 @@ module.exports = class Guider extends React.Component
             $.ajax do
                 method: \POST
                 url: \/api/new-object
-                data: values
+                data: JSON.stringify doc
+                contentType: "application/json"
                 error: ->
                     toastr.error it.response-text
                 success: ->
@@ -229,7 +236,7 @@ module.exports = class Guider extends React.Component
         ``
 
         opClass = "ui disabled item"
-        if $?.cookie('user') == 'admin'
+        if @state.is-admin
             opClass = "ui item"
 
         ``<div>

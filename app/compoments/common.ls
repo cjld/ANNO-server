@@ -60,9 +60,22 @@ class MyIdInput extends MyComponent
             @input.value = ""
         else
             @input.value = @props.data.to-string!
+            if @input.value != "" and not @state.done and not @state.error and not @state.loading
+                @check-value!
     componentDidUpdate: ->
         @componentDidMount!
         #@input.value = @props.data
+
+    check-value: ~>
+        $.ajax do
+            method: \POST
+            data: _id:@input.value
+            url: \/api/find-one-name
+            success: ~>
+                @set-state error: false, done: true, name: it.name, delete: true, loading: false
+            error: ~>
+                toastr.error "Object not found."
+                @set-state error:true, loading: false
 
 
     btnClick: ~>
@@ -73,15 +86,7 @@ class MyIdInput extends MyComponent
             return
         @set-state loading:true
         @set-data @input.value
-        $.ajax do
-            method: \POST
-            data: _id:@input.value
-            url: \/api/find-one-name
-            success: ~>
-                @set-state error: false, done: true, name: it.name, delete: true, loading: false
-            error: ~>
-                toastr.error "Object not found."
-                @set-state error:true, loading: false
+        @check-value!
 
     render: ->
         if @state.loading
@@ -93,7 +98,7 @@ class MyIdInput extends MyComponent
         else inputStyle = {}
         ``<div className={"ui right labeled left icon input"+(this.state.loading?" loading":"")}>
           <i className="file image outline icon"></i>
-          <input type="text" ref={(v)=>this.input = v} placeholder="Enter ObjectID" style={inputStyle} />
+          <input type="text" ref={(v)=>this.input = v} placeholder="Enter ObjectID" style={inputStyle} name={this.props.name} />
           <a className="ui tag label" onClick={this.btnClick}>
              {this.state.delete?"(name:"+this.state.name+") Delete":"Add Image"}
           </a>
