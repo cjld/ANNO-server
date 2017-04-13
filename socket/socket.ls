@@ -29,9 +29,11 @@ module.exports = (io) ->
         socket.on \open-session, ->
             console.log \open-session, it
             #wk.kill-proc!
-            my-object.find-one {_id:it.id}, (err, obj) ->
+            my-object.find-one {_id:it.id} .populate \originImage .exec (err, obj) ->
                 if err then socket.emit \s-error, err
                 url = obj?url
+                if obj.type == \annotation
+                    url = obj.originImage?url
                 if url then
                     wk.open-url url
                 else

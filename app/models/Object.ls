@@ -46,6 +46,7 @@ object = new mongoose.Schema do
     # annotated, un-annotated, issued
     state: {type: String, enum: [\annotated, \un-annotated, \issued], default: \un-annotated}
     marks: {type: [mark], default: []}
+    shape: [Number]
     annotations: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}]
     # worker has permission to change marks
     # worker == undefined in view all

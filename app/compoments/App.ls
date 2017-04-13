@@ -20,7 +20,7 @@ class MainPage extends React.Component
         ``<div className={type == "item" ? "ui fluid container" : "ui container"}>
             <Guider />
             {
-                type == "item"? <Editor currentItem={this.state.currentItem} /> : <Displayer />
+                type == "item" || type == "annotation" ? <Editor currentItem={this.state.currentItem} /> : <Displayer />
             }
         </div>
         ``

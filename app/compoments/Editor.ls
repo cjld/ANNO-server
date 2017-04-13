@@ -515,7 +515,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @layer.matrix.reset!
         @offset-group.matrix.reset!
 
-        imgUrl = @state.currentItem.url
+        imgUrl = @get-img-url!
         @background.style.cssText = ""
         @background.src = imgUrl
         @set-state imageLoaded: false
@@ -527,6 +527,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @worker.open-base64 data
             @origin-width = @background.width
             @origin-height = @background.height
+            if @state.currentItem.shape !== [@origin-width, @origin-height]
+                @state.currentItem.shape = [@origin-width, @origin-height]
+                @set-changed!
             #@background.position = paper.view.center
             #@offset-group.translate @background.bounds.point
             s1 = paper.view.size
@@ -1364,6 +1367,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
         else
             toastr.error "No mark found."
 
+    get-img-url: ~>
+        if @state.currentItem.type == \item
+            return @state.currentItem?.url
+        else
+            return @state.currentItem.originImage?.url
+
     render: ->
         list-option =
             *   value: 'all'
@@ -1371,7 +1380,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             *   value: 'un-annotated'
             *   value: 'issued'
         console.log \editor-render
-        imgUrl = @state.currentItem?.url
+        imgUrl = @get-img-url!
         {marks,cMark} = @state
         imgSizeStr = \width: + @origin-width + ', ' + \height: + @origin-height
         marksUI = for i of marks
@@ -1451,6 +1460,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <div className="ui horizontal divider">Status</div>
                 <div><b>Save status:</b> {this.state.saveStatus}</div>
                 <div><b>Image size:</b>{imgSizeStr}</div>
+                {
+                    this.state.currentItem.type == "annotation"?
+                        <div><b>Origin image:</b><Link to={"/i/"+this.state.currentItem.originImage._id}>{this.state.currentItem.originImage.name}</Link></div>
+                    : ""
+                }
 
                 <div className="ui horizontal divider">File</div>
                 <div className="ui mini button"

@@ -167,6 +167,7 @@ app.use \/list-objects, (req, res, next) ->
     .sort [['_id', -1]]
     .skip (page - 1) * config.page-size
     .limit config.page-size
+    .populate \originImage
 
 app.use \/find-objects, (req, res, next) ->
     my-object.find req.body .populate \originImage .exec (err, objs) ->

@@ -119,6 +119,8 @@ module.exports = class Displayer extends React.Component
                 {
                     (it.type=="item")?
                         <img className="ui bordered image" src={it.url} alt="" />
+                    :(it.type=="annotation")?
+                        <img className="ui bordered image" src={it.originImage.url} alt="" />
                     :
                         <h3><i className="ui huge folder open icon" />{it.name}</h3>
                 }
