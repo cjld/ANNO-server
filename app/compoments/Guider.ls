@@ -3,6 +3,8 @@ require! \./common
 {MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs} = common
 
 
+deep-copy = -> JSON.parse JSON.stringify it
+
 require! {
     \./../models/Object : {object: my-object, seeker}
     \./../models/document
@@ -83,6 +85,7 @@ module.exports = class Guider extends React.Component
         if is-admin
             $ \#addItemBtn .click ~>
                 @set-state modalType:\add
+                @origin-doc = {}
                 dialog.modal \show
 
             $ \#uploadBtn .click ~>
@@ -104,6 +107,7 @@ module.exports = class Guider extends React.Component
                     @state.doc[k] = v
                     dom = addItemForm.find "[name='#{k}']"
                     dom.val(v)
+                @origin-doc = deep-copy @state.doc
 
                 @set-state modalType:\edit
                 @edit-id = item._id
@@ -138,17 +142,23 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
                 values._id = undefined
-            doc = new document @state.doc, my-object
+            doc = new document {}, my-object
+            doc <<< @state.doc
             doc <<< values
             self.set-state ajaxing: true
             {selects} = store.get-state!
             ids = Object.keys(selects)
             if ids.length == 0
                 self.state.currentItem <<< values
+            doc-copy = deep-copy doc
+            for k of doc-copy
+                if k == \_id then continue
+                if doc-copy[k] === @origin-doc[k]
+                    doc-copy[k] = undefined
             $.ajax do
                 method: \POST
                 url: \/api/new-object
-                data: JSON.stringify doc
+                data: JSON.stringify doc-copy
                 contentType: "application/json"
                 error: ->
                     toastr.error it.response-text

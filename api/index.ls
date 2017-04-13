@@ -12,6 +12,8 @@ require! {
     \passport
     \emailjs : email
     \crypto
+
+    \promise
 }
 
 server = email.server.connect config.email.config
@@ -222,28 +224,68 @@ app.use \/find-neighbour, (req, res, next) ->
 app.use \/prefetch-objects, (req, res, next) ->
     find-neighbour config.prefetch-size, \1, req, res, next
 
+get-descendants = (ids, cb) ->
+    ps = for i in ids
+        if not i then continue
+        new promise (resolve, reject) ->
+            if i.type then resolve i
+            else
+                (err, doc) <- my-object.find-by-id i
+                if err then return reject err
+                if doc.type == \directory
+                    (err, docs) <- my-object.find parent:doc._id
+                    if err then return reject err
+                    get-descendants docs, (err, dds) ->
+                        if err then return reject err
+                        resolve [doc].concat dds
+                else
+                    resolve doc
+    promise.all ps
+        .then -> cb null, [].concat.apply [], it
+        .catch -> cb it
+
 app.post \/new-object, (req, res, next) ->
-    # just test
-    if req.body.url == '404'
-        res.status 404 .send "failed."
-        return
-    if req.body.url == 'wait'
-        do
-            <- set-timeout _, 5000
-            res.send "timeout ok!"
-        return
+
+    build-task = (obj) ->
+        (err, task) <- my-object.find-by-id obj._id
+        if err then return next err
+        doc = {parent: obj._id, name: \all_images, type: \directory}
+        (err, imgdir) <- my-object.find-one-and-update doc, doc, upsert:true
+        if err then return next err
+        (err, descendants) <- get-descendants obj.taskImages
+        if err then return next err
+        newdocs = for x in descendants
+            if x.type not in [\item, \annotation]
+                continue
+            new promise (resolve, reject) ->
+                doc = parent: imgdir._id, type: \annotation, originImage: x._id
+                doc-update = {name: x.name} <<< doc
+                (err, doc) <- my-object.find-one-and-update doc, doc-update, upsert: true
+                if err then return reject err
+                resolve doc
+        promise.all newdocs
+            .then (anno-docs) ->
+                res.send "#{anno-docs.length} annotations created."
+            .catch (reason) ->
+                next reason
 
     if req.body._id?
         edit-obj = {} <<< req.body
         id = delete edit-obj._id
         my-object.update {_id:id}, {$set:edit-obj}, ->
             if it then return next it
-            res.send "Edit id:#{id} successfully!"
+            if req.body.taskImages
+                build-task req.body, next
+            else
+                res.send "Edit id:#{id} successfully!"
     else
         object = new my-object req.body
         object.save ->
             if it then return next it
-            res.send "#{req.body.name} saved successfully."
+            if req.body.taskImages
+                build-task req.body, next
+            else
+                res.send "#{req.body.name} saved successfully."
 
 app.post \/delete-items, (req, res, next) ->
     #console.log req.body['items[]']

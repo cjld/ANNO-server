@@ -13,7 +13,7 @@ module.exports = class Breadcrumb extends React.Component
         p = [] <<< @state.ancestors
         for a in p.reverse!
             lists.push ``<div key={a._id} className="divider">/</div>``
-            lists.push ``<Link key={a._id+"-link"} to={"/i/"+a._id}>{a.name}</Link>``
+            lists.push ``<Link key={a._id+"-link"} to={"/i/"+a._id}>{a.name?a.name:"noname"}</Link>``
 
         ``<div>
             <Link to="/i/"><i className="big database icon" /></Link>
