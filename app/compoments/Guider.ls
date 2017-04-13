@@ -1,6 +1,6 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
-{MyComponent, MyCheckbox, MyDropdown, MyIdInput} = common
+{MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs} = common
 
 
 require! {
@@ -138,7 +138,7 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
                 values._id = undefined
-            doc = new document {}, my-object
+            doc = new document @state.doc, my-object
             doc <<< values
             self.set-state ajaxing: true
             {selects} = store.get-state!
@@ -190,6 +190,9 @@ module.exports = class Guider extends React.Component
             else if my-object.tree[key] == mongoose.Schema.Types.ObjectId or
                 my-object.tree[key].type == mongoose.Schema.Types.ObjectId
                 valui = ``<MyIdInput name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
+            else if key == \taskImages
+                valui = ``<MyIdInputs name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
+            else continue
             availItems.push ``<div className="field" key={key}>
                 <label>{key}</label>
                 {valui}

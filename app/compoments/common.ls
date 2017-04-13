@@ -22,11 +22,18 @@ class MyComponent extends React.Component
             @onChange = (data) ~>
                 @state.data = data
                 if b
-                    @dataOwner.state?[a][b] = data
-                    @dataOwner.forceUpdate!
+                    if @dataOwner.state?[a][b] !== data
+                        @dataOwner.state?[a][b] = data
+                        if @dataOwner instanceof MyComponent
+                            @dataOwner.onChange @dataOwner.state.data
+                        @dataOwner.forceUpdate!
                 else
-                if @dataOwner.state?[@dataKey] != data
-                    @dataOwner.set-state "#{@dataKey}":data
+                if @dataOwner.state?[@dataKey] !== data
+                    @dataOwner.state["#{@dataKey}"] = data
+                    if @dataOwner instanceof MyComponent
+                        @dataOwner.onChange @dataOwner.state.data
+                    @dataOwner.forceUpdate!
+
         else if @props.data?
             @set-state @props{data}
             @onChange = @props.onChange
@@ -56,7 +63,7 @@ class MyIdInput extends MyComponent
             boxShadow: \none
 
     componentDidMount: ->
-        if @props.data == undefined
+        if not @props.data
             @input.value = ""
         else
             @input.value = @props.data.to-string!
@@ -79,14 +86,14 @@ class MyIdInput extends MyComponent
 
 
     btnClick: ~>
-        if @state.delete
-            @set-state delete: false, done: false, name:""
-            @input.value = ""
-            @set-data undefined
-            return
         @set-state loading:true
         @set-data @input.value
         @check-value!
+
+    delClick: ~>
+        @set-state delete: false, done: false, name:""
+        @input.value = ""
+        @set-data undefined
 
     render: ->
         if @state.loading
@@ -100,10 +107,35 @@ class MyIdInput extends MyComponent
           <i className="file image outline icon"></i>
           <input type="text" ref={(v)=>this.input = v} placeholder="Enter ObjectID" style={inputStyle} name={this.props.name} />
           <a className="ui tag label" onClick={this.btnClick}>
-             {this.state.delete?"(name:"+this.state.name+") Delete":"Add Image"}
+             { "Check Image"+"(name:"+this.state.name+")"}
+          </a>
+          <a className="ui red label" onClick={this.delClick}>
+             Delete
           </a>
         </div>
         ``
+class MyIdInputs extends MyComponent
+    addID: ~>
+        @state.data.push undefined
+        @set-data @state.data
+
+    componentDidUpdate: ~>
+        newdata = []
+        change = false
+        for i,j in @state.data
+            if not i and j!=@state.data.length-1 then change = true
+            else newdata.push i
+        if change then
+            @set-data newdata
+
+    render: ->
+        ids = for i,id in @state.data
+            ``<MyIdInput name="noname" data={i} dataOwner={[this, "data."+id]} key={id} />``
+        ``<div>
+            <div className="ui button" onClick={this.addID}> New </div>
+            {ids}
+        </div>``
+
 # props
 # text
 class MyCheckbox extends MyComponent
@@ -157,5 +189,5 @@ class MyDropdown extends MyComponent
 
 module.exports = {
     React, Link, ReactDOM, TimerMixin, actions, store
-    MyComponent, MyCheckbox, MyDropdown, MyIdInput
+    MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs
 }

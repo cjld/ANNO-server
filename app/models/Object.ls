@@ -56,15 +56,15 @@ object = new mongoose.Schema do
     crossValidate: {type:Number, default: 1}
 
     originImage: {type: mongoose.Schema.Types.ObjectId, ref:\Object}
-    taskImages: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}]
+    taskImages: {type: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}], default: []}
 
     # config file for directory
     config: String
     parent: mongoose.Schema.Types.ObjectId
 
 seeker = do
-    item: <[type name description category url tags state annotations owner parent worker]>
-    directory: <[type name description state worker owner parent]>
+    item: <[type name description category url tags state annotations owner worker]>
+    directory: <[type name description state worker owner]>
     annotation: <[type name description state originImage worker owner]>
     task: <[type name description taskImages owner worker crossValidate]>
 
