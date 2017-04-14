@@ -44,6 +44,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paint-brush-size = @state.default-brush-size
         @state.imageLoaded = false
         @state.time-evaluate = false
+        @state.simplifyTolerance = 5
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
@@ -332,6 +333,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     strockWidth: 2
                     dashArray: [10, 4]
                     strokeScaling: false
+
+                if @state.smooth
+                    for c in path.children
+                        c.simplify @state.simplifyTolerance
                 @other-contours.addChild path
 
         paper.project.current-style =
@@ -437,7 +442,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @contour-path = path
         if @state.smooth
             for c in @contour-path.children
-                c.simplify!
+                c.simplify @state.simplifyTolerance
 
     send-cmd: (cmd, data) ->
         if @props.viewonly then return

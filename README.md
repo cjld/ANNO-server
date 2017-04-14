@@ -28,6 +28,9 @@
 *   [ ]  google login, wechat login
 *   [ ]  task
 *   [ ]  mission
+*   [ ]  params page url
+*   [ ]  permission
+*   [ ]  socket io save
 
 
 // fix init session change bug

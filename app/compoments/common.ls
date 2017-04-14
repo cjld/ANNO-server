@@ -27,8 +27,7 @@ class MyComponent extends React.Component
                         if @dataOwner instanceof MyComponent
                             @dataOwner.onChange @dataOwner.state.data
                         @dataOwner.forceUpdate!
-                else
-                if @dataOwner.state?[@dataKey] !== data
+                else if @dataOwner.state?[@dataKey] !== data
                     @dataOwner.state["#{@dataKey}"] = data
                     if @dataOwner instanceof MyComponent
                         @dataOwner.onChange @dataOwner.state.data
@@ -41,6 +40,10 @@ class MyComponent extends React.Component
     set-data: ->
         @set-state data:it
         if this.onChange then this.onChange it
+
+class MyInput extends MyComponent
+    render: ->
+        ``<input type="text" defaultValue={this.state.data} onChange={v => this.setData(v.target.value)} />``
 
 class MyIdInput extends MyComponent
     ->
@@ -189,5 +192,5 @@ class MyDropdown extends MyComponent
 
 module.exports = {
     React, Link, ReactDOM, TimerMixin, actions, store
-    MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs
+    MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs, MyInput
 }

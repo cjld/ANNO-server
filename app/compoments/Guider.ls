@@ -1,6 +1,6 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
-{MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs} = common
+{MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs, MyInput} = common
 
 
 deep-copy = -> JSON.parse JSON.stringify it
@@ -22,6 +22,10 @@ module.exports = class Guider extends React.Component
                 modalType: \add
                 doc: new document {}, my-object
                 is-admin: false
+                missionForm:
+                    uid: ""
+                    random: false
+                    amount: \1000
 
         store.connect-to-component this, [
             \currentItem
@@ -39,6 +43,8 @@ module.exports = class Guider extends React.Component
         #    modal: true
         dialog = $ \#addModal
         dialog.modal detachable:false
+        task-dialog = $ \#taskModal
+        task-dialog.modal detachable:false
 
         upload-dialog = $ \#uploadModal
         upload-dialog.modal detachable:false
@@ -122,6 +128,18 @@ module.exports = class Guider extends React.Component
                     actions.selectShowed!
                 else
                     actions.resetSelects!
+
+            $ \#taskBtn .click ~>
+                if @state.currentItem.type != \task
+                    return
+                # missionid, user, start time, anno, unanno, issue, total, operator
+                # operator:  apply, delete
+                # new mission: task assign, random assign, usern
+                # stat: total, un assign, assign(x), anno, unanno, issue
+                task-dialog.modal \show
+
+        $ \#assignbtn .click ~>
+            ...
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ~>
@@ -249,6 +267,53 @@ module.exports = class Guider extends React.Component
             </div>
         </div>
         ``
+        gen-table = (headers, data) ->
+            dom_headers = for h,i in headers
+                ``<th key={i}>{h}</th>``
+            body = for a,i in data
+                dom = for h,j in headers
+                    ``<td key={j}>{a[h]}</td>``
+                ``<tr key={i}>{dom}</tr>``
+            ``<table className="ui celled table">
+                <thead><tr>
+                    {dom_headers}
+                </tr></thead>
+                <tbody>
+                    {body}
+                </tbody>
+            </table>``
+        missions = gen-table [\missionid, \user, "start time", "annotated", "un-annotated", "issue", "total", "operator"], [{},{}]
+        stats = gen-table [\total, "un-assign", "assigned(1)", "annotated", "un-annotated", "issue"], [{}]
+
+        taskModal = ``<div className="ui modal" id="taskModal">
+            <i className="close icon"></i>
+            <div className="header">
+                Task Manage Panel
+            </div>
+            <div className="content">
+                <h3 className="ui header">Statistics</h3>
+                    {stats}
+                <h3 className="ui header">New Mission</h3>
+                    <form className="ui form">
+                        <div className="fields">
+                        <div className="twelve wide field">
+                            <label>User ID:</label>
+                            <MyIdInput data={this.state.missionForm.uid} dataOwner={[this,"missionForm.uid"]}/>
+                        </div>
+                        <div className="four wide field">
+                            <label>Amount:</label>
+                            <MyInput data={this.state.missionForm.amount} dataOwner={[this, "missionForm.amount"]}/>
+                        </div>
+                        </div>
+                        <div className="field">
+                            <MyCheckbox text="Random" data={this.state.missionForm.random} dataOwner={[this, "missionForm.random"]}/>
+                        </div>
+                        <button className="ui button" id="assignbtn">Assign</button>
+                    </form>
+                <h3 className="ui header">Missions</h3>
+                    {missions}
+            </div>
+        </div>``
 
         opClass = "ui disabled item"
         if @state.is-admin
@@ -257,6 +322,7 @@ module.exports = class Guider extends React.Component
         ``<div>
         {delModal}
         {uploadModal}
+        {taskModal}
         <div className="ui modal" id="addModal">
             <i className="close icon"></i>
             <div className="header">
@@ -284,7 +350,9 @@ module.exports = class Guider extends React.Component
                     <a className={opClass} id="addItemBtn"><i className="green add circle icon"></i></a>
                     <a className={opClass} id="delItemBtn"><i className="red minus circle icon"></i></a>
                     <a className={opClass} id="editItemBtn"><i className="edit icon"></i></a>
+                    <a className={opClass} id="taskBtn"><i className="tasks icon"></i></a>
                     <a className={opClass} id="uploadBtn"><i className="upload icon"></i></a>
+                    <a className={opClass} id="downloadBtn"><i className="download icon"></i></a>
                 </div>
 
                 <Breadcrumb/>

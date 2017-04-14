@@ -64,9 +64,9 @@ object = new mongoose.Schema do
 
 seeker = do
     item: <[type name description category url tags state annotations owner worker]>
-    directory: <[type name description state worker owner]>
+    directory: <[type name description state worker owner config]>
     annotation: <[type name description state originImage worker owner]>
-    task: <[type name description taskImages owner worker crossValidate]>
+    task: <[type name description taskImages owner worker crossValidate config]>
 
 module.exports = {object, mark, seeker}
 # move schema instantiation to other module
