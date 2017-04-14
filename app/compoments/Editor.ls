@@ -25,7 +25,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             *   value:"spotting", text:``<div><i className="crosshairs icon"></i>Instance Spotting</div>``
             *   value:"box", text:``<div><i className="square outline icon"></i>Bounding box</div>``
             *   value:"segment", text:``<div><i className="cube icon"></i>Instance Segmentation</div>``
-            *   value:"ps", text: ``<div><i className="wizard icon"></i>Paint selection</div>``
+            *   value:"ps", text: ``<div><i className="wizard icon"></i>Quick selection</div>``
             *   value:"paint", text: ``<div><i className="paint brush icon"></i>Free Paint</div>``
         ]
         @state.cMark = \0

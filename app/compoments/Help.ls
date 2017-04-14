@@ -62,7 +62,7 @@ root-content =
                 <p>autobox: 是否自动计算包围盒，默认为true</p>
                 <p>hideImage: 是否隐藏图片，默认为false</p>
                 <p>hideAnnotation: 是否隐藏标注，默认为false</p>
-                <p>editMode: 初始使用的工具，默认为ps，paint selection工具，可选工具有[spotting, segment, pan, paint, ps, box]</p>
+                <p>editMode: 初始使用的工具，默认为ps，Quick selection工具，可选工具有[spotting, segment, pan, paint, ps, box]</p>
             </div>``
         *   title: "如何浏览图片"
             url: "browser"
@@ -104,13 +104,13 @@ root-content =
                 <p>如果你是检查人员，你可以通过下方的navigation来浏览所有标注好的或者是没有标注好的图片，如果
                 存在标注问题，你可以点击issued黄色按钮表示该图片存在问题。</p>
             </div>``
-        *   title: "如何使用Paint Selection工具"
+        *   title: "如何使用Quick selection工具"
             url: "paintselection"
             content: ``<div>
                 <div className="ui segment">
                     <video controls="controls" src="/video/ps.ogv" style={{width:'100%'}}></video>
                 </div>
-                <p>通过快捷键5切换到Paint Selection工具</p>
+                <p>通过快捷键5切换到Quick selection工具</p>
                 <p>快捷键z、x来放大缩小笔刷</p>
                 <p>鼠标滚轮放大缩小画布</p>
                 <p>按住shift，光标变红，笔刷变为删除笔刷，可以删除选区</p>
@@ -160,7 +160,7 @@ root-content =
                 <div className="ui segment">
                     <video controls="controls" src="" style={{width:'100%'}}></video>
                 </div>
-                <p>z/x: 放大缩小笔刷（free paint模式或者paint selection模式），或者放大缩小画布</p>
+                <p>z/x: 放大缩小笔刷（free paint模式或者Quick selection模式），或者放大缩小画布</p>
                 <p>a/d: 添加/删除标注</p>
                 <p>n/p: 下一张/上一张图片</p>
                 <p>123456：切换使用不同的工具</p>
