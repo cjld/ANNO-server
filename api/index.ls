@@ -259,7 +259,7 @@ app.post \/new-object, (req, res, next) ->
                 continue
             new promise (resolve, reject) ->
                 doc = parent: imgdir._id, type: \annotation, originImage: x._id
-                doc-update = {name: x.name} <<< doc
+                doc-update = {name: x.name, url:x.url} <<< doc
                 (err, doc) <- my-object.find-one-and-update doc, doc-update, upsert: true
                 if err then return reject err
                 resolve doc
@@ -275,7 +275,7 @@ app.post \/new-object, (req, res, next) ->
         my-object.update {_id:id}, {$set:edit-obj}, ->
             if it then return next it
             if req.body.taskImages
-                build-task req.body, next
+                build-task req.body
             else
                 res.send "Edit id:#{id} successfully!"
     else
@@ -283,7 +283,7 @@ app.post \/new-object, (req, res, next) ->
         object.save ->
             if it then return next it
             if req.body.taskImages
-                build-task req.body, next
+                build-task object
             else
                 res.send "#{req.body.name} saved successfully."
 

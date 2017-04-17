@@ -166,7 +166,7 @@ module.exports = class Guider extends React.Component
             self.set-state ajaxing: true
             {selects} = store.get-state!
             ids = Object.keys(selects)
-            if ids.length == 0
+            if ids.length == 0 and self.state.modalType == \edit
                 self.state.currentItem <<< values
             doc-copy = deep-copy doc
             for k of doc-copy
