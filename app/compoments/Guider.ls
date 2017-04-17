@@ -7,7 +7,7 @@ deep-copy = -> JSON.parse JSON.stringify it
 
 require! {
     \./../models/Object : {object: my-object, seeker}
-    \./../models/document
+    \./../models/document : doc
     \./Breadcrumb
     \mongoose
 }
@@ -20,7 +20,7 @@ module.exports = class Guider extends React.Component
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
-                doc: new document {}, my-object
+                doc: new doc {}, my-object
                 is-admin: false
                 missionForm:
                     uid: ""
@@ -138,6 +138,20 @@ module.exports = class Guider extends React.Component
                 # stat: total, un assign, assign(x), anno, unanno, issue
                 task-dialog.modal \show
 
+            $ \#downloadBtn .click ~>
+                {selects} = store.get-state!
+                ids = Object.keys(selects)
+                if ids.length == 0
+                    items = [@state.currentItem]
+                else
+                    items = for i in ids then store.get-state!.items[i]
+                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent JSON.stringify items
+                dlAnchorElem = document.getElementById 'downloadAnchorElem'
+                dlAnchorElem.setAttribute "href", dataStr
+                dlAnchorElem.setAttribute "download", "data.json"
+                dlAnchorElem.click!
+
+
         $ \#assignbtn .click ~>
             ...
 
@@ -160,7 +174,7 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
                 values._id = undefined
-            doc = new document {}, my-object
+            doc = new doc {}, my-object
             doc <<< @state.doc
             doc <<< values
             self.set-state ajaxing: true
@@ -362,5 +376,6 @@ module.exports = class Guider extends React.Component
             <div className="ui vertical segment">
                 <big>{mainDescription}</big>
             </div>
+            <a id="downloadAnchorElem" style={{display:"none"}}></a>
         </div>
         ``

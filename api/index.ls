@@ -287,6 +287,19 @@ app.post \/new-object, (req, res, next) ->
             else
                 res.send "#{req.body.name} saved successfully."
 
+object-on-remove = (doc) ->
+    #console.log "remove #{doc._id}"
+    if doc.originImage
+        my-object.find-one _id:doc.originImage (err, doc) ->
+            if err then return console.error err
+            if not doc.annotation
+                return
+            i = doc.annotation.index-of doc._id
+            if i>=0
+                doc.annotation.splice i, 1
+                doc.save!
+
+
 app.post \/delete-items, (req, res, next) ->
     #console.log req.body['items[]']
     items = req.body['items[]']
@@ -295,9 +308,26 @@ app.post \/delete-items, (req, res, next) ->
     else
         return res.send "No item was deleted."
 
-    my-object.remove {_id:{$in:items}}, ->
-        if it then return next it
-        res.send "Delete #{items.length} items successfully!"
+    total-remove = 0
+    remove-descendants = (ids) ->
+        my-object.remove {_id:{$in:ids}} .exec!
+        if ids.length == 0
+            res.send "Delete #{total-remove} items successfully!"
+            return
+        my-object.find {parent:{$in:ids}}, (err, docs) ->
+            if err then return next err
+            total-remove += docs.length
+            for doc in docs
+                object-on-remove doc
+            ids = for i in docs then i._id
+            remove-descendants ids
+
+    my-object.find {_id:{$in:items}}, (err, docs)->
+        if err then return next err
+        for doc in docs
+            object-on-remove doc1
+        total-remove += items.length
+        remove-descendants items
 
 app.post \/save-mark, (req, res, next) ->
     #console.log req.body
