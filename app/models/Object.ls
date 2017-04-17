@@ -2,7 +2,7 @@ require! \mongoose
 
 validate_1d =
     validator: (v) ->
-        if not v instanceof array
+        if not v instanceof Array
             return false
         for a in v
             if not a instanceof Object
@@ -12,17 +12,17 @@ validate_1d =
             if not a.y instanceof Number
                 return false
         return true
-    message: "Not a valid 1d array."
+    message: "Not a valid 1d Array."
 
 validate_2d =
     validator: (v) ->
-        if not v instanceof array
+        if not v instanceof Array
             return false
         for a in v
             if not validate_1d.validator a
                 return false
         return true
-    message: "Not a valid 2d array."
+    message: "Not a valid 2d Array."
 
 mark = new mongoose.Schema do
     *   type: {type:String, default:""}

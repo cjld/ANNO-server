@@ -7,7 +7,7 @@ deep-copy = -> JSON.parse JSON.stringify it
 
 require! {
     \./../models/Object : {object: my-object, seeker}
-    \./../models/document : doc
+    \./../models/document : Document
     \./Breadcrumb
     \mongoose
 }
@@ -20,7 +20,7 @@ module.exports = class Guider extends React.Component
                 select-all-state: false
                 # modal type, edit or add
                 modalType: \add
-                doc: new doc {}, my-object
+                doc: new Document {}, my-object
                 is-admin: false
                 missionForm:
                     uid: ""
@@ -174,7 +174,7 @@ module.exports = class Guider extends React.Component
                 fid = store.get-state!.fatherId
                 if fid then values.parent = fid
                 values._id = undefined
-            doc = new doc {}, my-object
+            doc = new Document {}, my-object
             doc <<< @state.doc
             doc <<< values
             self.set-state ajaxing: true

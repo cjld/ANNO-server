@@ -246,6 +246,44 @@ get-descendants = (ids, cb) ->
 
 app.post \/new-object, (req, res, next) ->
 
+    remove-origin = (obj) ->
+        if not obj.originImage
+            return
+        (err, doc) <- my-object.find-by-id obj.originImage
+        if err
+            console.error err
+            return
+        if not doc.annotations
+            return
+        i = doc.annotations.index-of obj._id
+        if i>=0
+            doc.annotations.splice i, 1
+            doc.save!
+
+    add-origin = (id, obj) ->
+        if not obj.originImage
+            return
+        (err, doc) <- my-object.find-by-id obj.originImage
+        if err
+            console.error err
+            return
+        if not doc.annotations
+            doc.annotations = [obj._id]
+        else
+            i = doc.annotations.index-of obj._id
+            if i==-1
+                doc.annotations.push obj._id
+        doc.save!
+
+    on-update = (obj, newobj) ->
+        if obj.originImage == newobj.originImage
+            return
+        remove-origin obj
+        add-origin obj._id, newobj
+
+    on-create = (obj) ->
+        add-origin obj._id, obj
+
     build-task = (obj) ->
         (err, task) <- my-object.find-by-id obj._id
         if err then return next err
@@ -260,9 +298,17 @@ app.post \/new-object, (req, res, next) ->
             new promise (resolve, reject) ->
                 doc = parent: imgdir._id, type: \annotation, originImage: x._id
                 doc-update = {name: x.name, url:x.url} <<< doc
-                (err, doc) <- my-object.find-one-and-update doc, doc-update, upsert: true
+                (err, fdoc) <- my-object.find-one doc
                 if err then return reject err
-                resolve doc
+                if fdoc
+                    on-update fdoc, doc-update
+                    fdoc <<< doc-update
+                else
+                    fdoc = new my-object doc-update
+                    on-create fdoc
+                fdoc.save ->
+                    if it then return reject it
+                    resolve fdoc
         promise.all newdocs
             .then (anno-docs) ->
                 res.send "#{anno-docs.length} annotations created."
@@ -272,14 +318,19 @@ app.post \/new-object, (req, res, next) ->
     if req.body._id?
         edit-obj = {} <<< req.body
         id = delete edit-obj._id
-        my-object.update {_id:id}, {$set:edit-obj}, ->
-            if it then return next it
+        my-object.find-one {_id:id}, (err, doc) ->
+            if err then return next err
+            on-update doc, edit-obj
+            doc <<< edit-obj
+            (err) <- doc.save
+            if err then return next err
             if req.body.taskImages
                 build-task req.body
             else
                 res.send "Edit id:#{id} successfully!"
     else
         object = new my-object req.body
+        on-create object
         object.save ->
             if it then return next it
             if req.body.taskImages
@@ -290,14 +341,14 @@ app.post \/new-object, (req, res, next) ->
 object-on-remove = (doc) ->
     #console.log "remove #{doc._id}"
     if doc.originImage
-        my-object.find-one _id:doc.originImage (err, doc) ->
+        my-object.find-one _id:doc.originImage,  (err, doc2) ->
             if err then return console.error err
-            if not doc.annotation
+            if not doc2.annotation
                 return
-            i = doc.annotation.index-of doc._id
+            i = doc2.annotation.index-of doc._id
             if i>=0
-                doc.annotation.splice i, 1
-                doc.save!
+                doc2.annotation.splice i, 1
+                doc2.save!
 
 
 app.post \/delete-items, (req, res, next) ->
@@ -325,7 +376,7 @@ app.post \/delete-items, (req, res, next) ->
     my-object.find {_id:{$in:items}}, (err, docs)->
         if err then return next err
         for doc in docs
-            object-on-remove doc1
+            object-on-remove doc
         total-remove += items.length
         remove-descendants items
 
