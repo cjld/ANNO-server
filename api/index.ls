@@ -43,12 +43,8 @@ storage = multer.disk-storage do
 
 upload = multer {storage} .array \userPhoto, config.upload-limit
 app.post \/upload, (req, res) ->
-    #console.log req.body
     upload req, res, (err) ->
-        #console.log req.body
-        #console.log req.files
         if err
-            #console.log err
             res.status 500 .end "Error uploading files."
         else
             files = for file in req.files then do
@@ -58,7 +54,6 @@ app.post \/upload, (req, res) ->
                 url: config.image-server-url + config.upload-path + file.filename
                 parent: req.body.parent
 
-            #console.log files
             my-object.create files, (err) ->
                 if err
                     res.status 500 .end "Items creation failure."
@@ -213,7 +208,6 @@ find-neighbour = (size, is-next, req, res, next) ->
             qobj.state = {'$in': ['un-annotated', '', null]}
         else
             qobj.state = req.body.state
-    #console.log qobj, req.body, size, is-next
     my-object.find qobj, func
         .sort [['_id', if is-next==\1 then -1 else 1]]
         .limit size
@@ -247,18 +241,7 @@ get-descendants = (ids, cb) ->
 app.post \/new-object, (req, res, next) ->
 
     remove-origin = (obj) ->
-        if not obj.originImage
-            return
-        (err, doc) <- my-object.find-by-id obj.originImage
-        if err
-            console.error err
-            return
-        if not doc.annotations
-            return
-        i = doc.annotations.index-of obj._id
-        if i>=0
-            doc.annotations.splice i, 1
-            doc.save!
+        object-on-remove obj
 
     add-origin = (id, obj) ->
         if not obj.originImage
@@ -268,15 +251,16 @@ app.post \/new-object, (req, res, next) ->
             console.error err
             return
         if not doc.annotations
-            doc.annotations = [obj._id]
+            doc.annotations = [id]
         else
-            i = doc.annotations.index-of obj._id
+            i = doc.annotations.index-of id
             if i==-1
-                doc.annotations.push obj._id
+                doc.annotations.push id
         doc.save!
 
     on-update = (obj, newobj) ->
-        if obj.originImage == newobj.originImage
+        idstr = obj.originImage.to-string!
+        if idstr == newobj.originImage or idstr == newobj.originImage._id
             return
         remove-origin obj
         add-origin obj._id, newobj
@@ -325,7 +309,7 @@ app.post \/new-object, (req, res, next) ->
             doc <<< edit-obj
             (err) <- doc.save
             if err then return next err
-            if req.body.taskImages
+            if req.body.taskImages and doc.type == \task
                 build-task req.body
             else
                 res.send "Edit id:#{id} successfully!"
@@ -334,26 +318,24 @@ app.post \/new-object, (req, res, next) ->
         on-create object
         object.save ->
             if it then return next it
-            if req.body.taskImages
+            if req.body.taskImages and object.type == \task
                 build-task object
             else
                 res.send "#{req.body.name} saved successfully."
 
 object-on-remove = (doc) ->
-    #console.log "remove #{doc._id}"
     if doc.originImage
-        my-object.find-one _id:doc.originImage,  (err, doc2) ->
+        my-object.find-one _id:doc.originImage, (err, doc2) ->
             if err then return console.error err
-            if not doc2.annotation
+            if not doc2.annotations
                 return
-            i = doc2.annotation.index-of doc._id
+            i = doc2.annotations.index-of doc._id
             if i>=0
-                doc2.annotation.splice i, 1
+                doc2.annotations.splice i, 1
                 doc2.save!
 
 
 app.post \/delete-items, (req, res, next) ->
-    #console.log req.body['items[]']
     items = req.body['items[]']
     if items
         items = [items] if not Array.isArray items
@@ -382,7 +364,6 @@ app.post \/delete-items, (req, res, next) ->
         remove-descendants items
 
 app.post \/save-mark, (req, res, next) ->
-    #console.log req.body
     res.send \ok.
 
 app.post \/counter, (req, res, next) ->

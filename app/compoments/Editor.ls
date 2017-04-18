@@ -1417,6 +1417,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     {markTable}
                 </div>``
         else
+            annotationsUI = undefined
+            if @state.currentItem.annotations?length
+                annotationsList = for aid,i in @state.currentItem.annotations
+                    ``<li key={i}><Link to={'/i/'+aid}>{aid}</Link></li>``
+                annotationsUI = ``
+                <div><b>Annotations:</b><ul>{annotationsList}</ul></div>
+                ``
+
             utils = ``<div className="six wide column editor-utils">
                 <div className="ui horizontal divider" >Mark as</div>
                 <div className="ui mini green button"
@@ -1470,6 +1478,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         <div><b>Origin image:</b><Link to={"/i/"+this.state.currentItem.originImage._id}>{this.state.currentItem.originImage.name}</Link></div>
                     : ""
                 }
+                {annotationsUI}
 
                 <div className="ui horizontal divider">File</div>
                 <div className="ui mini button"

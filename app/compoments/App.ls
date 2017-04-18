@@ -17,7 +17,11 @@ class MainPage extends React.Component
 
     render: ->
         type = @state.currentItem?type
-        ``<div className={type == "item" ? "ui fluid container" : "ui container"}>
+        className = if type in ["item", "annotation"]
+            "ui fluid container"
+        else
+            "ui container"
+        ``<div className={className}>
             <Guider />
             {
                 type == "item" || type == "annotation" ? <Editor currentItem={this.state.currentItem} /> : <Displayer />
