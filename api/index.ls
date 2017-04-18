@@ -288,7 +288,7 @@ app.post \/new-object, (req, res, next) ->
         (err, task) <- my-object.find-by-id obj._id
         if err then return next err
         doc = {parent: obj._id, name: \all_images, type: \directory}
-        (err, imgdir) <- my-object.find-one-and-update doc, doc, upsert:true
+        (err, imgdir) <- my-object.find-one-and-update doc, doc, {upsert:true, new: true}
         if err then return next err
         (err, descendants) <- get-descendants obj.taskImages
         if err then return next err
@@ -318,6 +318,7 @@ app.post \/new-object, (req, res, next) ->
     if req.body._id?
         edit-obj = {} <<< req.body
         id = delete edit-obj._id
+        delete edit-obj.__v
         my-object.find-one {_id:id}, (err, doc) ->
             if err then return next err
             on-update doc, edit-obj
