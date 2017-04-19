@@ -115,7 +115,7 @@ module.exports = class Displayer extends React.Component
             key = @state.displayType + index
             imgurl = it.url
             if it.type == \annotation
-                imgurl = it.originImage.url
+                imgurl = it.originImage?url
             if @state.displayType == \grid or (it.type != \item and it.type != \annotation)
                 box = ``
                 <Link className="imgGalleryBox" to={"/i/"+obj._id}>
