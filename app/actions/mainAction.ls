@@ -34,6 +34,10 @@ def-vals =
     config: {}
     typeMap: {findType: -> undefined}
 
+    taskLoading: false
+    missionInfo: []
+    statsInfo: []
+
 class MainActions extends Actions
     ->
         super ...
@@ -111,6 +115,30 @@ class MainActions extends Actions
                 @set-store hasUpdate: true
             else
                 @set-store hasUpdate: false
+
+    loadTaskInfo: (task) ->
+        @set-store taskLoading: true
+        $.ajax do
+            method: \POST
+            url: \/api/taskInfo
+            data: taskid: task._id
+            success: ~>
+                @set-store it{missionInfo, statsInfo} <<< {taskLoading: false}
+            error: ~>
+                toastr.error it.response-text
+
+    #taskid, uid, random, amount
+    taskAssign: (assignInfo) ->
+        @set-store taskLoading: true
+        $.ajax do
+            method: \POST
+            url: \/api/taskAssign
+            data: JSON.stringify assignInfo
+            contentType: "application/json"
+            success: ~>
+                @set-store it{missionInfo, statsInfo} <<< {taskLoading: false}
+            error: ~>
+                toastr.error it.response-text
 
     fetchProfile: ->
         $.ajax do

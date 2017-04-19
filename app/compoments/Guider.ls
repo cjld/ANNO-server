@@ -30,6 +30,9 @@ module.exports = class Guider extends React.Component
         store.connect-to-component this, [
             \currentItem
             \displayType
+            \taskLoading
+            \missionInfo
+            \statsInfo
         ]
 
     componentDidMount: ->
@@ -132,6 +135,7 @@ module.exports = class Guider extends React.Component
             $ \#taskBtn .click ~>
                 if @state.currentItem.type != \task
                     return
+                actions.loadTaskInfo @state.currentItem
                 # missionid, user, start time, anno, unanno, issue, total, operator
                 # operator:  apply, delete
                 # new mission: task assign, random assign, usern
@@ -152,8 +156,10 @@ module.exports = class Guider extends React.Component
                 dlAnchorElem.click!
 
 
-        $ \#assignbtn .click ~>
-            ...
+        $ \#assignbtn .click (e) ~>
+            actions.taskAssign {taskid: @state.currentItem._id} <<< @state.missionForm
+            e.prevent-default!
+            return false
 
         addItemForm = $ \#addItemForm
         addItemForm.submit (e) ~>
@@ -296,15 +302,15 @@ module.exports = class Guider extends React.Component
                     {body}
                 </tbody>
             </table>``
-        missions = gen-table [\missionid, \user, "start time", "annotated", "un-annotated", "issue", "total", "operator"], [{},{}]
-        stats = gen-table [\total, "un-assign", "assigned(1)", "annotated", "un-annotated", "issue"], [{}]
+        missions = gen-table [\missionid, \user, "start time", "annotated", "un-annotated", "issued", "total", "operator"], @state.missionInfo
+        stats = gen-table [\total, "un-assign", "assigned(1)", "annotated", "un-annotated", "issued"], [@state.statsInfo]
 
         taskModal = ``<div className="ui modal" id="taskModal">
             <i className="close icon"></i>
             <div className="header">
                 Task Manage Panel
             </div>
-            <div className="content">
+            <div className={"ui vertical segment content "+(this.state.taskLoading?"loading":"")}>
                 <h3 className="ui header">Statistics</h3>
                     {stats}
                 <h3 className="ui header">New Mission</h3>

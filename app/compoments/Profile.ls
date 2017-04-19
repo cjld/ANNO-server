@@ -76,9 +76,13 @@ module.exports = class Profile extends React.Component
             <div className="ui header"> Profile </div>
             <div className="ui divider"></div>
             <form className={"ui form"+errc}>
-                <div className="disabled field">
+                <div className="field">
+                    <label>ID</label>
+                    <input type="text" name="id" placeholder="" defaultValue={userProfile.id} readOnly />
+                </div>
+                <div className="field">
                     <label>Email</label>
-                    <input type="text" name="email" placeholder="" defaultValue={userProfile.email} />
+                    <input type="text" name="email" placeholder="" defaultValue={userProfile.email} readOnly />
                 </div>
                 <div className="field">
                     <label>Name</label>
@@ -86,9 +90,9 @@ module.exports = class Profile extends React.Component
                 </div>
                 <h4 className="ui dividing header">Google acccount</h4>
                 {userProfile.googleId ?
-                    <div className="disabled field">
+                    <div className="field">
                         <label>Google ID</label>
-                        <input type="text" name="googleId" placeholder="" defaultValue={userProfile.googleId}/>
+                        <input type="text" name="googleId" placeholder="" defaultValue={userProfile.googleId} readOnly/>
                     </div>
                 :
                   <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>

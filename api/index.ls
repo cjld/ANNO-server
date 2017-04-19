@@ -96,7 +96,9 @@ app.use \/logout, (req, res) ->
 
 app.use \/profile, is-logged-in, (req, res) ->
     data = {} <<< req.user.to-object!.profile
-    data.email = req.user.local.email
+    if req.user.local.email
+        data.email = req.user.local.email
+    data.id = req.user._id.to-string!
     res.send data
 
 app.use \/edit-profile, is-logged-in, (req, res, next) ->
@@ -148,6 +150,82 @@ app.use \/reset-password, (req, res, next) ->
     else
         res.status 400 .end "Invalid Email."
 
+get-task = (req, res, next) ->
+    (err, task) <- my-object.find-one _id:req.body.taskid
+    if err then return next err
+    if not task
+        return res.status 404 .end "TaskID not found."
+    (err, imgdir) <- my-object.find-one parent:task._id, name: \all_images, type: \directory
+    if err then return next err
+    if not imgdir
+        return res.status 404 .end "Img dir not found."
+    req.imgdir = imgdir
+    req.task = task
+    next!
+
+send-taskInfo = (req, res, next) ->
+    cmap =
+        "total": {}
+        "un-assign": {\annotations.0 : {\$exists : false}}
+        "assigned(1)" : {\annotations.1 : {\$exists : false}, \annotations.0 : {\$exists : true}}
+        "annotated" : {state: \annotated}
+        "un-annotated" : {state: \un-annotated}
+        "issued" : {state: \issued}
+    ps = Object.keys cmap .map (k) ->
+        v = cmap[k]
+        return new promise (resolve, reject) ->
+            my-object.count {parent:req.imgdir._id} <<< v, (err, count) ->
+                if err then return reject err
+                resolve {"#{k}":count}
+    promise.all ps
+        .then (data) ->
+            dataall = {}
+            for a in data then dataall <<< a
+            res.json {missionInfo:[], statsInfo:dataall}
+        .catch (errs) ->
+            console.log errs
+            next errs
+
+app.use \/taskInfo, get-task, send-taskInfo
+# taskid, uid, random, amount
+app.use \/taskAssign, get-task, (req, res, next) ->
+    (err, worker) <- models.User.find-one _id:req.body.uid
+    if err then return next err
+    if not worker
+        return res.status 404 .end "user not found."
+    ckey = "annotations." + (req.task.crossValidate-1)
+    filter = {parent:req.imgdir._id, "#{ckey}": {\$exists : false}}
+    query = if req.body.random
+        my-object.find-random filter
+    else
+        my-object.find filter
+    query.limit req.body.amount
+    query.exec (err, docs) ->
+        if err then return next err
+        console.log "find docs #{docs.length}"
+        workerdir = new my-object do
+            type:\directory
+            parent: req.task._id
+            name: worker.profile.name + "'s task"
+        workerdir.save (err) ->
+            if err then return next err
+            ps = for doc in docs
+                new promise (resolve, reject) ->
+                    newdoc =
+                        parent: workerdir._id
+                        type: \annotation
+                        originImage: doc._id
+                        name: doc.name
+                        url: doc.url
+                    on-create newdoc
+                    newdoc.save (err) ->
+                        if err then return reject err
+                        resolve newdoc
+            promise.all ps
+            .then -> next!
+            .catch -> next it
+
+app.use \/taskAssign, send-taskInfo
 
 app.use \/list-objects, (req, res, next) ->
     page = parseInt req.body.page
@@ -175,7 +253,22 @@ app.use \/find-one-name, (req, res, next) ->
     req.body <<< req.query
     my-object.find-one req.body, {name:true}, (err, obj) ->
         if err then return next err
-        res.send obj
+        if not obj
+            res.status 404 .end "Object not found."
+        else
+            res.send obj
+
+app.use \/find-user, (req, res, next) ->
+    ss = req.body.id
+    filter = if validator.is-email ss
+        "profile.email" : ss
+    else if mongoose.Types.ObjectId.isValid ss
+        _id: ss
+    else
+        name: ss
+    (err,user) <- models.User.find-one filter
+    if err then return next err
+    res.send user.profile
 
 app.use \/find-one, (req, res, next) ->
     if req.body.parent == ''
@@ -238,40 +331,40 @@ get-descendants = (ids, cb) ->
         .then -> cb null, [].concat.apply [], it
         .catch -> cb it
 
+
+remove-origin = (obj) ->
+    object-on-remove obj
+
+add-origin = (id, obj) ->
+    if not obj.originImage
+        return
+    (err, doc) <- my-object.find-by-id obj.originImage
+    if err
+        console.error err
+        return
+    if not doc.annotations
+        doc.annotations = [id]
+    else
+        i = doc.annotations.index-of id
+        if i==-1
+            doc.annotations.push id
+    doc.save!
+
+on-update = (obj, newobj) ->
+    idstr = obj.originImage?to-string!
+    newidstr = if newobj.originImage?_id
+        newobj.originImage._id
+    else
+        newobj.originImage
+    if idstr == newidstr
+        return
+    remove-origin obj
+    add-origin obj._id, newobj
+
+on-create = (obj) ->
+    add-origin obj._id, obj
+
 app.post \/new-object, (req, res, next) ->
-
-    remove-origin = (obj) ->
-        object-on-remove obj
-
-    add-origin = (id, obj) ->
-        if not obj.originImage
-            return
-        (err, doc) <- my-object.find-by-id obj.originImage
-        if err
-            console.error err
-            return
-        if not doc.annotations
-            doc.annotations = [id]
-        else
-            i = doc.annotations.index-of id
-            if i==-1
-                doc.annotations.push id
-        doc.save!
-
-    on-update = (obj, newobj) ->
-        idstr = obj.originImage?to-string!
-        newidstr = if newobj.originImage?_id
-            newobj.originImage._id
-        else
-            newobj.originImage
-        if idstr == newidstr
-            return
-        remove-origin obj
-        add-origin obj._id, newobj
-
-    on-create = (obj) ->
-        add-origin obj._id, obj
-
     build-task = (obj) ->
         (err, task) <- my-object.find-by-id obj._id
         if err then return next err
