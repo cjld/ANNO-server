@@ -259,8 +259,12 @@ app.post \/new-object, (req, res, next) ->
         doc.save!
 
     on-update = (obj, newobj) ->
-        idstr = obj.originImage.to-string!
-        if idstr == newobj.originImage or idstr == newobj.originImage._id
+        idstr = obj.originImage?to-string!
+        newidstr = if newobj.originImage?_id
+            newobj.originImage._id
+        else
+            newobj.originImage
+        if idstr == newidstr
             return
         remove-origin obj
         add-origin obj._id, newobj
