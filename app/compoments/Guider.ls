@@ -237,7 +237,7 @@ module.exports = class Guider extends React.Component
                     valui = ``<input type="text" name={key} placeholder={key}/>``
             else if my-object.tree[key] == mongoose.Schema.Types.ObjectId or
                 my-object.tree[key].type == mongoose.Schema.Types.ObjectId
-                valui = ``<MyIdInput name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
+                valui = ``<MyIdInput name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} idtype={myObject.tree[key].ref}/>``
             else if key == \taskImages
                 valui = ``<MyIdInputs name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
             else continue
@@ -287,12 +287,47 @@ module.exports = class Guider extends React.Component
             </div>
         </div>
         ``
-        gen-table = (headers, data) ->
+        gen-table = (headers, data) ~>
             dom_headers = for h,i in headers
                 ``<th key={i}>{h}</th>``
             body = for a,i in data
                 dom = for h,j in headers
-                    ``<td key={j}>{a[h]}</td>``
+                    if h == "mission name"
+                        ``<td key={j}>
+                            <Link to={"/i/"+a["mid"]}>{a[h]}</Link>
+                        </td>``
+                    else if h == "user"
+                        ``<td key={j}>
+                            <Link to={"/profile?uid="+a["uid"]}>{a[h]}</Link>
+                        </td>``
+                    else if h == \operator and a["mission name"] != \all_images
+                        onDeleteClick = (id) ~>
+                            actions.deleteItems [id]
+                        onDeleteClick .= bind this, a["mid"]
+                        onApplyClick = (id) ~>
+                            actions.set-store taskLoading: true
+                            $.ajax do
+                                method: \POST
+                                url: \/api/apply
+                                data: id:id
+                                success: ~>
+                                    actions.loadTaskInfo @state.currentItem
+                                error: ~>
+                                    actions.set-store taskLoading: false
+                                    toastr.error it.response-text
+                        onApplyClick .= bind this, a["mid"]
+                        ``<td key={j}>
+                        <div className="ui icon buttons">
+                            <button className="ui green icon button" onClick={onApplyClick} {...{"data-tooltip":"Apply the user's annotations to all_images directory."}}>
+                                <i className="checkmark icon"></i>
+                            </button>
+                            <button className="ui red icon button" onClick={onDeleteClick} {...{"data-tooltip":"Remove this task."}}>
+                                <i className="trash icon"></i>
+                            </button>
+                        </div>
+                        </td>``
+                    else
+                        ``<td key={j}>{a[h]}</td>``
                 ``<tr key={i}>{dom}</tr>``
             ``<table className="ui celled table">
                 <thead><tr>
@@ -365,14 +400,14 @@ module.exports = class Guider extends React.Component
                 </div>
 
                 <div className={"ui right floated small menu"}>
-                    <a className={opClass} id="selectAllBtn"><i className=
+                    <a className={opClass} id="selectAllBtn"  {...{"data-tooltip":"Select All"}}><i className=
                     {self.state.selectAllState?"check circle icon":"check circle outline icon"}></i></a>
-                    <a className={opClass} id="addItemBtn"><i className="green add circle icon"></i></a>
-                    <a className={opClass} id="delItemBtn"><i className="red minus circle icon"></i></a>
-                    <a className={opClass} id="editItemBtn"><i className="edit icon"></i></a>
-                    <a className={opClass} id="taskBtn"><i className="tasks icon"></i></a>
-                    <a className={opClass} id="uploadBtn"><i className="upload icon"></i></a>
-                    <a className={opClass} id="downloadBtn"><i className="download icon"></i></a>
+                    <a className={opClass} id="addItemBtn" {...{"data-tooltip":"Add item to this folder"}}><i className="green add circle icon"></i></a>
+                    <a className={opClass} id="delItemBtn" {...{"data-tooltip":"Delete selected items"}}><i className="red minus circle icon"></i></a>
+                    <a className={opClass} id="editItemBtn" {...{"data-tooltip":"Edit selected item"}}><i className="edit icon"></i></a>
+                    <a className={opClass} id="taskBtn" {...{"data-tooltip":"Open Task Manage Panel"}}><i className="tasks icon"></i></a>
+                    <a className={opClass} id="uploadBtn" {...{"data-tooltip":"Upload Images to this folder"}}><i className="upload icon"></i></a>
+                    <a className={opClass} id="downloadBtn" {...{"data-tooltip":"Download"}}><i className="download icon"></i></a>
                 </div>
 
                 <Breadcrumb/>

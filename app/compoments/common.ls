@@ -77,7 +77,7 @@ class MyIdInput extends MyComponent
         #@input.value = @props.data
 
     check-value: ~>
-        url = if @props.idtype == \user
+        url = if @props.idtype.to-lower-case! == \user
             \/api/find-user
         else
             \/api/find-one-name
@@ -86,7 +86,7 @@ class MyIdInput extends MyComponent
             data: _id:@input.value
             url: url
             success: ~>
-                if @props.idtype == \user
+                if @props.idtype.to-lower-case! == \user
                     @set-data it._id
                 @set-state error: false, done: true, name: it.name, delete: true, loading: false
             error: ~>
@@ -112,7 +112,7 @@ class MyIdInput extends MyComponent
         else if @state.done
             inputStyle = @successStyle
         else inputStyle = {}
-        placeholder = if @props.idtype == \user
+        placeholder = if @props.idtype.to-lower-case! == \user
             "Enter UserID, Email or Name"
         else
             "Enter ObjectID"
@@ -120,7 +120,7 @@ class MyIdInput extends MyComponent
           <i className="file image outline icon"></i>
           <input type="text" ref={(v)=>this.input = v} placeholder={placeholder} style={inputStyle} name={this.props.name} />
           <a className="ui tag label" onClick={this.btnClick}>
-             { (this.props.idtype=="user"?"Check User":"Check Image")+"(name:"+this.state.name+")"}
+             { (this.props.idtype.toLowerCase()=="user"?"Check User":"Check Image")+"(name:"+this.state.name+")"}
           </a>
           <a className="ui red label" onClick={this.delClick}>
              Delete

@@ -137,6 +137,7 @@ class MainActions extends Actions
             contentType: "application/json"
             success: ~>
                 @set-store it{missionInfo, statsInfo} <<< {taskLoading: false}
+                actions.fetchContent!
             error: ~>
                 toastr.error it.response-text
 
@@ -247,6 +248,8 @@ class MainActions extends Actions
             success: ~>
                 toastr.info it
                 @fetchContent!
+                if @store.get-state!.currentItem?type == \task
+                    actions.loadTaskInfo @store.get-state!.currentItem
                 @set-store selects:{}
             complete: ~>
 

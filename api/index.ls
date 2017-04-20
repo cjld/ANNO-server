@@ -94,12 +94,23 @@ app.use \/logout, (req, res) ->
     req.logout!
     res.send \ok
 
-app.use \/profile, is-logged-in, (req, res) ->
-    data = {} <<< req.user.to-object!.profile
-    if req.user.local.email
-        data.email = req.user.local.email
-    data.id = req.user._id.to-string!
-    res.send data
+app.use \/profile, is-logged-in, (req, res, next) ->
+    if req.body.uid
+        (err,user) <- models.User.find-one _id:that
+        if err then return next err
+        if not user
+            return res.status 404 .end "user not found."
+        data = {} <<< user.to-object!.profile
+        if user.local.email
+            data.email = that
+        data.id = user._id.to-string!
+        res.send data
+    else
+        data = {} <<< req.user.to-object!.profile
+        if req.user.local.email
+            data.email = req.user.local.email
+        data.id = req.user._id.to-string!
+        res.send data
 
 app.use \/edit-profile, is-logged-in, (req, res, next) ->
     if req.body.email
@@ -150,6 +161,26 @@ app.use \/reset-password, (req, res, next) ->
     else
         res.status 400 .end "Invalid Email."
 
+app.use \/apply, (req, res, next) ->
+    (err, des) <- get-descendants [req.body.id]
+    if err then return next err
+    ps = des.map (d) ->
+        new promise (resolve, reject) ->
+            if d.type == \annotation
+                (err, ori) <- my-object.find-one _id:d.originImage
+                if err then return reject err
+                if not ori then return reject "Origin not found."
+                ori.state = d.state
+                ori.marks = d.marks
+                ori.save ->
+                    if it then return reject it
+                    resolve ori
+            else
+                resolve!
+    promise.all ps
+    .then -> res.send "Apply successful."
+    .catch -> next it
+
 get-task = (req, res, next) ->
     (err, task) <- my-object.find-one _id:req.body.taskid
     if err then return next err
@@ -190,9 +221,12 @@ send-taskInfo = (req, res, next) ->
                     for a,i in data
                         a <<< {
                             "mission name":docs[i].name
-                            "user":docs[i].worker?name
+                            "mid":docs[i]._id.to-string!
+                            "user":docs[i].worker?profile.name
+                            "uid":docs[i].worker?_id.to-string!
                             "start time": docs[i]._id.getTimestamp!.to-string!
                         }
+                    console.log data
                     resolve data
                 .catch (err) ->
                     reject err
@@ -350,8 +384,7 @@ app.use \/prefetch-objects, (req, res, next) ->
     find-neighbour config.prefetch-size, \1, req, res, next
 
 get-descendants = (ids, cb) ->
-    ps = for i in ids
-        if not i then continue
+    ps = ids.filter(-> it).map (i) ->
         new promise (resolve, reject) ->
             if i.type then resolve i
             else

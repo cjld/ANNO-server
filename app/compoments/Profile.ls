@@ -15,6 +15,8 @@ module.exports = class Profile extends React.Component
     ->
         super ...
         @state = { passwordError: "" }
+        @state.otherProfile = null
+        @state.tasks = []
         store.connect-to-component this, [\userProfile]
 
     submit: ~>
@@ -50,12 +52,37 @@ module.exports = class Profile extends React.Component
                 toastr.error "Edit profile error: "+e.response-text
         return false
 
+    fetchTask: (id) ->
+        $.ajax do
+            method: \POST
+            url: \/api/find-objects
+            data: worker:id, type:\directory
+            success: ~>
+                @set-state tasklist: it
+
+
     componentDidMount: ->
         @form = $ "form" .0
         @form?onsubmit = @submit
 
+        if @props.location.query.uid
+            $.ajax do
+                method: \POST
+                url: \/api/profile
+                data: uid:@props.location.query.uid
+                success: ~>
+                    @set-state otherProfile:it
+                error: (e)->
+                    toastr.error "Load profile error: "+e.response-text
+            @fetchTask @props.location.query.uid
+        else if @state.userProfile
+            @fetchTask @state.userProfile.id
+
     componentDidUpdate: ->
-        @componentDidMount!
+        @form = $ "form" .0
+        @form?onsubmit = @submit
+        if @state.userProfile and not @state.tasklist
+            @fetchTask @state.userProfile.id
 
     componentWillUnmount: ->
 
@@ -66,13 +93,25 @@ module.exports = class Profile extends React.Component
             </div>``
         errc = ""
         userProfile = @state.userProfile
+        if @state.otherProfile
+            userProfile = that
         if @state.passwordError
             errc = " error"
             errorMsg = ``<div className="ui error message">
                     <div className="header">Action Forbidden</div>
                     <pre>{this.state.passwordError}</pre>
                 </div>``
+        if @state.tasklist
+            tasklist = for task,i in @state.tasklist
+                ``<li key={i}><Link to={"/i/"+task._id}>{task.name}</Link></li>``
+            mytask = ``<div>
+                <div className="ui header"> Tasks </div>
+                <ul className="ui list">
+                    {tasklist}
+                </ul>
+            </div>``
         return ``<div className="ui padded text container segment">
+            {mytask}
             <div className="ui header"> Profile </div>
             <div className="ui divider"></div>
             <form className={"ui form"+errc}>
@@ -100,21 +139,22 @@ module.exports = class Profile extends React.Component
                     Link with Google
                   </button>
                 }
-
-                <h4 className="ui dividing header">Change password</h4>
-                <div className="field">
-                    <label>Old password</label>
-                    <input type="password" name="oldpassword" placeholder="" />
+                <div style={{display: this.state.otherProfile?"none":"block"}}>
+                    <h4 className="ui dividing header">Change password</h4>
+                    <div className="field">
+                        <label>Old password</label>
+                        <input type="password" name="oldpassword" placeholder="" />
+                    </div>
+                    <div className="field">
+                        <label>New password</label>
+                        <input type="password" name="password" placeholder="" />
+                    </div>
+                    <div className="field">
+                        <label>New password again</label>
+                        <input type="password" name="password2" placeholder="" />
+                    </div>
+                    {errorMsg}
+                    <button className="ui green button" type="submit">Change Profile</button>
                 </div>
-                <div className="field">
-                    <label>New password</label>
-                    <input type="password" name="password" placeholder="" />
-                </div>
-                <div className="field">
-                    <label>New password again</label>
-                    <input type="password" name="password2" placeholder="" />
-                </div>
-                {errorMsg}
-                <button className="ui green button" type="submit">Change Profile</button>
             </form>
         </div>``
