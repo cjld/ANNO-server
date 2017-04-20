@@ -221,9 +221,12 @@ module.exports = class Guider extends React.Component
             ``
         availItems = []
         for key of my-object.tree
-            unless key in seeker[@state.doc.type]
+            if not @state.currentItem
                 continue
-            if my-object.tree[key] == String or my-object.tree[key].type == String
+            unless key in seeker[@state.currentItem.type]
+                continue
+            types = [String, Number]
+            if my-object.tree[key] in types or my-object.tree[key].type in types
                 if key == 'marks' then continue
                 if my-object.tree[key].enum
                     option = [{value: v} for v in that]
@@ -300,7 +303,7 @@ module.exports = class Guider extends React.Component
                         ``<td key={j}>
                             <Link to={"/profile?uid="+a["uid"]}>{a[h]}</Link>
                         </td>``
-                    else if h == \operator and a["mission name"] != \all_images
+                    else if h == \operator
                         onDeleteClick = (id) ~>
                             actions.deleteItems [id]
                         onDeleteClick .= bind this, a["mid"]
@@ -318,7 +321,7 @@ module.exports = class Guider extends React.Component
                         onApplyClick .= bind this, a["mid"]
                         ``<td key={j}>
                         <div className="ui icon buttons">
-                            <button className="ui green icon button" onClick={onApplyClick} {...{"data-tooltip":"Apply the user's annotations to all_images directory."}}>
+                            <button className="ui green icon button" onClick={onApplyClick} {...{"data-tooltip":"Apply the user's annotations to origin image."}}>
                                 <i className="checkmark icon"></i>
                             </button>
                             <button className="ui red icon button" onClick={onDeleteClick} {...{"data-tooltip":"Remove this task."}}>

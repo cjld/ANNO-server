@@ -65,6 +65,8 @@ class MyIdInput extends MyComponent
             color: \#389f46
             boxShadow: \none
 
+    @defaultProps = idtype: \object
+
     componentDidMount: ->
         if not @props.data
             @input.value = ""
@@ -127,6 +129,7 @@ class MyIdInput extends MyComponent
           </a>
         </div>
         ``
+
 class MyIdInputs extends MyComponent
     addID: ~>
         @state.data.push undefined
