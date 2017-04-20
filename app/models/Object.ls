@@ -50,9 +50,9 @@ object = new mongoose.Schema do
     annotations: {type: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}], default: []}
     # worker has permission to change marks
     # worker == undefined in view all
-    worker: mongoose.Schema.Types.ObjectId
+    worker:  {type: mongoose.Schema.Types.ObjectId, ref:\User}
     # owner has permission to edit
-    owner: mongoose.Schema.Types.ObjectId
+    owner: {type: mongoose.Schema.Types.ObjectId, ref:\User}
     crossValidate: {type:Number, default: 1}
 
     originImage: {type: mongoose.Schema.Types.ObjectId, ref:\Object}

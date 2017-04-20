@@ -136,7 +136,7 @@ module.exports = class Guider extends React.Component
                 if @state.currentItem.type != \task
                     return
                 actions.loadTaskInfo @state.currentItem
-                # missionid, user, start time, anno, unanno, issue, total, operator
+                # mission name, user, start time, anno, unanno, issue, total, operator
                 # operator:  apply, delete
                 # new mission: task assign, random assign, usern
                 # stat: total, un assign, assign(x), anno, unanno, issue
@@ -302,7 +302,7 @@ module.exports = class Guider extends React.Component
                     {body}
                 </tbody>
             </table>``
-        missions = gen-table [\missionid, \user, "start time", "annotated", "un-annotated", "issued", "total", "operator"], @state.missionInfo
+        missions = gen-table ["mission name", \user, "start time", "annotated", "un-annotated", "issued", "total", "operator"], @state.missionInfo
         stats = gen-table [\total, "un-assign", "assigned(1)", "annotated", "un-annotated", "issued"], [@state.statsInfo]
 
         taskModal = ``<div className="ui modal" id="taskModal">
@@ -318,7 +318,7 @@ module.exports = class Guider extends React.Component
                         <div className="fields">
                         <div className="twelve wide field">
                             <label>User ID:</label>
-                            <MyIdInput data={this.state.missionForm.uid} dataOwner={[this,"missionForm.uid"]}/>
+                            <MyIdInput idtype="user" data={this.state.missionForm.uid} dataOwner={[this,"missionForm.uid"]}/>
                         </div>
                         <div className="four wide field">
                             <label>Amount:</label>

@@ -177,14 +177,46 @@ send-taskInfo = (req, res, next) ->
             my-object.count {parent:req.imgdir._id} <<< v, (err, count) ->
                 if err then return reject err
                 resolve {"#{k}":count}
+    ps.push new promise (resolve, reject) ->
+        my-object.find parent:req.task._id, type:\directory .populate \worker .exec (err, docs) ->
+            if err then return next err
+            ps2 = docs.map (doc) ->
+                new promise (resolve2, reject2) ->
+                    (err, results) <- count-state doc._id
+                    if err then return reject2 err
+                    resolve2 results
+            promise.all ps2
+                .then (data) ->
+                    for a,i in data
+                        a <<< {
+                            "mission name":docs[i].name
+                            "user":docs[i].worker?name
+                            "start time": docs[i]._id.getTimestamp!.to-string!
+                        }
+                    resolve data
+                .catch (err) ->
+                    reject err
     promise.all ps
         .then (data) ->
             dataall = {}
+            missionInfo = data.splice -1
             for a in data then dataall <<< a
-            res.json {missionInfo:[], statsInfo:dataall}
+            res.json {missionInfo:missionInfo[0], statsInfo:dataall}
         .catch (errs) ->
             console.log errs
             next errs
+
+get-proper-name = (id, name, i, cb) ->
+    if i==0
+        newname = name
+    else
+        newname = name+"(#{i})"
+    my-object.find-one parent:id, name:newname, (err, doc) ->
+        if err then return console.error err
+        if not doc
+            cb newname
+        else
+            get-proper-name id, name, i+1, cb
 
 app.use \/taskInfo, get-task, send-taskInfo
 # taskid, uid, random, amount
@@ -203,10 +235,12 @@ app.use \/taskAssign, get-task, (req, res, next) ->
     query.exec (err, docs) ->
         if err then return next err
         console.log "find docs #{docs.length}"
+        (name) <- get-proper-name req.task._id, worker.profile.name + "'s task", 0
         workerdir = new my-object do
             type:\directory
             parent: req.task._id
-            name: worker.profile.name + "'s task"
+            name: name
+            worker: worker._id
         workerdir.save (err) ->
             if err then return next err
             ps = for doc in docs
@@ -217,6 +251,8 @@ app.use \/taskAssign, get-task, (req, res, next) ->
                         originImage: doc._id
                         name: doc.name
                         url: doc.url
+                        worker: worker._id
+                    newdoc = new my-object newdoc
                     on-create newdoc
                     newdoc.save (err) ->
                         if err then return reject err
@@ -259,16 +295,18 @@ app.use \/find-one-name, (req, res, next) ->
             res.send obj
 
 app.use \/find-user, (req, res, next) ->
-    ss = req.body.id
+    ss = req.body._id
     filter = if validator.is-email ss
         "profile.email" : ss
     else if mongoose.Types.ObjectId.isValid ss
         _id: ss
     else
-        name: ss
+        "profile.name": ss
     (err,user) <- models.User.find-one filter
     if err then return next err
-    res.send user.profile
+    if not user
+        return res.status 404 .end "User not found."
+    res.send {_id:user._id} <<< user.profile.to-object!
 
 app.use \/find-one, (req, res, next) ->
     if req.body.parent == ''
@@ -463,9 +501,9 @@ app.post \/delete-items, (req, res, next) ->
 app.post \/save-mark, (req, res, next) ->
     res.send \ok.
 
-app.post \/counter, (req, res, next) ->
+count-state = (parent, cb) ->
     my-counter = (cond, cb) ->
-        cond <<< req.body.{parent}
+        cond <<< {parent}
         my-object.count cond, cb
 
     async.parallel {
@@ -478,9 +516,15 @@ app.post \/counter, (req, res, next) ->
         \issued : (callback) ->
             my-counter {state:'issued'}, callback
     }, (err, results) ->
-        if err then return next err
-        results.page-size = config.page-size
-        res.send results
+        if err then return cb err
+        cb null, results
+
+app.post \/counter, (req, res, next) ->
+    (err, results) <- count-state req.body.parent
+    if err then return next err
+    results.page-size = config.page-size
+    res.send results
+
 app.use (req, res) ->
     res.status 404 .send "api #{req.url} not found."
 
