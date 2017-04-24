@@ -185,8 +185,11 @@ module.exports = class Guider extends React.Component
                 dlAnchorElem.click!
 
             $ \#cache-image-btn .click ~>
-                @set-state is-caching:true
-                window.display-all-image-loaded!
+                if @state.is-caching
+                    @set-state is-caching:false
+                else
+                    @set-state is-caching:true
+                    window.display-all-image-loaded!
 
 
             $ \#downloadBtn .click ~>
