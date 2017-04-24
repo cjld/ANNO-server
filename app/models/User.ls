@@ -11,6 +11,7 @@ schema = new mongoose.Schema do
         email: String
         password: String
         code: String
+        is-admin: Boolean
     google:
         id: String
         token: String

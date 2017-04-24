@@ -62,6 +62,24 @@ object = new mongoose.Schema do
     config: String
     parent: mongoose.Schema.Types.ObjectId
 
+object.method.check-permission = (user) ->
+    if user.is-admin
+        return true
+    if not @owner
+        return true
+    if not user.id
+        return false
+    if user.id.to-string! == @owner.to-string!
+        return true
+    return false
+
+object.method.check-worker = (user) ->
+    if not @worker
+        return true
+    if not user.id
+        return false
+    return user.id.to-string! == @worker.to-string!
+
 seeker = do
     item: <[type name description category url tags state annotations owner worker]>
     directory: <[type name description state worker owner config]>

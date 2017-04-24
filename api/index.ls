@@ -103,12 +103,16 @@ app.use \/profile, is-logged-in, (req, res, next) ->
         data = {} <<< user.to-object!.profile
         if user.local.email
             data.email = that
+        if user.local.is-admin
+            data.is-admin = true
         data.id = user._id.to-string!
         res.send data
     else
         data = {} <<< req.user.to-object!.profile
         if req.user.local.email
             data.email = req.user.local.email
+        if req.user.local.is-admin
+            data.is-admin = true
         data.id = req.user._id.to-string!
         res.send data
 
@@ -161,7 +165,7 @@ app.use \/reset-password, (req, res, next) ->
     else
         res.status 400 .end "Invalid Email."
 
-app.use \/apply, (req, res, next) ->
+app.use \/apply, is-logged-in, (req, res, next) ->
     (err, des) <- get-descendants [req.body.id]
     if err then return next err
     ps = des.map (d) ->
@@ -170,6 +174,8 @@ app.use \/apply, (req, res, next) ->
                 (err, ori) <- my-object.find-one _id:d.originImage
                 if err then return reject err
                 if not ori then return reject "Origin not found."
+                if not ori.check-permission req.user
+                    return reject "Permission denied."
                 ori.state = d.state
                 ori.marks = d.marks
                 ori.save ->
@@ -254,7 +260,7 @@ get-proper-name = (id, name, i, cb) ->
 
 app.use \/taskInfo, get-task, send-taskInfo
 # taskid, uid, random, amount
-app.use \/taskAssign, get-task, (req, res, next) ->
+app.use \/taskAssign, is-logged-in, get-task, (req, res, next) ->
     (err, worker) <- models.User.find-one _id:req.body.uid
     if err then return next err
     if not worker
@@ -275,6 +281,7 @@ app.use \/taskAssign, get-task, (req, res, next) ->
             parent: req.task._id
             name: name
             worker: worker._id
+            owner: req.user._id
         workerdir.save (err) ->
             if err then return next err
             ps = for doc in docs
@@ -286,6 +293,7 @@ app.use \/taskAssign, get-task, (req, res, next) ->
                         name: doc.name
                         url: doc.url
                         worker: worker._id
+                        owner: req.user._id
                     newdoc = new my-object newdoc
                     on-create newdoc
                     newdoc.save (err) ->
@@ -435,7 +443,7 @@ on-update = (obj, newobj) ->
 on-create = (obj) ->
     add-origin obj._id, obj
 
-app.post \/new-object, (req, res, next) ->
+app.post \/new-object, is-logged-in, (req, res, next) ->
     build-task = (obj) ->
         (err, task) <- my-object.find-by-id obj._id
         if err then return next err
@@ -457,6 +465,7 @@ app.post \/new-object, (req, res, next) ->
                     fdoc <<< doc-update
                 else
                     fdoc = new my-object doc-update
+                    fdoc.owner = req.user._id
                     on-create fdoc
                 fdoc.save ->
                     if it then return reject it
@@ -473,6 +482,11 @@ app.post \/new-object, (req, res, next) ->
         delete edit-obj.__v
         my-object.find-one {_id:id}, (err, doc) ->
             if err then return next err
+            if not doc.check-permission req.user
+                if not doc.check-worker req.user
+                    return res.status 401 .send "Permission denied."
+                else
+                    edit-obj = edit-obj{state, marks}
             on-update doc, edit-obj
             doc <<< edit-obj
             (err) <- doc.save
@@ -483,6 +497,7 @@ app.post \/new-object, (req, res, next) ->
                 res.send "Edit id:#{id} successfully!"
     else
         object = new my-object req.body
+        object.owner = req.user._id
         on-create object
         object.save ->
             if it then return next it
@@ -503,7 +518,7 @@ object-on-remove = (doc) ->
                 doc2.save!
 
 
-app.post \/delete-items, (req, res, next) ->
+app.post \/delete-items, is-logged-in, (req, res, next) ->
     items = req.body['items[]']
     if items
         items = [items] if not Array.isArray items
@@ -520,12 +535,18 @@ app.post \/delete-items, (req, res, next) ->
             if err then return next err
             total-remove += docs.length
             for doc in docs
+                if not doc.check-permission req.user
+                    return res.status 401 .end "Permission denied."
+            for doc in docs
                 object-on-remove doc
             ids = for i in docs then i._id
             remove-descendants ids
 
     my-object.find {_id:{$in:items}}, (err, docs)->
         if err then return next err
+        for doc in docs
+            if not doc.check-permission req.user
+                return res.status 401 .end "Permission denied."
         for doc in docs
             object-on-remove doc
         total-remove += items.length
