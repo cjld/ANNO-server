@@ -482,6 +482,8 @@ app.post \/new-object, is-logged-in, (req, res, next) ->
         delete edit-obj.__v
         my-object.find-one {_id:id}, (err, doc) ->
             if err then return next err
+            if not doc
+                return res.status 404 .end "Object not found."
             if not doc.check-permission req.user
                 if not doc.check-worker req.user
                     return res.status 401 .send "Permission denied."
