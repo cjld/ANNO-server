@@ -488,7 +488,7 @@ app.post \/new-object, is-logged-in, (req, res, next) ->
                 if not doc.check-worker req.user
                     return res.status 401 .send "Permission denied."
                 else
-                    edit-obj = edit-obj{state, marks}
+                    edit-obj := edit-obj{state, marks, shape}
             on-update doc, edit-obj
             doc <<< edit-obj
             (err) <- doc.save
