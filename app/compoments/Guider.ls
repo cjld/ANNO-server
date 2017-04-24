@@ -171,29 +171,30 @@ module.exports = class Guider extends React.Component
                 # stat: total, un assign, assign(x), anno, unanno, issue
                 task-dialog.modal \show
 
-            $ \#download-json-btn .click ~>
-                {selects} = store.get-state!
-                ids = Object.keys(selects)
-                if ids.length == 0
-                    items = [@state.currentItem]
-                else
-                    items = for i in ids then store.get-state!.items[i]
-                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent JSON.stringify items
-                dlAnchorElem = document.getElementById 'downloadAnchorElem'
-                dlAnchorElem.setAttribute "href", dataStr
-                dlAnchorElem.setAttribute "download", "data.json"
-                dlAnchorElem.click!
+        $ \#download-json-btn .click ~>
+            {selects} = store.get-state!
+            ids = Object.keys(selects)
+            if ids.length == 0
+                items = [@state.currentItem]
+            else
+                items = for i in ids then store.get-state!.items[i]
+            dataStr = "data:text/json;charset=utf-8," + encodeURIComponent JSON.stringify items
+            dlAnchorElem = document.getElementById 'downloadAnchorElem'
+            dlAnchorElem.setAttribute "href", dataStr
+            dlAnchorElem.setAttribute "download", "data.json"
+            dlAnchorElem.click!
 
-            $ \#cache-image-btn .click ~>
-                if @state.is-caching
-                    @set-state is-caching:false
-                else
-                    @set-state is-caching:true
-                    window.display-all-image-loaded!
+        $ \#cache-image-btn .click ~>
+            if @state.is-caching
+                @set-state is-caching:false
+            else
+                @set-state is-caching:true
+                @download-progress.progress 'set label', 'Image Caching.'
+                window.display-all-image-loaded!
 
 
-            $ \#downloadBtn .click ~>
-                download-dialog.modal \show
+        $ \#downloadBtn .click ~>
+            download-dialog.modal \show
 
 
         $ \#assignbtn .click (e) ~>
