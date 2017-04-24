@@ -468,7 +468,7 @@ module.exports = class Guider extends React.Component
                     <a className={opClass} id="editItemBtn" {...{"data-tooltip":"Edit selected item"}}><i className="edit icon"></i></a>
                     <a className={opClass} id="taskBtn" {...{"data-tooltip":"Open Task Manage Panel"}}><i className="tasks icon"></i></a>
                     <a className={opClass} id="uploadBtn" {...{"data-tooltip":"Upload Images to this folder"}}><i className="upload icon"></i></a>
-                    <a className={opClass} id="downloadBtn" {...{"data-tooltip":"Download"}}><i className="download icon"></i></a>
+                    <a className="ui item" id="downloadBtn" {...{"data-tooltip":"Download"}}><i className="download icon"></i></a>
                 </div>
 
                 <Breadcrumb/>
