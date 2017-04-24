@@ -80,11 +80,6 @@ class MainActions extends Actions
                 return this[data]
             return {typeMap}
 
-        @gen-dep [\currentItem], (data) ->
-            {currentItem} = data
-            if currentItem and currentItem.type == \item
-                actions.prefetchImage currentItem
-
     connect-socket: ->
         if not window.socket then
             window.socket = io!

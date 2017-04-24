@@ -526,6 +526,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @set-state imageLoaded: false
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
+            actions.prefetchImage @state.currentItem
             if @worker
                 data = @getBase64Image @background
                 console.log "base64Length #{data.length}"
