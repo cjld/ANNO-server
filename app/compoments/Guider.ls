@@ -1,6 +1,8 @@
 require! \./common
 {React, Link, ReactDOM, TimerMixin, actions, store} = common
 {MyComponent, MyCheckbox, MyDropdown, MyIdInput, MyIdInputs, MyInput} = common
+require! \../history : myhistory
+
 
 
 deep-copy = -> JSON.parse JSON.stringify it
@@ -11,6 +13,12 @@ require! {
     \./Breadcrumb
     \mongoose
 }
+
+
+my-parse-int = ->
+    a = parseInt it
+    if Number.isNaN a then a=1
+    return a
 
 module.exports = class Guider extends React.Component
     ->
@@ -26,6 +34,7 @@ module.exports = class Guider extends React.Component
                     uid: ""
                     random: false
                     amount: \1000
+                is-caching: false
 
         store.connect-to-component this, [
             \currentItem
@@ -34,6 +43,9 @@ module.exports = class Guider extends React.Component
             \missionInfo
             \statsInfo
         ]
+
+    componentWillUnmount: ->
+        window.display-all-image-loaded = undefined
 
     componentDidMount: ->
         is-admin = false
@@ -52,6 +64,32 @@ module.exports = class Guider extends React.Component
         upload-dialog = $ \#uploadModal
         upload-dialog.modal detachable:false
         @upload-progress = $('#upload-progress').progress();
+
+        download-dialog = $ \#downloadModal
+        download-dialog.modal detachable:false
+        @download-progress = $('#download-progress').progress();
+        window.display-all-image-loaded = ~>
+            if @state.is-caching
+                {counter,page,tabType,fatherId} = store.get-state!
+                page-size = my-parse-int counter.page-size
+                totalPage = Math.ceil (my-parse-int counter[tabType]) / page-size
+                page = my-parse-int page
+                if page==NaN then page=0
+                unless fatherId? then fatherId = ""
+                furl = if fatherId? and fatherId!="" then "/"+fatherId else ""
+                p = page+1
+                if p > totalPage
+                    @download-progress.progress percent:100
+                    @download-progress.progress 'set label', 'Cache images done.'
+                    @download-progress.progress 'set success'
+                    @set-state is-caching: false
+                    next-page-url = "/i"+furl+"/page/"+1
+                    myhistory.push next-page-url
+                else
+                    next-page-url = "/i"+furl+"/page/"+p
+                    @download-progress.progress percent:page/totalPage*100
+                    myhistory.push next-page-url
+                # TODO: copy paste from Pagebar
 
         del-dialog = $ \#delModal
         del-dialog.modal do
@@ -81,15 +119,6 @@ module.exports = class Guider extends React.Component
                 else
                     toastr.error xhr.response-text
                     self.upload-progress.progress 'set error'
-
-        #$ \#uploadForm .submit ->
-        #    $ \#status .empty!.text "File is uploading..."
-        #    #$ this .ajax-submit do
-        #    #    error: (xhr) ->
-        #    #        toastr.error "Error: " + xhr.status
-        #    #    success: (response) ->
-        #    #        toastr.success response
-        #    return false
 
         if is-admin
             $ \#addItemBtn .click ~>
@@ -142,7 +171,7 @@ module.exports = class Guider extends React.Component
                 # stat: total, un assign, assign(x), anno, unanno, issue
                 task-dialog.modal \show
 
-            $ \#downloadBtn .click ~>
+            $ \#download-json-btn .click ~>
                 {selects} = store.get-state!
                 ids = Object.keys(selects)
                 if ids.length == 0
@@ -154,6 +183,14 @@ module.exports = class Guider extends React.Component
                 dlAnchorElem.setAttribute "href", dataStr
                 dlAnchorElem.setAttribute "download", "data.json"
                 dlAnchorElem.click!
+
+            $ \#cache-image-btn .click ~>
+                @set-state is-caching:true
+                window.display-all-image-loaded!
+
+
+            $ \#downloadBtn .click ~>
+                download-dialog.modal \show
 
 
         $ \#assignbtn .click (e) ~>
@@ -290,6 +327,26 @@ module.exports = class Guider extends React.Component
             </div>
         </div>
         ``
+
+        downloadModal = ``<div className="ui modal" id="downloadModal">
+            <i className="close icon"></i>
+            <div className="header">
+                Download Items
+            </div>
+            <div className="content">
+                <div className={this.state.isCaching?"ui red button":"ui button"} id="cache-image-btn">{(this.state.isCaching?"Stop ":"")+"Cache Images"}</div>
+                <div className="ui button" id="download-json-btn">Download Json</div>
+                <div className="ui hidden divider" />
+                <div className="ui active progress" id="download-progress">
+                  <div className="bar">
+                    <div className="progress"></div>
+                  </div>
+                  <div className="label"><span id = "status"></span></div>
+                </div>
+            </div>
+        </div>
+        ``
+
         gen-table = (headers, data) ~>
             dom_headers = for h,i in headers
                 ``<th key={i}>{h}</th>``
@@ -380,6 +437,7 @@ module.exports = class Guider extends React.Component
         ``<div>
         {delModal}
         {uploadModal}
+        {downloadModal}
         {taskModal}
         <div className="ui modal" id="addModal">
             <i className="close icon"></i>

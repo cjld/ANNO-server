@@ -5,7 +5,7 @@ require! \./Editor
 
 my-parse-int = ->
     a = parseInt it
-    if a==NaN then a=1
+    if Number.isNaN a then a=1
     return a
 
 class Pagebar extends React.Component
@@ -60,6 +60,7 @@ module.exports = class Displayer extends React.Component
             hoverable: true
 
     render: ->
+        @pending = 0
         self = this
         tabs =
             *   type: \total, iconstr:  "file archive outline icon"
@@ -117,11 +118,16 @@ module.exports = class Displayer extends React.Component
             if it.type == \annotation
                 imgurl = it.originImage?url
             if @state.displayType == \grid or (it.type != \item and it.type != \annotation)
+                @pending++
+                onload = ~>
+                    @pending--
+                    if @pending == 0
+                        window.display-all-image-loaded?!
                 box = ``
                 <Link className="imgGalleryBox" to={"/i/"+obj._id}>
                 {
                     (it.type=="item" || it.type=="annotation")?
-                        <img className="ui bordered image" src={imgurl} alt="" />
+                        <img className="ui bordered image" src={imgurl} alt="" onLoad={onload}/>
                     :
                         <h3><i className="ui huge folder open icon" />{it.name}</h3>
                 }
