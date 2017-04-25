@@ -14,6 +14,7 @@ require! {
     \crypto
 
     \promise
+    \./session : {store}
 }
 
 server = email.server.connect config.email.config
@@ -70,6 +71,10 @@ is-logged-in = (req, res, next) ->
     if req.is-authenticated! then return next!
     res.status 401 .end "Please login first."
 
+is-admin = (req, res, next) ->
+    if req.user.local.is-admin then return next!
+    res.status 401 .end "Permission denied."
+
 my-passport = (strategy) ->
     return (req, res, next) ->
         _ = passport.authenticate strategy, (err, user, info) ->
@@ -80,6 +85,14 @@ my-passport = (strategy) ->
                 if it then return next it
                 res.send data
         _(req, res, next)
+
+app.use \/sessions, is-logged-in, is-admin, (req, res, next) ->
+    console.log store
+    console.log store.collection.find
+    (err, sessions) <- store.collection.find!.to-array
+    if err then return next err
+    console.log sessions
+    res.json sessions
 
 app.use \/signup, my-passport \local-signup
 

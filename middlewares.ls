@@ -8,6 +8,7 @@ require! {
     \validator
 
     \express-session : \session
+    \./api/session : {store}
     \passport
     \passport-local
     \passport-google-oauth : {OAuth2Strategy : GoogleStrategy}
@@ -22,7 +23,7 @@ app = express!
     # set limit to fix bug
     # <http://stackoverflow.com/questions/19917401/node-js-express-request-entity-too-large>
     ..use body-parser.urlencoded extended:false, limit:\5mb
-    ..use session secret:config.secret, resave: true, saveUninitialized: true
+    ..use session secret:config.secret, resave: true, saveUninitialized: true, store: store
     ..use passport.initialize!
     ..use passport.session!
 

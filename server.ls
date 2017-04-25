@@ -3,6 +3,7 @@ global.inElectron = false
 require! {
     \./config
     \express
+    \./api : api-app
     \./middlewares
     \http
     \socket.io : socket-io
@@ -19,7 +20,6 @@ require! {
     \react-router
     \./app-dest/routes
     \swig
-    \./api : api-app
 }
 
 app.use \/api, api-app
