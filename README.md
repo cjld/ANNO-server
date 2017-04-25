@@ -24,13 +24,14 @@
 *   [x]  fj
 *   [ ]  code converge test
 *   [x]  dev env
-*   [ ]  forget password
+*   [x]  forget password
 *   [ ]  google login, wechat login
-*   [ ]  task
-*   [ ]  mission
+*   [x]  task
+*   [x]  mission
 *   [ ]  params page url
 *   [ ]  permission
 *   [ ]  socket io save
+*   [ ]  task error
 
 
 // fix init session change bug
