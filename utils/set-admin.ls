@@ -16,7 +16,7 @@ if args[0] == \id
 else if args[0] == \name
     query = 'profile.name': args[1]
 else if args[0] == \email
-    query = 'profile.name': args[1]
+    query = 'profile.email': args[1]
 
 if query
     (err, user) <- User.find-one query
