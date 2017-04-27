@@ -306,6 +306,12 @@ module.exports = class Guider extends React.Component
         </div>
         ``
 
+        uploadDirChange = ~>
+            filesRelativePath = for file in it.target.files
+                file.webkitRelativePath
+            s = JSON.stringify filesRelativePath
+            $ \#relativePathInput .val s
+
         uploadModal = ``<div className="ui modal" id="uploadModal">
             <i className="close icon"></i>
             <div className="header">
@@ -316,11 +322,16 @@ module.exports = class Guider extends React.Component
             encType="multipart/form-data"
             action="/api/upload"
             method="post">
-                <input type="file" name="userPhoto" multiple className="ui small button"/>
-                <input type="file" name="userPhoto2" className="ui small button" {...{webkitdirectory:"", directory:""}}/>
+                <h4 className="ui header">Select files</h4>
+                <input type="file" name="userUpload" multiple className="ui small button"/>
+                <h4 className="ui header">Select directory</h4>
+                <input type="file" name="userUpload2" className="ui small button"
+                    onChange={uploadDirChange}
+                    ref={it => {$(it).attr("directory","");$(it).attr("webkitdirectory","");}}/>
                 <div className="ui hidden divider" />
                 <input type="submit" value="Upload Image" name="submit" className="ui green button"/>
                 <input type='text' id='upload-parent' name='parent' style={{display:'none'}} />
+                <input type='text' name="relativePath" id="relativePathInput" style={{display:"none"}} />
                 <div className="ui hidden divider" />
                 <div className="ui active progress" id="upload-progress">
                   <div className="bar">

@@ -36,26 +36,73 @@ mongoose.connection.on \error ->
 app.get \/test, (req, res) ->
     res.send \ok!
 
+
+is-logged-in = (req, res, next) ->
+    if req.is-authenticated! then return next!
+    res.status 401 .end "Please login first."
+
+is-admin = (req, res, next) ->
+    if req.user.local.is-admin then return next!
+    res.status 401 .end "Permission denied."
+
 storage = multer.disk-storage do
     destination: (req, file, callback) ->
         callback null, config.image-server-dir + config.upload-path
     filename: (req, file, callback) ->
         callback null Date.now!+'-'+file.originalname
 
-upload = multer {storage} .array \userPhoto, config.upload-limit
-app.post \/upload, (req, res) ->
+upload = multer {storage} .fields [
+    *   name: \userUpload, max-count: config.upload-limit
+    *   name: \userUpload2, max-count: config.upload-limit
+]
+
+app.post \/upload, is-logged-in, (req, res) ->
     upload req, res, (err) ->
         if err
             res.status 500 .end "Error uploading files."
         else
-            files = for file in req.files then do
-                name: file.originalname
-                state: \un-annotated
-                type: \item
-                url: config.image-server-url + config.upload-path + file.filename
-                parent: req.body.parent
+            if req.files["userUpload"]
+                files = for file in req.files["userUpload"]
+                    if not file.mimetype.starts-with \image
+                        continue
+                    new my-object do
+                        name: file.originalname
+                        state: \un-annotated
+                        type: \item
+                        url: config.image-server-url + config.upload-path + file.filename
+                        owner: req.user._id
+                        parent: req.body.parent
+            else
+                files = []
 
-            my-object.create files, (err) ->
+            if req.files["userUpload2"] and req.body.relativePath
+                dirmap = {'':req.body.parent}
+                rpath = JSON.parse req.body.relativePath
+                files2 = []
+                for path,j in rpath
+                    ps = path.split \/
+                    cname = ""
+                    file = req.files["userUpload2"][j]
+                    if not file.mimetype.starts-with \image
+                        continue
+                    for s,i in ps
+                        pr = dirmap[cname]
+                        cname = cname + \/ + s
+                        if dirmap[cname]
+                            continue
+                        newobj = new my-object do
+                            name: s
+                            state: \un-annotated
+                            type: if i==ps.length-1 then \item else \directory
+                            owner: req.user._id
+                            parent: pr
+                            url: if i==ps.length-1 then config.image-server-url + config.upload-path + file.filename else undefined
+                        dirmap[cname] = newobj._id
+                        files2.push newobj
+            else
+                files2 = []
+
+            my-object.create files.concat files2, (err) ->
                 if err
                     res.status 500 .end "Items creation failure."
                 else
@@ -66,14 +113,6 @@ app.use \/signup (req, res, next) ->
         res.status 400 .end "Email not valid."
         return
     next!
-
-is-logged-in = (req, res, next) ->
-    if req.is-authenticated! then return next!
-    res.status 401 .end "Please login first."
-
-is-admin = (req, res, next) ->
-    if req.user.local.is-admin then return next!
-    res.status 401 .end "Permission denied."
 
 my-passport = (strategy) ->
     return (req, res, next) ->
