@@ -83,7 +83,7 @@ module.exports = class Profile extends React.Component
     componentDidUpdate: ->
         @form = $ "form" .0
         @form?onsubmit = @submit
-        if @state.userProfile and not @state.tasklist
+        if @state.userProfile
             @fetchTask @state.userProfile.id
 
     componentWillUnmount: ->
