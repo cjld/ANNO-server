@@ -123,7 +123,15 @@ module.exports = class Guider extends React.Component
         if is-admin
             $ \#addItemBtn .click ~>
                 @set-state modalType:\add
-                @origin-doc = {}
+                if not @state.currentItem
+                    return
+                item = @state.currentItem
+                for k,v of item
+                    # attribute selector
+                    @state.doc[k] = v
+                    dom = addItemForm.find "[name='#{k}']"
+                    dom.val(v)
+                @origin-doc = deep-copy @state.doc
                 dialog.modal \show
 
             $ \#uploadBtn .click ~>
@@ -264,7 +272,7 @@ module.exports = class Guider extends React.Component
         for key of my-object.tree
             if not @state.currentItem
                 continue
-            unless key in seeker[@state.currentItem.type]
+            unless key in seeker[@state.doc.type]
                 continue
             types = [String, Number]
             if my-object.tree[key] in types or my-object.tree[key].type in types
