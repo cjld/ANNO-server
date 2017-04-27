@@ -53,6 +53,8 @@ module.exports = class Profile extends React.Component
         return false
 
     fetchTask: (id) ->
+        if not id
+            return
         $.ajax do
             method: \POST
             url: \/api/find-objects
