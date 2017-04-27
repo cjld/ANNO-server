@@ -317,6 +317,7 @@ module.exports = class Guider extends React.Component
             action="/api/upload"
             method="post">
                 <input type="file" name="userPhoto" multiple className="ui small button"/>
+                <input type="file" name="userPhoto2" className="ui small button" {...{webkitdirectory:"", directory:""}}/>
                 <div className="ui hidden divider" />
                 <input type="submit" value="Upload Image" name="submit" className="ui green button"/>
                 <input type='text' id='upload-parent' name='parent' style={{display:'none'}} />
@@ -338,6 +339,7 @@ module.exports = class Guider extends React.Component
                 Download Items
             </div>
             <div className="content">
+                <div className="ui message">note: Cache Images only work on <Link to="/download">local version of ANNOTATE</Link></div>
                 <div className={this.state.isCaching?"ui red button":"ui button"} id="cache-image-btn">{(this.state.isCaching?"Stop ":"")+"Cache Images"}</div>
                 <div className="ui button" id="download-json-btn">Download Json</div>
                 <div className="ui hidden divider" />
