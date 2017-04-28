@@ -42,7 +42,7 @@ root-content =
                 <p></p>
             </div>``
         *   title: "如何创建并且使用任务管理系统"
-            url: "config"
+            url: "task"
             content: ``<div>
                 <img src="/img/screenshots/screenshot-task1.png" className="ui big centered image" />
                 <p>第一步：点击新建按钮，类别选择为task，同时在taskImage域里填入需要被标注的文件以及文件夹</p>
