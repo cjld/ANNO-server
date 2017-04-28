@@ -446,10 +446,7 @@ app.use \/prefetch-objects, (req, res, next) ->
 get-descendants = (ids, cb) ->
     ps = ids.filter(-> it).map (i) ->
         new promise (resolve, reject) ->
-            if i.type then resolve i
-            else
-                (err, doc) <- my-object.find-by-id i
-                if err then return reject err
+            check-doc = (doc) ->
                 if doc.type == \directory
                     (err, docs) <- my-object.find parent:doc._id
                     if err then return reject err
@@ -458,6 +455,11 @@ get-descendants = (ids, cb) ->
                         resolve [doc].concat dds
                 else
                     resolve doc
+
+            if i.type then check-doc i
+            else
+                (err, doc) <- my-object.find-one _id:i
+                check-doc doc
     promise.all ps
         .then -> cb null, [].concat.apply [], it
         .catch -> cb it
