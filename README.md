@@ -4,12 +4,12 @@ An online annotation tool with image editing.
 
 # Screenshots
 
-![](screenshots/screenshot.png)
+![](public/img/screenshots/screenshot.png)
 -----
 
-![](screenshots/screenshot2.png)
+![](public/img/screenshots/screenshot2.png)
 
-# Feature
+# Features
 *   Useful tools(Quick Selection, Segment, Spotting, Painting)
 *   Task Manage System
 *   low latency(local versiong supported, build from Electron)

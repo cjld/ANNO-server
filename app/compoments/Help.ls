@@ -41,28 +41,28 @@ root-content =
                 <p>第三步：上传图片到数据集文件夹，如果需要可以在数据集文件夹下创建子文件夹。</p>
                 <p></p>
             </div>``
-        *   title: "如何填写数据集配置文件"
+        *   title: "如何创建并且使用任务管理系统"
             url: "config"
             content: ``<div>
-                <p>一个配置文件实例</p>
-                <pre>{configDemoStr}</pre>
-                <p>配置文件包含的key：autoType, allowedOverlap, types</p>
-                <p>types: 描述了所有的类别，types对应的key是一个数组，代表了有多少个大类。
-                每个大类有两个key， description和types，分别代表大类的描述和所有小类。
-                每个小类有三个key，title，color，src，其中title代表了类别名，如果你的类别
-                名包含有"-x"的后缀名，那么代表这个类别还需要一个额外的输入信息，比如某些限速标志，对于不同速度的限速
-                标志pl15,pl40,pl60,您可以声明title为pl-x，这样当用户选择这个类别的时候，会要求额外输入一个字符串信息，
-                color代表了这个
-                类别在绘制的时候使用的颜色，可以不填，src代表了这个类别的图标，可以不填。</p>
-                <p>autoType：在编辑器工作的时候是否开启自动类别，是一个为了方便标注人员标注的选项，
-                开启时会自动将新建的标注按顺序赋予类别</p>
-                <p>allowedOverlap: 在使用PaintSelection时是否允许不同类别之间产生重叠</p>
-                <p>autosaveInterval: 自动保存的间隔，默认5000，单位毫秒</p>
-                <p>showMark: 是否显示包围盒和类别，默认为true</p>
-                <p>autobox: 是否自动计算包围盒，默认为true</p>
-                <p>hideImage: 是否隐藏图片，默认为false</p>
-                <p>hideAnnotation: 是否隐藏标注，默认为false</p>
-                <p>editMode: 初始使用的工具，默认为ps，Quick selection工具，可选工具有[spotting, segment, pan, paint, ps, box]</p>
+                <img src="/img/screenshots/screenshot-task1.png" className="ui big centered image" />
+                <p>第一步：点击新建按钮，类别选择为task，同时在taskImage域里填入需要被标注的文件以及文件夹</p>
+                <img src="/img/screenshots/screenshot-newtask3.png" className="ui big centered image" />
+                <p>第二步：进入创建好的task目录，可以发现有一个名为allimages的文件夹，该文件夹存储了所有需要被标注的文件，首先点击工具栏第五个按钮，打开task manage panel，我们在new mission中的user id项里面填入标注人员的姓名，id，或者email，点击check user检查是否有该用户，在amount中填入分配给该用户的标注图片数量，点击assign。</p>
+                <img src="/img/screenshots/screenshot-task4.png" className="ui big centered image" />
+                <p>可以看到出现了一个新的文件夹，该文件夹存储了用户需要标注的所有图片。</p>
+                <img src="/img/screenshots/screenshot-task5.png" className="ui big centered image" />
+                <p>用户在自己的profile页面也能看到自己所需要标注的任务。</p>
+            </div>``
+        *   title: "如何构建自己的数据集"
+            url: "dataset"
+            content: ``<div>
+                <div className="ui segment">
+                    <video controls="controls" src="" style={{width:'100%'}}></video>
+                </div>
+                <p>第一步：创建数据集文件夹</p>
+                <p>第二步：填写数据集配置文件，设置标注类别。</p>
+                <p>第三步：上传图片到数据集文件夹，如果需要可以在数据集文件夹下创建子文件夹。</p>
+                <p></p>
             </div>``
         *   title: "如何浏览图片"
             url: "browser"
