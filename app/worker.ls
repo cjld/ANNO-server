@@ -37,7 +37,6 @@ class worker
             console.log "proc exit with ", {code, signal}
             if signal != \SIGKILL
                 @on-data? \s-error, error:"Program exit with #{signal}, please reload."
-            @proc = undefined
         @proc.my-rl = readline.create-interface input:@proc.stdout
             ..on \line, @get-result
 
