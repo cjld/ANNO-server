@@ -208,7 +208,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @current-box.closed = true
                 @current-box.mydata = {i:@state.cMark}
                 @current-box <<< @box-style
-                @current-box.strockWidth = 4
+                @current-box.strokeWidth = 4
 
                 if @current-type
                     @current-type.position = @current-box.bounds.topLeft.add [@current-box.bounds.width / 2, 0]
@@ -330,7 +330,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     fillColor: fillColor
                     fillRule: \evenodd
                     strokeColor: \black
-                    strockWidth: 2
+                    strokeWidth: 2
                     dashArray: [10, 4]
                     strokeScaling: false
 
@@ -435,7 +435,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             fillColor: fillColor
             fillRule: \evenodd
             strokeColor: \black
-            strockWidth: 2
+            strokeWidth: 2
             dashArray: [10, 4]
             strokeScaling: false
         @rebuild-group.addChild path
@@ -1097,8 +1097,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
             is_erase = e.modifiers.shift
             paint-cmd = {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
-            if not mark.stroke then mark.stroke = []
-            mark.stroke.push paint-cmd
+            if not mark.strokes then mark.stroke = []
+            mark.strokes.push {} <<< paint-cmd <<< {date: (new Date).to-string!}
             @send-cmd \paint, paint-cmd
 
 

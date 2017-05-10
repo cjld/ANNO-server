@@ -32,6 +32,7 @@ mark = new mongoose.Schema do
         segments: {type: mongoose.Schema.Types.Mixed, default: [], validate: validate_2d}
         active-segment: {type: {i:Number, j:Number}, default:{i:0,j:0}}
         contours: {type: mongoose.Schema.Types.Mixed, default: [], validate: validate_2d}
+        strokes: {type: mongoose.Schema.Types.Mixed, default: []}
     *   _id: false
 
 object = new mongoose.Schema do
