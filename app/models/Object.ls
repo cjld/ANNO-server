@@ -64,7 +64,7 @@ object = new mongoose.Schema do
     parent: mongoose.Schema.Types.ObjectId
 
 object.methods.check-permission = (user) ->
-    if user.is-admin
+    if user.local.is-admin
         return true
     if not @owner
         return true
@@ -75,6 +75,8 @@ object.methods.check-permission = (user) ->
     return false
 
 object.methods.check-worker = (user) ->
+    if user.local.is-admin
+        return true
     if not @worker
         return true
     if not user.id
