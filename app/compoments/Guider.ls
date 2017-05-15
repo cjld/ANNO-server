@@ -131,7 +131,7 @@ module.exports = class Guider extends React.Component
                     @state.doc[k] = v
                     dom = addItemForm.find "[name='#{k}']"
                     dom.val(v)
-                @origin-doc = deep-copy @state.doc
+                @origin-doc = {}
                 dialog.modal \show
 
             $ \#uploadBtn .click ~>
