@@ -67,8 +67,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @reload-config next-state.config
         if next-state.typeMap !== @state.typeMap
             @create-typeimage-symbol next-state.typeMap
-        if next-state.editMode != @state.editMode
-            @switchTool next-state.editMode
         return true
 
     create-typeimage-symbol: (typeMap)->
@@ -285,7 +283,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             ..fillColor = \green
         @paints.background = new paper.CompoundPath
             ..fillColor = \red
-        @paints.hair = new paper.CompoundPath
+        @paints.alpha = new paper.CompoundPath
             ..fillColor = \yellow
         @strokeStyle =
             strokeWidth: 0
@@ -1140,7 +1138,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         $ @canvas .on \mouseover, ~> @activate-canvas!
 
-        @switchTool!
         @componentDidUpdate!
 
     activate-canvas: ->
@@ -1201,6 +1198,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
 
     componentDidUpdate: ->
+        @switchTool!
         @rebuild!
 
     save: (savestr)~>
@@ -1413,6 +1411,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 </tbody>
             </table>``
 
+        if @state.editMode == \paint
+            paintDropdown = ``<MyDropdown
+                dataOwner={[this, "paintState"]}
+                defaultText="Paint Mode"
+                options={[
+                    {value:"background", text:"Background"},
+                    {value:"foreground", text:"Foreground"},
+                    {value:"alpha", text:"alpha"}
+                ]} />``
+
         if @props.markonly
             utils = ``<div className="six wide column editor-utils canvas-vh45">
                     {markTable}
@@ -1509,15 +1517,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         twoColumn = utils?
 
-        if @state.editMode == \paint
-            paintDropdown = ``<MyDropdown
-                dataOwner={[this, "paintState"]}
-                defaultText="Paint Mode"
-                options={[
-                    {value:"background", text:"Background"},
-                    {value:"foreground", text:"Foreground"},
-                    {value:"hair", text:"hair"}
-                ]} />``
         if @props.viewonly
             helpModal = undefined
         else
