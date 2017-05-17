@@ -1097,7 +1097,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
             is_erase = e.modifiers.shift
             paint-cmd = {stroke:[point{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
-            if not mark.strokes then mark.stroke = []
+            if not mark.strokes then mark.strokes = []
             mark.strokes.push {} <<< paint-cmd <<< {date: (new Date).to-string!}
             @send-cmd \paint, paint-cmd
 
@@ -1106,7 +1106,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 point = e.point.transform tmatrix
                 lpoint = e.lastPoint.transform tmatrix
                 paint-cmd = {stroke:[point{x,y},lpoint{x,y}], size:@state.paint-brush-size, is_bg:is_erase}
-                mark.stroke.push paint-cmd
+                mark.strokes.push paint-cmd
                 @send-cmd \paint, paint-cmd
                 @cursor.position = point
         @ps-tool.on-mouse-move = (e) ~>
