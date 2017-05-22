@@ -16,7 +16,7 @@ module.exports = class Profile extends React.Component
         super ...
         @state = { passwordError: "" }
         @state.otherProfile = null
-        @state.tasks = []
+        @state.tasklist = undefined
         store.connect-to-component this, [\userProfile]
 
     submit: ~>
@@ -53,7 +53,7 @@ module.exports = class Profile extends React.Component
         return false
 
     fetchTask: (id) ->
-        if not id
+        if not id or @state.tasklist
             return
         $.ajax do
             method: \POST
