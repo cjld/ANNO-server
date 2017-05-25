@@ -245,6 +245,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     segments: seg
                     closed: true
 
+    path-simplify: (cp) ->
+        for c,i in cp.children
+            xy = for seg in c.segments
+                seg.point{x,y}
+            new-xy = simplify xy, @state.simplifyTolerance, true
+            cp.children[i] = new paper.Path new-xy
     rebuild: ->
         @activate-canvas!
         if @props.viewonly and not @props.markonly
@@ -359,8 +365,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     strokeScaling: false
 
                 if @state.simplify
-                    for c in path.children
-                        c.simplify @state.simplifyTolerance
+                    @path-simplify path
                 @other-contours.addChild path
 
         paper.project.current-style =
@@ -461,8 +466,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @rebuild-group.addChild path
         @contour-path = path
         if @state.simplify
-            for c in @contour-path.children
-                c.simplify @state.simplifyTolerance
+            @path-simplify @contour-path
 
     send-cmd: (cmd, data) ->
         if @props.viewonly then return
