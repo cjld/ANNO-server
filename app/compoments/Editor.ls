@@ -45,7 +45,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.paint-brush-size = @state.default-brush-size
         @state.imageLoaded = false
         @state.time-evaluate = false
-        @state.simplifyTolerance = 5
+        @state.simplifyTolerance = 1
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
