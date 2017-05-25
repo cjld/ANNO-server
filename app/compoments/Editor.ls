@@ -29,7 +29,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             *   value:"paint", text: ``<div><i className="paint brush icon"></i>Free Paint</div>``
         ]
         @state.cMark = \0
-        @state.smooth = false
+        @state.smooth = true
         @state.simplify = false
         @state.showMark = true
         @state.autobox = false
@@ -221,18 +221,17 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 prev = it[it.length-1]
             if @state.smooth
                 seg = for xyd in it
-                    if prev.x == xyd.x
+                    d = if xyd.d!=undefined then xyd.d else 0.5
+                    res = if prev.x == xyd.x
                         if prev.y < xyd.y
-                            d = 1-xyd.d
+                            [prev.x-0.5+d, prev.y+0.5]
                         else
-                            d = xyd.d
+                            [prev.x-0.5+d, xyd.y+0.5]
                     else
                         if prev.x < xyd.x
-                            d = 1-xyd.d
+                            [prev.x+0.5, prev.y-0.5+d]
                         else
-                            d = xyd.d
-                    d = 0.5
-                    res = [xyd.x*d+prev.x*(1-d), xyd.y*d+prev.y*(1-d)]
+                            [xyd.x+0.5, prev.y-0.5+d]
                     prev = xyd
                     res
                 path = new paper.Path do
