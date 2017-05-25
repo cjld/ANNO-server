@@ -30,6 +30,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         ]
         @state.cMark = \0
         @state.smooth = false
+        @state.simplify = false
         @state.showMark = true
         @state.autobox = false
         @state.hideImage = false
@@ -214,6 +215,36 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 #paper.project.current-style = {}
                 @set-changed!
 
+    path-convert: (contours) ->
+        return contours.map ~>
+            if it.length
+                prev = it[it.length-1]
+            if @state.smooth
+                seg = for xyd in it
+                    if prev.x == xyd.x
+                        if prev.y < xyd.y
+                            d = 1-xyd.d
+                        else
+                            d = xyd.d
+                    else
+                        if prev.x < xyd.x
+                            d = 1-xyd.d
+                        else
+                            d = xyd.d
+                    d = 0.5
+                    res = [xyd.x*d+prev.x*(1-d), xyd.y*d+prev.y*(1-d)]
+                    prev = xyd
+                    res
+                path = new paper.Path do
+                    segments: seg
+                    closed: true
+                #path.smooth!
+                return path
+            else
+                seg = it.map ~> [it.x, it.y]
+                return new paper.Path do
+                    segments: seg
+                    closed: true
 
     rebuild: ->
         @activate-canvas!
@@ -315,11 +346,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @other-contours = new paper.Group
                 @rebuild-group.addChild @other-contours
 
-                paths = contours.map ~>
-                    seg = it.map ~> [it.x, it.y]
-                    new paper.Path do
-                        segments: seg
-                        closed: true
+                paths = @path-convert contours
 
                 fillColor = new paper.Color color
                 fillColor.alpha = if @state.hideImage then 1 else 0.5
@@ -332,7 +359,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     dashArray: [10, 4]
                     strokeScaling: false
 
-                if @state.smooth
+                if @state.simplify
                     for c in path.children
                         c.simplify @state.simplifyTolerance
                 @other-contours.addChild path
@@ -419,11 +446,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @contour-path.remove!
             @contour-path = null
 
-        paths = contours.map ~>
-            seg = it.map ~> [it.x, it.y]
-            new paper.Path do
-                segments: seg
-                closed: true
+        paths = @path-convert contours
 
         fillColor = new paper.Color color
         if not @state.hideImage
@@ -438,7 +461,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             strokeScaling: false
         @rebuild-group.addChild path
         @contour-path = path
-        if @state.smooth
+        if @state.simplify
             for c in @contour-path.children
                 c.simplify @state.simplifyTolerance
 
@@ -1468,6 +1491,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <MyCheckbox
                     text="Smooth"
                     dataOwner={[this, "smooth"]} data={this.state.smooth}/>
+                <MyCheckbox
+                    text="Simplify"
+                    dataOwner={[this, "simplify"]} data={this.state.simplify}/>
                 <MyCheckbox
                     text="Autosave"
                     dataOwner={[this, "autosave"]} data={this.state.autosave}/>
