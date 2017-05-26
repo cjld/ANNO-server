@@ -83,7 +83,7 @@ module.exports = class Profile extends React.Component
     componentDidUpdate: ->
         @form = $ "form" .0
         @form?onsubmit = @submit
-        if @state.userProfile
+        if @state.userProfile and not @props.location.query.uid
             @fetchTask @state.userProfile.id
 
     componentWillUnmount: ->
@@ -119,21 +119,21 @@ module.exports = class Profile extends React.Component
             <form className={"ui form"+errc}>
                 <div className="field">
                     <label>ID</label>
-                    <input type="text" name="id" placeholder="" defaultValue={userProfile.id} readOnly />
+                    <input type="text" name="id" placeholder="" value={userProfile.id} readOnly />
                 </div>
                 <div className="field">
                     <label>Email</label>
-                    <input type="text" name="email" placeholder="" defaultValue={userProfile.email} readOnly />
+                    <input type="text" name="email" placeholder="" value={userProfile.email} readOnly />
                 </div>
                 <div className="field">
                     <label>Name</label>
-                    <input type="text" name="name" placeholder="" defaultValue={userProfile.name}/>
+                    <input type="text" name="name" placeholder="" value={userProfile.name}/>
                 </div>
                 <h4 className="ui dividing header">Google acccount</h4>
                 {userProfile.googleId ?
                     <div className="field">
                         <label>Google ID</label>
-                        <input type="text" name="googleId" placeholder="" defaultValue={userProfile.googleId} readOnly/>
+                        <input type="text" name="googleId" placeholder="" value={userProfile.googleId} readOnly/>
                     </div>
                 :
                   <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>

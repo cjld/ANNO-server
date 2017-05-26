@@ -82,3 +82,8 @@ a:hover {
     overflow: scroll;
     max-height: 70vh;
 }
+
+.modal-scroll {
+    overflow-y: scroll;
+    max-height: 80vh;
+}

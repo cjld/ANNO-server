@@ -430,7 +430,7 @@ module.exports = class Guider extends React.Component
             <div className="header">
                 Task Manage Panel
             </div>
-            <div className={"ui vertical segment content "+(this.state.taskLoading?"loading":"")}>
+            <div className={"modal-scroll ui vertical segment content "+(this.state.taskLoading?"loading":"")}>
                 <h3 className="ui header">Statistics</h3>
                     {stats}
                 <h3 className="ui header">New Mission</h3>
