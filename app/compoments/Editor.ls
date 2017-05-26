@@ -29,7 +29,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             *   value:"paint", text: ``<div><i className="paint brush icon"></i>Free Paint</div>``
         ]
         @state.cMark = \0
-        @state.smooth = true
+        @state.smooth = false
         @state.simplify = false
         @state.showMark = true
         @state.autobox = false
