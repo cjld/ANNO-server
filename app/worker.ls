@@ -6,15 +6,15 @@ else
 
 config =
     time-evaluate: false
-    paint-bin: "./../build-worker/anno_worker"
-    paint-bin-args: ['server', '-platform', 'offscreen']
 
 class worker
 
-    ->
+    (paint-bin, paint-bin-args)->
         @proc = null
         @is-ready = false
         @cmd-buffer = []
+        @paint-bin = paint-bin
+        @paint-bin-args = paint-bin-args
 
     send-buffer: ->
         buffer = @cmd-buffer
@@ -27,8 +27,9 @@ class worker
         child_process = localRequire \child_process
         readline = localRequire \readline
         if inElectron
-            config.paint-bin = "./resources/app/libs/anno_worker"
-        @proc = child_process.exec-file config.paint-bin, config.paint-bin-args, maxBuffer: 30*1024*1024
+            @paint-bin = "./resources/app/libs/anno_worker"
+            @paint-bin-args = ['server', '-platform', 'offscreen']
+        @proc = child_process.exec-file @paint-bin, @paint-bin-args, maxBuffer: 30*1024*1024
         if process.stdout
             @proc.stderr.pipe process.stdout
         else

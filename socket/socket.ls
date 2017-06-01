@@ -9,7 +9,7 @@ module.exports = (io) ->
     user-count = 0
 
     io.on \connection, (socket) ->
-        wk = new worker
+        wk = new worker config.paint-bin, config.paint-bin-args
         #wk.spawn!
         user-count++
         console.log user-count
