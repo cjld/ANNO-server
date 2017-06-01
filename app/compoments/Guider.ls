@@ -234,6 +234,8 @@ module.exports = class Guider extends React.Component
                 if k == \_id then continue
                 if doc-copy[k] === @origin-doc[k]
                     doc-copy[k] = undefined
+            if not values._id
+                doc-copy._id = undefined
             $.ajax do
                 method: \POST
                 url: \/api/new-object
