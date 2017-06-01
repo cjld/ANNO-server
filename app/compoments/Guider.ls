@@ -122,15 +122,7 @@ module.exports = class Guider extends React.Component
 
         if is-admin
             $ \#addItemBtn .click ~>
-                @set-state modalType:\add
-                if not @state.currentItem
-                    return
-                item = @state.currentItem
-                for k,v of item
-                    # attribute selector
-                    @state.doc[k] = v
-                    dom = addItemForm.find "[name='#{k}']"
-                    dom.val(v)
+                @set-state modalType:\add, doc: new Document {}, my-object
                 @origin-doc = {}
                 dialog.modal \show
 
@@ -270,8 +262,6 @@ module.exports = class Guider extends React.Component
             ``
         availItems = []
         for key of my-object.tree
-            if not @state.currentItem
-                continue
             unless key in seeker[@state.doc.type]
                 continue
             types = [String, Number]
