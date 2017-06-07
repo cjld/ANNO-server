@@ -18,11 +18,15 @@ An online annotation tool with image editing.
 
 ```
 sudo apt-get install mongodb
-sudo npm install -g nodemon http-server request
+sudo npm install -g gulp livescript bower nodemon http-server request
 
 
 npm instsll
 bower install
+mkdir -p ../data/payload/uploads
+# make uploads directory
+cp config.example.ls config.ls
+# please edit config.ls
 cd utils
 ./start-all.sh
 ```
