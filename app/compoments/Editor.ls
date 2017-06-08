@@ -46,6 +46,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.imageLoaded = false
         @state.time-evaluate = false
         @state.simplifyTolerance = 1
+        @state.propagate-back = undefined
+        @state.propagating = false
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
@@ -434,6 +436,9 @@ module.exports = class Editor extends React.Component implements TimerMixin
         if @state.marks == undefined or @state.marks === []
             @state.marks = @new-mark!
             @state.cMark = 0
+        if @contour-override
+            @state.marks[0].contours = @contour-override
+            @contour-override = undefined
 
     componentWillMount: ->
         @state.currentItem = @props.currentItem
@@ -490,6 +495,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
             toastr.success "Session load success, total seg: #{data.return.regCount}"
         else if data.pcmd == \load-region
             toastr.success "Region load success, total seg selected: #{data.return.segCount}"
+        else if data.pcmd == \propagate
+            @set-state propagating: false
+            @contour-override = data.return.contours
+            myhistory.push "/i/"+@propagate-to._id
+            # TODO
+
         if data.ts and data.ts <= @cts
             return
         if @state.time-evaluate
@@ -619,6 +630,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
             $ \body .css \overflow, \hidden
 
             @helpModal = $ \#helpModal
+                ..modal detachable:false
+            @propagateModal = $ \#propagateModal
                 ..modal detachable:false
 
         @reload-config!
@@ -1384,6 +1397,24 @@ module.exports = class Editor extends React.Component implements TimerMixin
     on-next-click: (e) ~> @find-neighbour 1
     on-prev-click: (e) ~> @find-neighbour 0
 
+    on-propagate-click: ~>
+        @propagateModal.modal \show
+        $ .ajax do
+            method: \GET
+            url: \/api/prefetch-objects
+            data: @state.currentItem{parent,_id}
+            error: ->
+                #toastr.error it.response-text
+                console.error it.response-text
+            success: ~>
+                #items = {[i._id, i] for i in it}
+                @set-state propagate-back:it
+
+    do-propagate: (from, to) ~>
+        @set-state propagating: true
+        @propagate-to = to
+        @send-cmd \propagate, {from: from, to: to}
+
     show-help: ~> @helpModal.modal \show
 
     markAs: (str) ~>
@@ -1535,6 +1566,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     onClick={this.onPrevClick}>prev</div>
                 <div className="ui mini button"
                     onClick={this.onNextClick}>next</div>
+                <div className="ui mini button"
+                    onClick={this.onPropagateClick}>propagate</div>
             </div>``
 
         popup = ``<TypePopup ref={(it) => {this.typePopup = it}} onChange={this.switchType}/>``
@@ -1548,6 +1581,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         if @props.viewonly
             helpModal = undefined
+            propagateModal = undefined
         else
             helpModal = ``<div className="ui modal" id="helpModal">
                     <i className="close icon"></i>
@@ -1558,8 +1592,30 @@ module.exports = class Editor extends React.Component implements TimerMixin
                         <Help />
                     </div>
                 </div>``
+            propagateContent = undefined
+            if @state.propagate-back
+                propagateContent = for item,i in @state.propagate-back
+                    onClick = @do-propagate.bind this, @state.currentItem, item
+                    ``<div className="column imgGalleryBoxOuter" key={i}>
+                        <a className="imgGalleryBox" onClick={onClick}>
+                            <img className="ui image" src={item.url}/>
+                        </a>
+                    </div>``
+                propagateContent = ``<div className="ui three column grid">
+                    {propagateContent}
+                </div>``
+            propagateModal = ``<div className="ui modal" id="propagateModal">
+                    <i className="close icon"></i>
+                    <div className="header">
+                        Propagate
+                    </div>
+                    <div className={"modal-scroll ui vertical segment content "+(propagateContent && ! this.state.propagating?"":"loading")}>
+                        {propagateContent}
+                    </div>
+                </div>``
         ``<div className={this.state.imageLoaded?"ui segment":"ui loading segment"}>
             {helpModal}
+            {propagateModal}
             <div className="ui grid">
                 <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh30" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
                     <div className="canvas-border">

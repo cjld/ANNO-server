@@ -24,6 +24,7 @@ module.exports = (io) ->
             user-count--
             #console.log user-count
             io.sockets.emit \user-count, user-count
+            wk.release-tmpdir!
             wk.kill-proc!
 
         socket.on \open-session, ->
@@ -42,6 +43,7 @@ module.exports = (io) ->
         socket.on \paint, wk.on-paint
         socket.on \load-region, wk.on-load-region
         socket.on \config, wk.on-config
+        socket.on \propagate, wk.on-propagate
 
 process.on 'uncaughtException', (err) ->
     console.error err.stack

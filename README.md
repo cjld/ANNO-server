@@ -35,7 +35,7 @@ cd utils
 Local versions are build from Electron. you can download [here](http://anno.randonl.me:9200:download)
 
 # TODO
-*   [ ]  local refine, recalc all
+*   [x]  local refine, recalc all
 *   [ ]  config reload bug
 *   [ ]  contour right mouse selection
 *   [x]  dataset config
