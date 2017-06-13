@@ -16,6 +16,21 @@ class worker
         @paint-bin = paint-bin
         @paint-bin-args = paint-bin-args
 
+    alloc-tmpdir: (cb) ->
+        if @tmpdir
+            cb!
+            return
+        tmp = localRequire \tmp
+        tmp.dir unsafe-cleanup:true, (err, path, cleanupCallback) ~>
+            if err then throw err;
+            console.log("tmpDir: ", path);
+            @tmpdir = path
+            @release-tmpdir-callback = cleanupCallback
+            cb!
+    release-tmpdir: ->
+        @release-tmpdir-callback?!
+        @tmpdir = undefined
+
     send-buffer: ->
         buffer = @cmd-buffer
         @cmd-buffer = []
@@ -74,6 +89,33 @@ class worker
         console.log \config-worker
         @send-cmd {cmd:'config', data:data}
 
+    on-propagate: (data) ~>
+        <~ @alloc-tmpdir
+        data.tmpdir = @tmpdir
+        @propagate-data = data
+        @send-cmd {cmd:"drawmask", data:data}
+        promise = localRequire \promise
+        child_process = localRequire \child_process
+        @ps = for url,i in [data.from.url, data.to.url]
+            new promise (resolve, reject) ~>
+                proc = child_process.exec-file "wget", [url, '-O', @tmpdir+"/#{i}.png"]
+                proc.on \exit, (code, signal) ~>
+                    if code==0
+                        return resolve!
+                    console.log "download error(#{code}, #{signal}): "+ url
+                    reject!
+
+    on-propagate-step2: ~>
+        child_process = localRequire \child_process
+        promise = localRequire \promise
+        promise.all @ps .then ~>
+            proc = child_process.exec-file "cp", [@tmpdir+"/2.png", @tmpdir+"/3.png"]
+            proc.on \exit, (code, signal) ~>
+                @send-cmd {cmd:"loadmask", data:@propagate-data}
+
+    on-propagate-step3: (data) ~>
+        data.pcmd = \propagate
+        @on-data? \ok, data
 
     kill-proc: ~>
         @is-ready = false
@@ -98,6 +140,12 @@ class worker
         if res.status == 'error'
             @on-data? \s-error, res.error
         if res.status == \ok
+            if res.data.pcmd == "drawmask"
+                @on-propagate-step2!
+                return
+            if res.data.pcmd == "loadmask"
+                @on-propagate-step3 res.data
+                return
             @on-data? \ok, res.data
             if config.time-evaluate
                 if res.data.pcmd == \paint
@@ -110,5 +158,7 @@ class worker
             @on-paint data
         else if cmd==\config
             @on-config data
+        else if cmd==\propagate
+            @on-propagate data
 
 module.exports = worker

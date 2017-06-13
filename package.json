@@ -58,6 +58,7 @@
     "socket.io-client": "^1.7.3",
     "swig": "^1.4.2",
     "through2": "^2.0.3",
+    "tmp": "0.0.31",
     "validator": "^7.0.0"
   },
   "devDependencies": {

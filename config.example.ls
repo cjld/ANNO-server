@@ -11,7 +11,7 @@ config =
     upload-limit: 100000
     server-ip: "localhost"
     image-server-port: 9201
-    image-server-dir: "./../data/pyload/"
+    image-server-dir: "./../data/payload/"
     upload-path: "uploads/"
     auth:
         google:
