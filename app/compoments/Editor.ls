@@ -428,6 +428,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     instance = type-symbol.place spot
                     instance.scale wfactor
                     @spots-group.addChild instance
+            if @state.typeMap[rtype]?spotsEdge
+                for [s,t,c] in that
+                    c ?= \red
+                    s = mark.spots[s]
+                    t = mark.spots[t]
+                    if !s or !t then continue
+                    path = new paper.Path new paper.Point(s), new paper.Point(t)
+                    path.strokeColor = c
+                    path.strokeScaling = false
+                    @rebuild-group.addChild path
 
         @boxtype-group.bring-to-front!
         paper.view.draw!

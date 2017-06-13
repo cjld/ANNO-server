@@ -70,7 +70,7 @@ class MainActions extends Actions
             for k,v of it.config.types
                 for i in v.types
                     title = i.title.split('-')[0]
-                    typeMap[title] = i.{src, color, spotsType}
+                    typeMap[title] = i.{src, color, spotsType, spotsEdge}
                     if i.color == undefined
                         c = new paper.Color \red
                         c.hue = 255 * rand-float-from-sth i.title

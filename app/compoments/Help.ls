@@ -25,6 +25,14 @@ configDemoStr = '''
     ]
 }
 '''
+configDemoStr2 = '''
+{
+    "title": "飞机",
+    "color": "#FFC125",
+    "spotsEdge": [[0,1],[0,2, "green"],[0,3]],
+    "spotsType":["机头", "左翼", "机尾","右翼"]
+}
+'''
 
 root-content =
     title: "Home"
@@ -61,11 +69,18 @@ root-content =
                 <p>配置文件包含的key：autoType, allowedOverlap, types</p>
                 <p>types: 描述了所有的类别，types对应的key是一个数组，代表了有多少个大类。
                 每个大类有两个key， description和types，分别代表大类的描述和所有小类。
-                每个小类有四个key，title，color，src，spotsType, 其中title代表了类别名，如果你的类别
+                每个小类有五个key，title，color，src，spotsType，spotsEdge, 其中title代表了类别名，如果你的类别
                 名包含有"-x"的后缀名，那么代表这个类别还需要一个额外的输入信息，比如某些限速标志，对于不同速度的限速
                 标志pl15,pl40,pl60,您可以声明title为pl-x，这样当用户选择这个类别的时候，会要求额外输入一个字符串信息，
                 color代表了这个
-                类别在绘制的时候使用的颜色，可以不填，src代表了这个类别的图标，可以不填。spotsType代表了该类使用spotting工具时, 每个点按顺序的含义, spotsType一个合理的取值为一个字符串数组,如["左眼","右眼","鼻子","嘴巴"]</p>
+                类别在绘制的时候使用的颜色，可以不填，src代表了这个类别的图标，可以不填。spotsType代表了该类使用spotting工具时, 每个点按顺序的含义, spotsType一个合理的取值为一个字符串数组,如["左眼","右眼","鼻子","嘴巴"],
+                spotsEdge代表了这些点之间是否有连边，spotsEdge为一个二维数组[[i1,j1,c1],[i2,j2,c2],...], 代表了第i1个点向j1连一条颜色为c1的边，以此类推，c1可以省略，默认为红色
+                </p>
+                <p>下图给出了配置types的实例</p>
+                <pre>{configDemoStr2}</pre>
+                <img src="/img/screenshots/screenshot-type1.png" className="ui big centered image" />
+                <p>在标注物体密集时，我们讲show bounding box的勾选取消掉</p>
+                <img src="/img/screenshots/screenshot-type2.png" className="ui big centered image" />
                 <p>autoType：在编辑器工作的时候是否开启自动类别，是一个为了方便标注人员标注的选项，
                 开启时会自动将新建的标注按顺序赋予类别</p>
                 <p>allowedOverlap: 在使用PaintSelection时是否允许不同类别之间产生重叠</p>
