@@ -264,8 +264,10 @@ module.exports = class Guider extends React.Component
             ``
         availItems = []
         for key of my-object.tree
+            css = {}
             unless key in seeker[@state.doc.type]
-                continue
+                css = display:"none"
+            if key == \_id then continue
             types = [String, Number]
             if my-object.tree[key] in types or my-object.tree[key].type in types
                 if key == 'marks' then continue
@@ -285,7 +287,7 @@ module.exports = class Guider extends React.Component
             else if key == \taskImages
                 valui = ``<MyIdInputs name={key} data={this.state.doc[key]} dataOwner={[this, "doc."+key]} />``
             else continue
-            availItems.push ``<div className="field" key={key}>
+            availItems.push ``<div className="field" key={key} style={css}>
                 <label>{key}</label>
                 {valui}
             </div>

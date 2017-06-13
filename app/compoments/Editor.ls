@@ -83,10 +83,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 if this[it] then return that
                 pp = this[it.split('-')[0]]
                 if not pp then return undefined
-                ps = pp.place [-15,10]
+                ps = pp.place [0,-30]
                 text = new paper.PointText
                 text.style = text-style
-                text.content = it.split('-')[1]
+                ss = it.split('-')
+                if ss.length == 2
+                    text.content = ss[1]
+                else
+                    text.content = ss[1] + '-' + ss[2]
                 g = new paper.Group [text, ps]
                 g.remove!
                 fixit.push it
@@ -406,6 +410,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @rebuild-group.addChild @spots-group
         for i,mark of @state.marks
             type-symbol = undefined
+            rtype = mark.type.split('-')[0]
             if @state.showMark and mark.type and @typeimages.find(mark.type)
                 type-symbol = @typeimages.find(mark.type)
             for j,spot of mark.spots
@@ -416,6 +421,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @spots-group.addChild instance
                 instance.mydata = {i,j}
                 if type-symbol
+                    if @state.typeMap[rtype]?spotsType
+                        type-symbol = @typeimages.find(mark.type + "-" + that[j])
                     instance = type-symbol.place spot
                     instance.scale wfactor
                     @spots-group.addChild instance
@@ -662,6 +669,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @drag-func = @drag-func i,j
             else
                 if @state.cMark? and @state.marks[@state.cMark]
+                    type = @state.marks[@state.cMark].type
+                    if type
+                        type = @state.typeMap.findType(type)?spotsType
+                        if type and type.length <= @state.marks[@state.cMark].spots.length
+                            toastr.error "More spots are not allowed."
+                            return
                     @state.marks[@state.cMark].spots.push point{x,y}
                     @rebuild!
                     return @forceUpdate!
@@ -1300,6 +1313,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
     on-current-mark-change: (mark) ->
         @drop-cmd!
         bgContours = []
+        for omk,i in @state.marks
+            type = omk.type
+            if type
+                type = @state.typeMap.findType(type)?spotsType
+                if type and type.length != omk.spots.length
+                    toastr.error "number of spots invalid."
+                    @state.cMark = i
+                    break
         if mark
             mark = @state.marks[mark]
         else
