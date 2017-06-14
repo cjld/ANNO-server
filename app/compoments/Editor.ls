@@ -10,6 +10,7 @@ require! {
     \mongoose
     \../history : myhistory
     \../worker
+    \./GoogleMap
 }
 
 inte = (a,b) -> parseInt(a) == parseInt(b)
@@ -167,6 +168,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @background.style.height = (@origin-height * s.y) + 'px'
         @background.style.left = t.x + 'px'
         @background.style.top = t.y + 'px'
+        @update-googlemap!
+
+    update-googlemap: ->
+        s = @layer.scaling
+        t = @layer.matrix.translation
+
+
 
     calc-bbox: ->
         # auto bbox
@@ -564,8 +572,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
         imgUrl = @get-img-url!
         @background.style.cssText = ""
-        @background.src = imgUrl
-        @set-state imageLoaded: false
+
+        #@background.src = imgUrl
+        #@set-state imageLoaded: false
+
+        @set-state imageLoaded: true
+        a = new google.maps.LatLng({lat:-48.950725273448164, lng:103.49028906249998})
+        b = new google.maps.LatLng({lat:3.8213823008568584, lng:158.59771093749998})
+        @origin-mapbounds = new google.maps.LatLngBounds(a, b)
+        @googleMap.map.fit-bounds @origin-mapbounds
+
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
             actions.prefetchImage @state.currentItem
@@ -1641,6 +1657,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh30" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
                     <div className="canvas-border">
                         <img id='canvas-bg' crossOrigin="anonymous"/>
+                        <GoogleMap ref={(v) => this.googleMap = v}/>
                         <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>
