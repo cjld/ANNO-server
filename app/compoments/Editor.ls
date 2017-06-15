@@ -173,6 +173,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
     update-googlemap: ->
         s = @layer.scaling
         t = @layer.matrix.translation
+        s1 = paper.view.size
+        xx = t.x + s1.width/2
+        yy = t.y + s1.height/2
+        console.log s,t, xx/s.x, yy/s.y, @googleMap.map.get-center!.toString!
+        bounds = @googleMap.map.get-bounds!
+        console.log t.x/s.x, t.y/s.y, bounds.toString!
 
 
 
@@ -584,13 +590,29 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @background.style.cssText = ""
 
         #@background.src = imgUrl
-        #@set-state imageLoaded: false
+        @set-state imageLoaded: false
 
-        @set-state imageLoaded: true
-        a = new google.maps.LatLng({lat:-48.950725273448164, lng:103.49028906249998})
-        b = new google.maps.LatLng({lat:3.8213823008568584, lng:158.59771093749998})
+        #a = new google.maps.LatLng({lat:-48.950725273448164, lng:103.49028906249998})
+        #b = new google.maps.LatLng({lat:3.8213823008568584, lng:158.59771093749998})
+
+        a = new google.maps.LatLng({lat:0, lng:0})
+        b = new google.maps.LatLng({lat:50, lng:50})
         @origin-mapbounds = new google.maps.LatLngBounds(a, b)
         @googleMap.map.fit-bounds @origin-mapbounds
+        google.maps.event.addListenerOnce @googleMap.map, 'idle', ~>
+            bounds = @googleMap.map.get-bounds!
+            @set-state imageLoaded: true
+            console.log "google map loaded. ", bounds
+            s1 = paper.view.size
+            bwidth = bounds.getNorthEast!.lng! - bounds.getSouthWest!.lng!
+            if bwidth<=0 then bwidth += 360
+            bheight = bounds.getNorthEast!.lat! - bounds.getSouthWest!.lat!
+            scale = [s1.width / bwidth, -s1.height / bheight]
+            @state.paint-brush-size /= scale[0]
+            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
+            @scale scale, [0,0]
+            @layer.translate [-bounds.getSouthWest!.lng!*scale[0], -bounds.getNorthEast!.lat!*scale[1]]
+
 
         @background.onload = ~>
             console.log "The image has loaded.", imgUrl
@@ -619,10 +641,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     scale: (factor, center)->
         @layer.scale factor, center
+        if typeof(factor) == 'number'
+            rfactor = 1.0/factor
+        else
+            rfactor = factor.map -> 1.0/it
         for ins in @spots-group.children
-            ins.scale 1.0/factor
+            ins.scale rfactor
         for ins in @boxtype-group.children
-            ins.scale 1.0/factor
+            ins.scale rfactor
 
     reload-config: ->
         config = @state.config
