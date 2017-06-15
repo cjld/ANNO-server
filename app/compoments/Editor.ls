@@ -50,7 +50,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.propagate-back = undefined
         @state.propagating = false
         @has-googlemap = false
-        @map-scaling = 1
+        @map-scaling = 100000000
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
@@ -176,6 +176,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     update-googlemap: ->
         s = @layer.scaling
+        console.log s
         t = @layer.matrix.translation
         s1 = paper.view.size
         xx = (t.x - s1.width / 2) / s.x
@@ -616,7 +617,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
 #37.620370, -122.380060
         if @state.currentItem.latlngBounds
             bounds = JSON.parse that
-            @set-state latlngBounds: bounds
             @has-googlemap = true
             a = new google.maps.LatLng(bounds.sw)
             b = new google.maps.LatLng(bounds.ne)
@@ -624,6 +624,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
             @googleMap.map.set-center a
             @googleMap.map.fit-bounds @origin-mapbounds
             is-load = false
+            bounds.sw.lat *= @map-scaling
+            bounds.sw.lng *= @map-scaling
+            bounds.ne.lat *= @map-scaling
+            bounds.ne.lng *= @map-scaling
+            @set-state latlngBounds: bounds
             #google.maps.event.removeListener @googleMap.map
             google.maps.event.addListenerOnce @googleMap.map, 'idle', ~>
                 if is-load then return
@@ -845,7 +850,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                                 mark.segments.splice j,1
                             else
                                 @drag-func = (poly, e) ~~>
-                                    movePolygon poly, e.delta.multiply tmatrix.scaling
+                                    delta = e.delta.multiply tmatrix.scaling
+                                    if @has-googlemap
+                                        delta = delta.multiply -1
+                                    movePolygon poly, delta
                                     @rebuild!
                                 @drag-func = @drag-func poly
                         case \segment
@@ -854,6 +862,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                             else
                                 @drag-func = (point, e) ~~>
                                     delta = e.delta.multiply tmatrix.scaling
+                                    if @has-googlemap
+                                        delta = delta.multiply -1
                                     np = delta.add point
                                     point{x,y} = np
                                     @rebuild!
@@ -998,9 +1008,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
             point = e.point.transform tmatrix
 
             tolerance = 5
-            if @has-googlemap
-                # TODO change tolerance not work
-                tolerance = - tolerance * tmatrix.scaling.x
             hitOptions =
                 stroke: true
                 fill: true

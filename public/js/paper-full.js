@@ -929,7 +929,7 @@ var Numerical = new function() {
 	var abs = Math.abs,
 		sqrt = Math.sqrt,
 		pow = Math.pow,
-		EPSILON = 1e-12,
+		EPSILON = 1e-30,
 		MACHINE_EPSILON = 1.12e-16;
 
 	function clip(value, min, max) {
