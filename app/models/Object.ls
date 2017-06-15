@@ -50,6 +50,8 @@ object = new mongoose.Schema do
     marks: {type: [mark], default: []}
     shape: [Number]
     annotations: {type: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}], default: []}
+    # json string {ne:{lat:Number, lng:Number}, sw:{lat:Number, lng:Number}}
+    latlngBounds: String
     # worker has permission to change marks
     # worker == undefined in view all
     worker:  {type: mongoose.Schema.Types.ObjectId, ref:\User}
@@ -85,7 +87,7 @@ object.methods.check-worker = (user) ->
     return user.id.to-string! == @worker.to-string!
 
 seeker = do
-    item: <[type name description category url tags state annotations owner worker]>
+    item: <[type name description category url tags state annotations owner worker latlngBounds]>
     directory: <[type name description state worker owner config]>
     annotation: <[type name description state originImage worker owner]>
     task: <[type name description taskImages owner worker crossValidate config]>

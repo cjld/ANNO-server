@@ -34,6 +34,13 @@ configDemoStr2 = '''
 }
 '''
 
+boundsStr = '''
+{
+    ne:{lat:Number, lng:Number}, // longitude and latitude of NorthEast point
+    sw:{lat:Number, lng:Number}  // longitude and latitude of SouthWest point
+}
+'''
+
 root-content =
     title: "Home"
     url: ""
@@ -90,6 +97,13 @@ root-content =
                 <p>hideImage: 是否隐藏图片，默认为false</p>
                 <p>hideAnnotation: 是否隐藏标注，默认为false</p>
                 <p>editMode: 初始使用的工具，默认为ps，Quick selection工具，可选工具有[spotting, segment, pan, paint, ps, box]</p>
+            </div>``
+        *   title: "GoogleMap 标注功能"
+            url: "googlemap"
+            content: ``<div>
+                <p>你可以通过设置item里的latlngBounds来开启GoogleMap标注功能, latlngBounds的格式为一个json格式的字符串: </p>
+                <pre>{boundsStr}</pre>
+                <p>注意: 在googleMap标注功能开启以后, quick selection工具将无法使用.</p>
             </div>``
         *   title: "如何浏览图片"
             url: "browser"

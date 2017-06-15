@@ -49,6 +49,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.simplifyTolerance = 1
         @state.propagate-back = undefined
         @state.propagating = false
+        @has-googlemap = false
+        @map-scaling = 1
         store.connect-to-component this, [\typeMap, \config]
 
     autosave: ->
@@ -164,21 +166,26 @@ module.exports = class Editor extends React.Component implements TimerMixin
     update-backgroud: ->
         s = @layer.scaling
         t = @layer.matrix.translation
-        @background.style.width = (@origin-width * s.x) + 'px'
-        @background.style.height = (@origin-height * s.y) + 'px'
-        @background.style.left = t.x + 'px'
-        @background.style.top = t.y + 'px'
-        @update-googlemap!
+        if @has-googlemap
+            @update-googlemap!
+        else
+            @background.style.width = (@origin-width * s.x) + 'px'
+            @background.style.height = (@origin-height * s.y) + 'px'
+            @background.style.left = t.x + 'px'
+            @background.style.top = t.y + 'px'
 
     update-googlemap: ->
         s = @layer.scaling
         t = @layer.matrix.translation
         s1 = paper.view.size
-        xx = t.x + s1.width/2
-        yy = t.y + s1.height/2
-        console.log s,t, xx/s.x, yy/s.y, @googleMap.map.get-center!.toString!
-        bounds = @googleMap.map.get-bounds!
-        console.log t.x/s.x, t.y/s.y, bounds.toString!
+        xx = (t.x - s1.width / 2) / s.x
+        yy = (t.y - s1.height / 2) / s.y
+        #console.log s,t, @googleMap.map.get-center!.toString!
+        #bounds = @googleMap.map.get-bounds!
+        #console.log t.x/s.x, t.y/s.y, xx/s.x, yy/s.y, bounds.toString!
+        @googleMap.map.set-center new google.maps.LatLng lng:xx / @map-scaling, lat:yy / @map-scaling
+        zoom = Math.round(@init-zoom + Math.log2(-s.x/@init-scale[0]))
+        @googleMap.map.set-zoom zoom
 
 
 
@@ -290,7 +297,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @rebuild-group = new paper.Group
         @offset-group.addChild @rebuild-group
         @rebuild-group.apply-matrix = false
-        wfactor = 1 / @layer.scaling.x
+        if @has-googlemap
+            wfactor = [-1 / @layer.scaling.x, -1 / @layer.scaling.y]
+        else
+            wfactor = 1 / @layer.scaling.x
         segm-op = if @state.editMode==\pan then 0.5 else 0.5
         spot-op = if @state.editMode==\pan then 0.8 else 0.8
 
@@ -453,6 +463,14 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     path.strokeScaling = false
                     @rebuild-group.addChild path
 
+        if @state.latlngBounds
+            p1 = new paper.Point [that.sw.lng, that.sw.lat]
+            p2 = new paper.Point [that.ne.lng, that.ne.lat]
+            path = new paper.Path.Rectangle p1, p2
+            path <<< @box-style
+            #paper.project.current-style = @box-style
+            @rebuild-group.addChild path
+
         @boxtype-group.bring-to-front!
         paper.view.draw!
 
@@ -577,11 +595,12 @@ module.exports = class Editor extends React.Component implements TimerMixin
     load-session: ~>
         @state.paint-brush-size = @state.default-brush-size
 
-        if not @props.viewonly
-            @drop-cmd!
-            if not @worker
-                @send-cmd \open-session, id:@state.currentItem._id
-            @on-current-mark-change!
+        if not @state.currentItem.latlngBounds
+            if not @props.viewonly
+                @drop-cmd!
+                if not @worker
+                    @send-cmd \open-session, id:@state.currentItem._id
+                @on-current-mark-change!
 
         @layer.matrix.reset!
         @offset-group.matrix.reset!
@@ -589,62 +608,78 @@ module.exports = class Editor extends React.Component implements TimerMixin
         imgUrl = @get-img-url!
         @background.style.cssText = ""
 
-        #@background.src = imgUrl
         @set-state imageLoaded: false
 
         #a = new google.maps.LatLng({lat:-48.950725273448164, lng:103.49028906249998})
         #b = new google.maps.LatLng({lat:3.8213823008568584, lng:158.59771093749998})
+#37.612024, -122.394866
+#37.620370, -122.380060
+        if @state.currentItem.latlngBounds
+            bounds = JSON.parse that
+            @set-state latlngBounds: bounds
+            @has-googlemap = true
+            a = new google.maps.LatLng(bounds.sw)
+            b = new google.maps.LatLng(bounds.ne)
+            @origin-mapbounds = new google.maps.LatLngBounds(a, b)
+            @googleMap.map.set-center a
+            @googleMap.map.fit-bounds @origin-mapbounds
+            is-load = false
+            #google.maps.event.removeListener @googleMap.map
+            google.maps.event.addListenerOnce @googleMap.map, 'idle', ~>
+                if is-load then return
+                is-load = true
+                bounds = @googleMap.map.get-bounds!
+                @set-state imageLoaded: true
+                console.log "google map loaded. ", bounds
+                s1 = paper.view.size
+                bwidth = bounds.getNorthEast!.lng! - bounds.getSouthWest!.lng!
+                if bwidth<=0 then bwidth += 360
+                bheight = bounds.getNorthEast!.lat! - bounds.getSouthWest!.lat!
+                bwidth *= @map-scaling
+                bheight *= @map-scaling
+                scale = [s1.width / bwidth, -s1.height / bheight]
+                @init-scale = scale
+                @init-zoom = @googleMap.map.get-zoom!
 
-        a = new google.maps.LatLng({lat:0, lng:0})
-        b = new google.maps.LatLng({lat:50, lng:50})
-        @origin-mapbounds = new google.maps.LatLngBounds(a, b)
-        @googleMap.map.fit-bounds @origin-mapbounds
-        google.maps.event.addListenerOnce @googleMap.map, 'idle', ~>
-            bounds = @googleMap.map.get-bounds!
-            @set-state imageLoaded: true
-            console.log "google map loaded. ", bounds
-            s1 = paper.view.size
-            bwidth = bounds.getNorthEast!.lng! - bounds.getSouthWest!.lng!
-            if bwidth<=0 then bwidth += 360
-            bheight = bounds.getNorthEast!.lat! - bounds.getSouthWest!.lat!
-            scale = [s1.width / bwidth, -s1.height / bheight]
-            @state.paint-brush-size /= scale[0]
-            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
-            @scale scale, [0,0]
-            @layer.translate [-bounds.getSouthWest!.lng!*scale[0], -bounds.getNorthEast!.lat!*scale[1]]
-
-
-        @background.onload = ~>
-            console.log "The image has loaded.", imgUrl
-            actions.prefetchImage @state.currentItem
-            if @worker
-                data = @getBase64Image @background
-                console.log "base64Length #{data.length}"
-                @worker.open-base64 data
-            @origin-width = @background.width
-            @origin-height = @background.height
-            if @state.currentItem.shape !== [@origin-width, @origin-height]
-                @state.currentItem.shape = [@origin-width, @origin-height]
-                @set-changed!
-            #@background.position = paper.view.center
-            #@offset-group.translate @background.bounds.point
-            s1 = paper.view.size
-            s2 = @background.{width, height}
-            ss = Math.min s1.width/s2.width, s1.height/s2.height
-            @state.paint-brush-size /= ss
-            @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
-            @scale ss, [0,0]
-            #@layer.translate @layer.matrix.translation
-            @update-backgroud!
-            @set-state imageLoaded: true
-            #@forceUpdate!
+                @state.paint-brush-size /= scale[0]
+                @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
+                @scale scale, [0,0]
+                @layer.translate [-bounds.getSouthWest!.lng! * @map-scaling * scale[0], -bounds.getNorthEast!.lat! * @map-scaling * scale[1]]
+        else
+            @set-state latlngBounds: null
+            @background.src = imgUrl
+            @has-googlemap = false
+            @background.onload = ~>
+                console.log "The image has loaded.", imgUrl
+                actions.prefetchImage @state.currentItem
+                if @worker
+                    data = @getBase64Image @background
+                    console.log "base64Length #{data.length}"
+                    @worker.open-base64 data
+                @origin-width = @background.width
+                @origin-height = @background.height
+                if @state.currentItem.shape !== [@origin-width, @origin-height]
+                    @state.currentItem.shape = [@origin-width, @origin-height]
+                    @set-changed!
+                #@background.position = paper.view.center
+                #@offset-group.translate @background.bounds.point
+                s1 = paper.view.size
+                s2 = @background.{width, height}
+                ss = Math.min s1.width/s2.width, s1.height/s2.height
+                @state.paint-brush-size /= ss
+                @cursor.scaling =  @state.paint-brush-size / @state.default-brush-size
+                @scale ss, [0,0]
+                #@layer.translate @layer.matrix.translation
+                @update-backgroud!
+                @set-state imageLoaded: true
+                #@forceUpdate!
 
     scale: (factor, center)->
         @layer.scale factor, center
         if typeof(factor) == 'number'
             rfactor = 1.0/factor
         else
-            rfactor = factor.map -> 1.0/it
+            rfactor = factor.map -> -1.0/it
         for ins in @spots-group.children
             ins.scale rfactor
         for ins in @boxtype-group.children
@@ -937,6 +972,8 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 else
                     @drag-func = (e) ~>
                         delta = e.delta.multiply tmatrix.scaling
+                        if @has-googlemap
+                            delta = delta.multiply -1
                         if q1 then mark.bbox.p1.x += delta.x
                         if q2 then mark.bbox.p2.x += delta.x
                         if q3 then mark.bbox.p1.y += delta.y
@@ -960,11 +997,15 @@ module.exports = class Editor extends React.Component implements TimerMixin
             tmatrix = @rebuild-group.globalMatrix.inverted!
             point = e.point.transform tmatrix
 
+            tolerance = 5
+            if @has-googlemap
+                # TODO change tolerance not work
+                tolerance = - tolerance * tmatrix.scaling.x
             hitOptions =
                 stroke: true
                 fill: true
                 segments: true
-                tolerance: 5
+                tolerance: tolerance
             hit-result = @box-group.hit-test point, hitOptions
             if hit-result?item
                 if e.modifiers.shift
@@ -1061,6 +1102,17 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 return false
 
         @zoom = (factor, center) ~>
+            if @has-googlemap
+                if factor>1
+                    if @googleMap.map.get-zoom! == 19
+                        factor = 1
+                    else
+                        factor = 2
+                else
+                    if @googleMap.map.get-zoom! == 3
+                        factor = 1
+                    else
+                        factor = 1/2
             @state.paint-brush-size /= factor
             @scale factor, center
             @update-backgroud!
@@ -1693,7 +1745,11 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 <div className={!twoColumn ? "myCanvas sixteen wide column canvas-vh30" : this.props.markonly?"myCanvas ten wide column canvas-vh45":"myCanvas ten wide column canvas-vh75"}>
                     <div className="canvas-border">
                         <img id='canvas-bg' crossOrigin="anonymous"/>
-                        <GoogleMap ref={(v) => this.googleMap = v}/>
+                        { (this.state.currentItem.latlngBounds)?
+                            <GoogleMap ref={(v) => this.googleMap = v}/>
+                        :
+                            undefined
+                        }
                         <canvas id='canvas' data-paper-resize></canvas>
                     </div>
                 </div>

@@ -8,6 +8,8 @@ module.exports = class GoogleMap extends React.Component
 
     componentDidMount: ->
         @map = new google.maps.Map @mapDom
+        @map.setMapTypeId "satellite"
+        @map.setTilt 0
 
     render: ->
         ``<div id="map" className="google-map" ref={(v) => this.mapDom = v}></div>``
