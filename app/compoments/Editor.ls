@@ -176,7 +176,6 @@ module.exports = class Editor extends React.Component implements TimerMixin
 
     update-googlemap: ->
         s = @layer.scaling
-        console.log s
         t = @layer.matrix.translation
         s1 = paper.view.size
         xx = (t.x - s1.width / 2) / s.x
@@ -187,6 +186,16 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @googleMap.map.set-center new google.maps.LatLng lng:xx / @map-scaling, lat:yy / @map-scaling
         zoom = Math.round(@init-zoom + Math.log2(-s.x/@init-scale[0]))
         @googleMap.map.set-zoom zoom
+
+        bounds = @googleMap.map.get-bounds!
+        s1 = paper.view.size
+        bwidth = bounds.getNorthEast!.lng! - bounds.getSouthWest!.lng!
+        if bwidth<=0 then bwidth += 360
+        bheight = bounds.getNorthEast!.lat! - bounds.getSouthWest!.lat!
+        scale = [s1.width / bwidth, -s1.height / bheight]
+        #console.log scale[1] / scale[0], s.y / s.x
+        #console.log scale, s
+        @layer.scaling.y =  @layer.scaling.x * scale[1] / scale[0]
 
 
 
