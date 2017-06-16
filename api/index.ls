@@ -511,7 +511,7 @@ app.post \/new-object, is-logged-in, (req, res, next) ->
                 continue
             new promise (resolve, reject) ->
                 doc = parent: imgdir._id, type: \annotation, originImage: x._id
-                doc-update = {name: x.name, url:x.url} <<< doc
+                doc-update = {name: x.name, url:x.url, latlngBounds: x.latlngBounds} <<< doc
                 (err, fdoc) <- my-object.find-one doc
                 if err then return reject err
                 if fdoc
