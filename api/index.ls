@@ -344,6 +344,7 @@ app.use \/taskAssign, is-logged-in, get-task, (req, res, next) ->
                         originImage: doc._id
                         name: doc.name
                         url: doc.url
+                        latlngBounds: doc.latlngBounds
                         worker: worker._id
                         owner: req.user._id
                     newdoc = new my-object newdoc
