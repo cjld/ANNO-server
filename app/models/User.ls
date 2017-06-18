@@ -7,6 +7,10 @@ schema = new mongoose.Schema do
         name: String
         email: String
         googleId: String
+        realName: String
+        idNumber: String
+        cardNumber: String
+        bank: String
     local:
         email: String
         password: String

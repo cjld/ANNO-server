@@ -97,6 +97,26 @@ module.exports = class Profile extends React.Component
         userProfile = @state.userProfile
         if @state.otherProfile
             userProfile = that
+        else
+            billing = ``<div>
+                <h4 className="ui dividing header">Billing info</h4>
+                <div className="field">
+                    <label>Real Name(真实姓名)</label>
+                    <input type="text" name="realName" placeholder="" value={userProfile.realName}/>
+                </div>
+                <div className="field">
+                    <label>ID Number(身份证号)</label>
+                    <input type="text" name="idNumber" placeholder="" value={userProfile.idNumber}/>
+                </div>
+                <div className="field">
+                    <label>Card Number(银行卡号)</label>
+                    <input type="text" name="cardNumber" placeholder="" value={userProfile.cardNumber}/>
+                </div>
+                <div className="field">
+                    <label>Bank(开户行)</label>
+                    <input type="text" name="bank" placeholder="" value={userProfile.bank}/>
+                </div>
+            </div>``
         if @state.passwordError
             errc = " error"
             errorMsg = ``<div className="ui error message">
@@ -129,6 +149,7 @@ module.exports = class Profile extends React.Component
                     <label>Name</label>
                     <input type="text" name="name" placeholder="" value={userProfile.name}/>
                 </div>
+                {billing}
                 <h4 className="ui dividing header">Google acccount</h4>
                 {userProfile.googleId ?
                     <div className="field">

@@ -153,6 +153,10 @@ app.use \/profile, is-logged-in, (req, res, next) ->
         if not user
             return res.status 404 .end "user not found."
         data = {} <<< user.to-object!.profile
+        data.realName = undefined
+        data.idNumber = undefined
+        data.cardNumber = undefined
+        data.bank = undefined
         if user.local.email
             data.email = that
         if user.local.is-admin
