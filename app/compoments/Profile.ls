@@ -102,19 +102,19 @@ module.exports = class Profile extends React.Component
                 <h4 className="ui dividing header">Billing info</h4>
                 <div className="field">
                     <label>Real Name(真实姓名)</label>
-                    <input type="text" name="realName" placeholder="" value={userProfile.realName}/>
+                    <input type="text" name="realName" placeholder="" defaultValue={userProfile.realName}/>
                 </div>
                 <div className="field">
                     <label>ID Number(身份证号)</label>
-                    <input type="text" name="idNumber" placeholder="" value={userProfile.idNumber}/>
+                    <input type="text" name="idNumber" placeholder="" defaultValue={userProfile.idNumber}/>
                 </div>
                 <div className="field">
                     <label>Card Number(银行卡号)</label>
-                    <input type="text" name="cardNumber" placeholder="" value={userProfile.cardNumber}/>
+                    <input type="text" name="cardNumber" placeholder="" defaultValue={userProfile.cardNumber}/>
                 </div>
                 <div className="field">
                     <label>Bank(开户行)</label>
-                    <input type="text" name="bank" placeholder="" value={userProfile.bank}/>
+                    <input type="text" name="bank" placeholder="" defaultValue={userProfile.bank}/>
                 </div>
             </div>``
         if @state.passwordError
@@ -132,7 +132,7 @@ module.exports = class Profile extends React.Component
                     {tasklist}
                 </ul>
             </div>``
-        return ``<div className="ui padded text container segment">
+        return ``<div className="ui padded text container segment" key={userProfile.id}>
             {mytask}
             <div className="ui header"> Profile </div>
             <div className="ui divider"></div>
@@ -147,21 +147,9 @@ module.exports = class Profile extends React.Component
                 </div>
                 <div className="field">
                     <label>Name</label>
-                    <input type="text" name="name" placeholder="" value={userProfile.name}/>
+                    <input type="text" name="name" placeholder="" defaultValue={userProfile.name}/>
                 </div>
                 {billing}
-                <h4 className="ui dividing header">Google acccount</h4>
-                {userProfile.googleId ?
-                    <div className="field">
-                        <label>Google ID</label>
-                        <input type="text" name="googleId" placeholder="" value={userProfile.googleId} readOnly/>
-                    </div>
-                :
-                  <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>
-                    <i className="google icon"></i>
-                    Link with Google
-                  </button>
-                }
                 <div style={{display: this.state.otherProfile?"none":"block"}}>
                     <h4 className="ui dividing header">Change password</h4>
                     <div className="field">
@@ -178,6 +166,18 @@ module.exports = class Profile extends React.Component
                     </div>
                     {errorMsg}
                     <button className="ui green button" type="submit">Change Profile</button>
+                    <h4 className="ui dividing header">Google acccount</h4>
+                    {userProfile.googleId ?
+                        <div className="field">
+                            <label>Google ID</label>
+                            <input type="text" name="googleId" placeholder="" value={userProfile.googleId} readOnly/>
+                        </div>
+                    :
+                      <button type="button" className="ui google plus button" onClick={()=>location.href = "/api/auth/google"}>
+                        <i className="google icon"></i>
+                        Link with Google
+                      </button>
+                    }
                 </div>
             </form>
         </div>``
