@@ -49,7 +49,7 @@ storage = multer.disk-storage do
     destination: (req, file, callback) ->
         callback null, config.image-server-dir + config.upload-path
     filename: (req, file, callback) ->
-        callback null Date.now!+'-'+file.originalname
+        callback null, Date.now!+'-'+file.originalname
 
 upload = multer {storage} .fields [
     *   name: \userUpload, max-count: config.upload-limit
@@ -548,7 +548,8 @@ app.post \/new-object, is-logged-in, (req, res, next) ->
                     return res.status 401 .send "Permission denied."
                 else
                     edit-obj := edit-obj{state, marks, shape}
-            on-update doc, edit-obj
+            else
+                on-update doc, edit-obj
             doc <<< edit-obj
             (err) <- doc.save
             if err then return next err
