@@ -97,7 +97,7 @@ module.exports = class Profile extends React.Component
         userProfile = @state.userProfile
         if @state.otherProfile
             userProfile = that
-        else
+        if not @state.otherProfile or @state.userProfile.is-admin
             billing = ``<div>
                 <h4 className="ui dividing header">Billing info</h4>
                 <div className="field">
