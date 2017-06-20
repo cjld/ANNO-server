@@ -552,6 +552,10 @@ app.post \/new-object, is-logged-in, (req, res, next) ->
             else
                 on-update doc, edit-obj
             doc <<< edit-obj
+            if edit-obj.marks
+                doc.marks_size = that.length
+            else
+                doc.marks_size = 0
             (err) <- doc.save
             if err then return next err
             if req.body.taskImages and doc.type == \task
@@ -632,6 +636,13 @@ count-state = (parent, cb) ->
             my-counter {state:{'$in':['un-annotated', null, '']}}, callback
         \issued : (callback) ->
             my-counter {state:'issued'}, callback
+        \marks_size : (callback) ->
+            my-object.aggregate [
+                *   $match: {parent:mongoose.Types.ObjectId(parent)}
+                *   $group: "_id": null, "count": { "$sum" : "$marks_size" }
+            ], (err, result) ->
+                    console.log "agg", result, parent
+                    callback err, result?[0].count
     }, (err, results) ->
         if err then return cb err
         cb null, results

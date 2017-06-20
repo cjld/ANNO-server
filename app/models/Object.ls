@@ -48,6 +48,7 @@ object = new mongoose.Schema do
     # annotated, un-annotated, issued
     state: {type: String, enum: [\annotated, \un-annotated, \issued], default: \un-annotated}
     marks: {type: [mark], default: []}
+    marks_size: Number
     shape: [Number]
     annotations: {type: [{type: mongoose.Schema.Types.ObjectId, ref:\Object}], default: []}
     # json string {ne:{lat:Number, lng:Number}, sw:{lat:Number, lng:Number}}

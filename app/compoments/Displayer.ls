@@ -63,10 +63,10 @@ module.exports = class Displayer extends React.Component
         @pending = 0
         self = this
         tabs =
-            *   type: \total, iconstr:  "file archive outline icon"
-            *   type: \annotated, iconstr:  "file icon"
-            *   type: \un-annotated, iconstr:  "file outline icon"
-            *   type: \issued, iconstr:  "warning sign icon"
+            *   type: \total, iconstr:  "file archive outline icon", dom:``<div>{"total(" + self.state.counter.marks_size + " marks)"}</div>``
+            *   type: \annotated, iconstr:  "file icon", dom:\annotated
+            *   type: \un-annotated, iconstr:  "file outline icon", dom:\un-annotated
+            *   type: \issued, iconstr:  "warning sign icon", dom:\issued
 
         for i in tabs
             i.number = self.state.counter[i.type]
@@ -78,7 +78,7 @@ module.exports = class Displayer extends React.Component
                 key={it.type}>
                 <i className={it.iconstr}></i>
                 <b>{it.number}</b>&nbsp;
-                {it.type}
+                {it.dom}
             </a>
             ``
         tabsUI = ``<div className="ui four item top attached tabular menu">

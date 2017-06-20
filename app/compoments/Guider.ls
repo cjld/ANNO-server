@@ -416,7 +416,7 @@ module.exports = class Guider extends React.Component
                     {body}
                 </tbody>
             </table>``
-        missions = gen-table ["mission name", \user, "start time", "annotated", "un-annotated", "issued", "total", "operator"], @state.missionInfo
+        missions = gen-table ["mission name", \user, "start time", "annotated", "un-annotated", "issued", "total","marks_size" "operator"], @state.missionInfo
         stats = gen-table [\total, "un-assign", "assigned(1)", "annotated", "un-annotated", "issued"], [@state.statsInfo]
 
         taskModal = ``<div className="ui modal" id="taskModal">
