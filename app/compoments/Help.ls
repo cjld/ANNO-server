@@ -29,7 +29,7 @@ configDemoStr2 = '''
 {
     "title": "飞机",
     "color": "#FFC125",
-    "spotsEdge": [[0,1],[0,2, "green"],[0,3]],
+    "spotsEdge": [[0,1],[0,2, "green", true],[0,3]],
     "spotsType":["机头", "左翼", "机尾","右翼"]
 }
 '''
@@ -81,7 +81,7 @@ root-content =
                 标志pl15,pl40,pl60,您可以声明title为pl-x，这样当用户选择这个类别的时候，会要求额外输入一个字符串信息，
                 color代表了这个
                 类别在绘制的时候使用的颜色，可以不填，src代表了这个类别的图标，可以不填。spotsType代表了该类使用spotting工具时, 每个点按顺序的含义, spotsType一个合理的取值为一个字符串数组,如["左眼","右眼","鼻子","嘴巴"],
-                spotsEdge代表了这些点之间是否有连边，spotsEdge为一个二维数组[[i1,j1,c1],[i2,j2,c2],...], 代表了第i1个点向j1连一条颜色为c1的边，以此类推，c1可以省略，默认为红色
+                spotsEdge代表了这些点之间是否有连边，spotsEdge为一个二维数组[[i1,j1,c1,a1],[i2,j2,c2,a2],...], 代表了第i1个点向j1连一条颜色为c1的边，以此类推，c1可以省略，默认为红色, a1同样可以省略,代表是否需要画箭头.
                 </p>
                 <p>下图给出了配置types的实例</p>
                 <pre>{configDemoStr2}</pre>

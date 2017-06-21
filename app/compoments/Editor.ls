@@ -463,12 +463,23 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     instance.scale wfactor
                     @spots-group.addChild instance
             if @state.typeMap[rtype]?spotsEdge
-                for [s,t,c] in that
+                for [s,t,c,a] in that
                     c ?= \red
                     s = mark.spots[s]
                     t = mark.spots[t]
                     if !s or !t then continue
-                    path = new paper.Path new paper.Point(s), new paper.Point(t)
+                    ss = new paper.Point(s)
+                    tt = new paper.Point(t)
+                    path = new paper.Path ss, tt
+                    if a
+                        delta = tt.subtract ss .multiply -0.1
+                        delta1 = delta.rotate 45 .add tt
+                        delta2 = delta.rotate -45 .add tt
+                        path2 = new paper.Path [delta1, tt, delta2]
+                        path2.strokeColor = c
+                        path2.strokeScaling = false
+                        @rebuild-group.addChild path2
+
                     path.strokeColor = c
                     path.strokeScaling = false
                     @rebuild-group.addChild path
