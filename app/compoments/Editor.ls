@@ -49,7 +49,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.simplifyTolerance = 1
         @state.propagate-back = undefined
         @state.propagating = false
-        @state.show-sub = false
+        @state.show-sub = true
         @has-googlemap = false
         @map-scaling = 100000000
         store.connect-to-component this, [\typeMap, \config]
@@ -258,6 +258,59 @@ module.exports = class Editor extends React.Component implements TimerMixin
             if it.length
                 prev = it[it.length-1]
             if @state.smooth
+                if @state.show-sub
+                    in-style =
+                        fillColor : new paper.Color 0,0,0,0
+                        strokeColor : \green
+                        strokeWidth : 2
+                        strokeScaling: false
+                    out-style =
+                        fillColor : new paper.Color 0,0,0,0
+                        strokeColor : \red
+                        strokeWidth : 2
+                        strokeScaling: false
+                    for xyd in it
+                        d = if xyd.d!=undefined then xyd.d else 0.5
+                        if prev.x == xyd.x
+                            if prev.y < xyd.y
+                                i = [prev.x-1, prev.y]
+                                o = [prev.x, prev.y]
+                                m = [prev.x-0.5+d, prev.y+0.5]
+                            else
+                                o = [prev.x-1, xyd.y]
+                                i = [prev.x, xyd.y]
+                                m = [prev.x-0.5+d, xyd.y+0.5]
+                        else
+                            if prev.x < xyd.x
+                                o = [prev.x, prev.y-1]
+                                i = [prev.x, prev.y]
+                                m = [prev.x+0.5, prev.y-0.5+d]
+                            else
+                                i = [xyd.x, prev.y-1]
+                                o = [xyd.x, prev.y]
+                                m = [xyd.x+0.5, prev.y-0.5+d]
+                        dd = 0.01
+                        path = new paper.Path.Circle new paper.Point(m), 0.1
+                        path <<< in-style
+                        path.strokeColor = \black
+                        @rebuild-group.addChild path
+                        path = new paper.Path.Rectangle new paper.Point([i[0]+dd,i[1]+dd]), new paper.Point([i[0]+1-dd,i[1]+1-dd])
+                        path <<< in-style
+                        @rebuild-group.addChild path
+                        path = new paper.Path.Rectangle new paper.Point([o[0]+dd,o[1]+dd]), new paper.Point([o[0]+1-dd,o[1]+1-dd])
+                        path <<< out-style
+                        @rebuild-group.addChild path
+                        path = new paper.Path.Line new paper.Point(m), new paper.Point(i).add([0.5,0.5])
+                        path <<< in-style
+                        @rebuild-group.addChild path
+                        path = new paper.Path.Line new paper.Point(m), new paper.Point(o).add([0.5,0.5])
+                        path <<< out-style
+                        @rebuild-group.addChild path
+
+                        prev = xyd
+
+                if it.length
+                    prev = it[it.length-1]
                 seg = for xyd in it
                     d = if xyd.d!=undefined then xyd.d else 0.5
                     res = if prev.x == xyd.x
@@ -529,7 +582,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         paths = @path-convert contours
 
         fillColor = new paper.Color color
-        if not @state.hideImage
+        if not @state.hideImage and fillColor.alpha == 1
             fillColor.alpha = 0.5
         path = new paper.CompoundPath do
             children: paths
@@ -537,7 +590,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
             fillRule: \evenodd
             strokeColor: \black
             strokeWidth: 2
-            dashArray: [10, 4]
+            dashArray: if @state.show-sub then [1,0] else [10, 4]
             strokeScaling: false
         @rebuild-group.addChild path
         @contour-path = path
