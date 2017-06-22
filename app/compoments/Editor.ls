@@ -49,6 +49,7 @@ module.exports = class Editor extends React.Component implements TimerMixin
         @state.simplifyTolerance = 1
         @state.propagate-back = undefined
         @state.propagating = false
+        @state.show-sub = false
         @has-googlemap = false
         @map-scaling = 100000000
         store.connect-to-component this, [\typeMap, \config]
@@ -1040,8 +1041,10 @@ module.exports = class Editor extends React.Component implements TimerMixin
                     return
                 i = hit-result.item.mydata.i
                 if not inte i, @state.cMark
-                    @set-state cMark:i
-                    mark = @get-current-mark!
+                    mark = @state.marks[i]
+                    # don't change mark when mouse moving
+                    #@set-state cMark:i
+                    #mark = @get-current-mark!
                 if hit-result.segment?
                     p = hit-result.segment.point
                     q1 = p.x == mark.bbox.p1.x
