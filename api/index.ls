@@ -642,7 +642,7 @@ count-state = (parent, cb) ->
                 *   $group: "_id": null, "count": { "$sum" : "$marks_size" }
             ], (err, result) ->
                     console.log "agg", result, parent
-                    callback err, result?[0].count
+                    callback err, result?[0]?count
     }, (err, results) ->
         if err then return cb err
         cb null, results
