@@ -1013,12 +1013,13 @@ module.exports = class Editor extends React.Component implements TimerMixin
                 @rebuild!
                 return
 
-            mark.bbox = p1: point{x,y}, p2: point{x,y}
-            @rebuild!
-            @drag-func = (e) ~>
-                point = e.point.transform tmatrix
-                mark.bbox.p2 = point{x,y}
+            if not mark.bbox
+                mark.bbox = p1: point{x,y}, p2: point{x,y}
                 @rebuild!
+                @drag-func = (e) ~>
+                    point = e.point.transform tmatrix
+                    mark.bbox.p2 = point{x,y}
+                    @rebuild!
         @box-tool.on-mouse-drag = ~> @drag-func it
         @box-tool.on-key-down = ~> @pan-tool.on-key-down it
         @box-tool.on-mouse-move = (e) ~>
