@@ -1,5 +1,0 @@
-asd = ->
-
-@asd
-class A
-
