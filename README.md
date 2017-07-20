@@ -32,7 +32,7 @@ cd utils
 ```
 
 # Download
-Local versions are build from Electron. you can download [here](http://anno.randonl.me:9200:download)
+Local versions are build from Electron. you can download [here](http://anno.randonl.me:9200/download)
 
 # TODO
 *   [x]  local refine, recalc all

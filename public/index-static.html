@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Annotate</title>
+    <script src="/js/vendor.js" charset="utf-8"></script>
+    <style src="/css/vendor.css"></style>
+    <link rel="stylesheet" href="/css/vendor.css" media="screen" title="no title" charset="utf-8">
+</head>
+<body>
+    <div class="app">
+        <div class="ui menu">
+                <a class="header item" href="/">ANNOTATE
+                    <div class="floating ui red circular mini label" style="top:20%">
+                        100
+                    </div>
+                </a>
+                <div class="item">
+                    <div class="ui small left labeled right icon input">
+                        <div class="ui label">Whole datasets</div>
+                        <input type="text" placeholder="Search">
+                        <i class="search icon"></i>
+                    </div>
+                </div>
+                <a href="#" class="item">Explore</a>
+                <a class="active item">
+                    Datasets
+                </a>
+                <a class="item">
+                    Stats
+                </a>
+                <a class="item">
+                    Category
+                </a>
+                <a class="item">
+                    Whatever
+                </a>
+                <div class="ui right floated text menu">
+                    <div class="item">
+                        <div class="ui buttons">
+                            <div class="ui green button">
+                                Sign up
+                            </div>
+                            <div class="or"></div>
+                            <div class="ui button">
+                                Sign in
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ui container">
+                <div class="ui container">
+        <div class="ui right floated small menu">
+            <a class="ui active item"><i class="grid layout icon"></i></a>
+            <a class="ui item"><i class="list layout icon"></i></a>
+            <a class="ui item"><i class="block layout icon"></i></a>
+        </div>
+<div class="ui right floated small menu">
+<a class="ui item"><i class="check circle icon"></i></a>
+    <a class="ui item"><i class="green add circle icon"></i></a>
+        <a class="ui active item"><i class="red minus circle icon"></i></a>
+</div>
+                    <i class="big database icon"></i>
+                    <div class="ui huge breadcrumb">
+                        <div class="divider">/</div>
+                        <a href="#">Traffic-sign</a>
+                        <div class="divider">/</div>
+                        <a href="#">Prohibit</a>
+                    </div>
+                    <br>
+                </div>
+                <div class="ui vertical segment">
+                    <big>simple description, all prohibit traffic sign in China.</big>
+                </div>
+                <div class="ui four item top attached tabular menu">
+                    <a href="#" class="active item">
+                        <i class="file archive outline icon"></i>
+                        <b>1,000</b>&nbsp;
+                        total
+                    </a>
+                    <a href="#" class="item">
+                        <i class="file icon"></i>
+                        <b>400</b>&nbsp;
+                        annotated
+                    </a>
+                    <a href="#" class="item">
+                        <i class="file outline icon"></i>
+                        <b>400</b>&nbsp;
+                        un-annotated
+                    </a>
+                    <a href="#" class="item">
+                        <i class="warning sign icon"></i>
+                        <b>300</b>&nbsp;
+                        issues
+                    </a>
+                </div>
+                <div class="ui bottom attached segment">
+                    <div class="ui three column grid">
+                        <div class="column">
+                          <div class="ui red segment imgGalleryBoxOuter" style="overflow:hidden">
+                              <a class="ui left corner label" onclick="handleClick(this)">
+                                  <script type="text/javascript">
+                                      function handleClick(e) {
+                                          console.log('hahah');
+                                          console.log(e);
+                                          dom = $(e);
+                                          dom.addClass('active');
+                                          icon = dom.find('i');
+                                          icon.attr('class', "checkmark box icon")
+                                      }
+                                  </script>
+                                  <i class="square outline icon"></i>
+                              </a>
+                              <div class="imgGalleryBox">
+                                  <img class="ui bordered image" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="" />
+                              </div>
+                          </div>
+                          <div class="ui special popup">
+                              <div class="ui bulleted list">
+                                  <div class="item">
+                                      <div class="header">
+                                          category
+                                      </div>
+                                      <div class="description">
+                                          logo
+                                      </div>
+                                  </div>
+                                  <div class="item">
+                                      <div class="header">
+                                          description
+                                      </div>
+                                      <div class="description">
+                                          logo of google. cool!
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+                        </div>
+                        <div class="column ">
+                          <div class="ui yellow segment">
+                              <div class="imgGalleryBox">
+                              <img class="ui image" src="http://ww1.sinaimg.cn/mw600/8245bf01jw1f03wj9ne8kj20c84d6tvs.jpg" alt="" />
+                                </div>
+                          </div>
+                        </div>
+                        <div class="column">
+                          <div class="ui green segment">
+                              <div class="imgGalleryBox">
+                                  <img class="ui image" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="" />
+                              </div>
+                          </div>
+                        </div>
+                        <div class="column ">
+                          <div class="ui segment">
+                              <div class="imgGalleryBox">
+                              <img class="ui image" src="http://ww1.sinaimg.cn/mw600/8245bf01jw1f03wj9ne8kj20c84d6tvs.jpg" alt="" />
+                                </div>
+                          </div>
+                        </div>
+                    </div>
+                    <div class="ui pagination secondary pointing menu">
+                      <a class="active item">
+                        1
+                      </a>
+                      <div class="disabled item">
+                        ...
+                      </div>
+                      <a class="item">
+                        10
+                      </a>
+                      <a class="item">
+                        11
+                      </a>
+                      <a class="item">
+                        12
+                      </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+                <div class="ui divider">
+                </div>
+                <div class="ui disabled basic inverted center aligned segment">
+                    <b>Annotate</b>, © 2016 Dun Liang.
+                </div>
+            </div>
+    </div>
+    <script type="text/javascript">
+$('.imgGalleryBoxOuter')
+.popup({inline:true});
+    </script>
+</body>
+
+</html>
